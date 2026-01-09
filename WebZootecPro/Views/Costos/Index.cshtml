@@ -1,0 +1,121 @@
+﻿@model WebZootecPro.ViewModels.Costos.CostosIndexVm
+@{
+    ViewData["Title"] = "Costos";
+    var tipos = ViewBag.TiposCosto as List<SelectListItem>;
+    var centros = ViewBag.CentrosCosto as List<SelectListItem>;
+    var establos = ViewBag.Establos as List<SelectListItem>;
+    var hatos = ViewBag.Hatos as List<SelectListItem>;
+    var animales = ViewBag.Animales as List<SelectListItem>;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Costos</h3>
+    <a class="btn btn-primary" asp-action="Create">Nuevo costo</a>
+</div>
+
+<form method="get" class="card card-body mb-3">
+    <div class="row g-2">
+        <div class="col-md-2">
+            <label class="form-label">Desde</label>
+            <input type="date" name="desde" class="form-control" value="@(Model.Desde?.ToString("yyyy-MM-dd"))" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Hasta</label>
+            <input type="date" name="hasta" class="form-control" value="@(Model.Hasta?.ToString("yyyy-MM-dd"))" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Establo</label>
+            <select class="form-select" name="idEstablo">
+                <option value="">(Todos)</option>
+                @foreach (var it in establos ?? new())
+                {
+                    <option value="@it.Value" selected="@(Model.IdEstablo?.ToString() == it.Value)">@it.Text</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Hato/Corral</label>
+            <select class="form-select" name="idHato">
+                <option value="">(Todos)</option>
+                @foreach (var it in hatos ?? new())
+                {
+                    <option value="@it.Value" selected="@(Model.IdHato?.ToString() == it.Value)">@it.Text</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Animal</label>
+            <select class="form-select" name="idAnimal">
+                <option value="">(Todos)</option>
+                @foreach (var it in animales ?? new())
+                {
+                    <option value="@it.Value" selected="@(Model.IdAnimal?.ToString() == it.Value)">@it.Text</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Tipo</label>
+            <select class="form-select" name="idTipoCosto">
+                <option value="">(Todos)</option>
+                @foreach (var it in tipos ?? new())
+                {
+                    <option value="@it.Value" selected="@(Model.IdTipoCosto?.ToString() == it.Value)">@it.Text</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Centro</label>
+            <select class="form-select" name="idCentroCosto">
+                <option value="">(Todos)</option>
+                @foreach (var it in centros ?? new())
+                {
+                    <option value="@it.Value" selected="@(Model.IdCentroCosto?.ToString() == it.Value)">@it.Text</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <button class="btn btn-outline-primary w-100" type="submit">Filtrar</button>
+        </div>
+    </div>
+</form>
+
+<div class="alert alert-info">
+    <strong>Total:</strong> @Model.Total.ToString("N2")
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Centro</th>
+                <th>Tipo</th>
+                <th>Monto</th>
+                <th>Desc.</th>
+                <th class="text-end">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var x in Model.Items)
+            {
+                <tr>
+                    <td>@x.Fecha.ToString("yyyy-MM-dd")</td>
+                    <td>@x.IdCentroCostoNavigation?.Nombre</td>
+                    <td>@x.IdTipoCostoNavigation?.Nombre</td>
+                    <td>@x.MontoTotal.ToString("N2")</td>
+                    <td>@x.Descripcion</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@x.IdMovimientoCosto">Editar</a>
+                        <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@x.IdMovimientoCosto">Eliminar</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

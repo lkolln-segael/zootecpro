@@ -1,0 +1,60 @@
+﻿@model IEnumerable<WebZootecPro.Data.Hato>
+@{
+    ViewData["Title"] = "Hatos";
+    var establos = ViewBag.Establos as IDictionary<int, string>;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0">Hatos</h2>
+        <p class="text-muted small mb-0">
+            Grupos productivos dentro de cada establo
+        </p>
+    </div>
+    <a class="btn btn-primary" asp-action="Create">Nuevo hato</a>
+</div>
+
+<div class="card card-list mt-3">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-borderless mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>NOMBRE</th>
+                        <th>SISTEMA PROD.</th>
+                        <th>UBICACIÓN</th>
+                        <th>ESTABLO</th>
+                        <th class="text-end">ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        string nomEstablo = "-";
+                        if (establos != null && establos.ContainsKey(item.EstabloId))
+                        {
+                            nomEstablo = establos[item.EstabloId];
+                        }
+
+                        <tr>
+                            <td>@item.nombre</td>
+                            <td>@item.sistemaProduccion</td>
+                            <td>@item.ubicacion</td>
+                            <td>@nomEstablo</td>
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@item.Id"
+                                   class="btn btn-sm btn-outline-secondary me-1">
+                                    Editar
+                                </a>
+                                <a asp-action="Delete" asp-route-id="@item.Id"
+                                   class="btn btn-sm btn-outline-danger">
+                                    Eliminar
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,147 @@
+﻿@model WebZootecPro.ViewModels.Reportes.ReproduccionKpiViewModel
+@{
+    ViewData["Title"] = "KPI Reproducción";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h3 class="mb-0"><i class="bi bi-graph-up me-2"></i>KPI Reproducción</h3>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" asp-controller="Reportes" asp-action="ElegiblesInseminacion">
+            <i class="bi bi-list-check me-1"></i>Elegibles
+        </a>
+        <a class="btn btn-outline-primary" asp-controller="Reportes" asp-action="RevisionPrenez">
+            <i class="bi bi-calendar2-check me-1"></i>Revisión
+        </a>
+    </div>
+</div>
+
+<form method="get" class="card card-body mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Desde</label>
+            <input class="form-control" type="date" name="desde" value="@Model.Desde.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Hasta</label>
+            <input class="form-control" type="date" name="hasta" value="@Model.Hasta.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Hato</label>
+            <select class="form-select" name="idHato" asp-items="ViewBag.IdHato">
+                <option value="">(Todos)</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100" type="submit">
+                <i class="bi bi-funnel me-1"></i>Filtrar
+            </button>
+        </div>
+    </div>
+</form>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="card card-body">
+            <div class="text-muted small">Hembras activas</div>
+            <div class="fs-4 fw-semibold">@Model.TotalHembrasActivas</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-body">
+            <div class="text-muted small">Elegibles al corte</div>
+            <div class="fs-4 fw-semibold">@Model.VacasElegiblesAlCorte</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-body">
+            <div class="text-muted small">Servicios (periodo)</div>
+            <div class="fs-4 fw-semibold">@Model.ServiciosEnPeriodo</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-body">
+            <div class="text-muted small">Concepciones (periodo)</div>
+            <div class="fs-4 fw-semibold">@Model.ConcepcionesEnPeriodo</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card card-body">
+            <div class="text-muted small">PR (Concepciones / Elegibles)</div>
+            <div class="fs-3 fw-bold">@Model.TasaPrenez %</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-body">
+            <div class="text-muted small">Tasa Inseminación (Servicios / Elegibles)</div>
+            <div class="fs-3 fw-bold">@Model.TasaInseminacion %</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-body">
+            <div class="text-muted small">Servicios por concepción</div>
+            <div class="fs-3 fw-bold">@Model.ServiciosPorConcepcion</div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card card-body">
+            <div class="text-muted small">Concepción 1er servicio</div>
+            <div class="fs-4 fw-semibold">
+                @Model.ConcepcionPrimerServicio / @Model.TotalPrimerServicio
+                <span class="ms-2 badge bg-primary">@Model.ConcepcionPrimerServicioPct %</span>
+            </div>
+            <div class="text-muted small">* Basado en numeroServicio = 1 dentro del periodo.</div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card card-body">
+            <div class="text-muted small">Tasa aborto</div>
+            <div class="fs-4 fw-semibold">
+                @Model.AbortosEnPeriodo / @Model.ConfirmPositivasEnPeriodo
+                <span class="ms-2 badge bg-danger">@Model.TasaAbortoPct %</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-body">
+            <div class="text-muted small">Días a 1er servicio (prom.)</div>
+            <div class="fs-4 fw-semibold">@((Model.DiasPrimerServicioProm?.ToString("0.0")) ?? "-")</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-body">
+            <div class="text-muted small">Días abiertos (prom.)</div>
+            <div class="fs-4 fw-semibold">@((Model.DiasAbiertosProm?.ToString("0.0")) ?? "-")</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-body">
+            <div class="text-muted small">Intervalo entre partos (prom.)</div>
+            <div class="fs-4 fw-semibold">@((Model.IntervaloEntrePartosProm?.ToString("0.0")) ?? "-")</div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card card-body">
+            <div class="text-muted small">% preñadas a 150 DIM (al corte)</div>
+            <div class="fs-4 fw-semibold">
+                @Model.Prenadas150DIM / @Model.Base150DIM
+                <span class="ms-2 badge bg-success">@Model.PorcPrenadas150DIM %</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card card-body">
+            <div class="text-muted small">% preñadas a 200 DIM (al corte)</div>
+            <div class="fs-4 fw-semibold">
+                @Model.Prenadas200DIM / @Model.Base200DIM
+                <span class="ms-2 badge bg-success">@Model.PorcPrenadas200DIM %</span>
+            </div>
+        </div>
+    </div>
+</div>

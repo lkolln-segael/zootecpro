@@ -1,0 +1,54 @@
+﻿@model WebZootecPro.ViewModels.Produccion.ReporteIndustriaFormViewModel
+@{
+    ViewData["Title"] = "Registrar reporte industria";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="RegistrarReporteIndustria" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div class="row">
+        <div class="col-md-3 mb-3">
+            <label class="form-label">Fecha</label>
+            <input asp-for="Fecha" type="date" class="form-control" />
+            <span asp-validation-for="Fecha" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <label class="form-label">Turno</label>
+            <select asp-for="Turno" class="form-select">
+                <option value="MAÑANA">MAÑANA</option>
+                <option value="TARDE">TARDE</option>
+                <option value="NOCHE">NOCHE</option>
+            </select>
+            <span asp-validation-for="Turno" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Hato</label>
+            <select asp-for="IdHato" class="form-select" asp-items="ViewBag.IdHato"></select>
+            <span asp-validation-for="IdHato" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Peso reportado</label>
+            <input asp-for="PesoReportado" class="form-control" />
+            <span asp-validation-for="PesoReportado" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-8 mb-3">
+            <label class="form-label">Observación</label>
+            <input asp-for="Observacion" class="form-control" />
+            <span asp-validation-for="Observacion" class="text-danger"></span>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a asp-action="ReporteIndustria" class="btn btn-secondary ms-2">Volver</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

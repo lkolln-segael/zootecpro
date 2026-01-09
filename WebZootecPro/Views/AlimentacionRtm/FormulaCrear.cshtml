@@ -1,0 +1,33 @@
+﻿@model WebZootecPro.Data.RtmFormula
+@{
+    ViewData["Title"] = "Crear fórmula";
+}
+
+<h3 class="mb-3">Crear fórmula RTM</h3>
+
+<form method="post" class="card card-body">
+    @Html.AntiForgeryToken()
+
+    <div class="row g-2">
+        <div class="col-md-6">
+            <label class="form-label">Nombre</label>
+            <input class="form-control" asp-for="nombre" />
+            <span class="text-danger" asp-validation-for="nombre"></span>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Descripción</label>
+            <input class="form-control" asp-for="descripcion" />
+        </div>
+        <div class="col-md-2 mt-2">
+            <div class="form-check mt-4">
+                <input class="form-check-input" asp-for="activo" />
+                <label class="form-check-label">Activo</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+        <button class="btn btn-primary" type="submit">Guardar y editar composición</button>
+        <a class="btn btn-outline-secondary" asp-action="Formulas">Volver</a>
+    </div>
+</form>

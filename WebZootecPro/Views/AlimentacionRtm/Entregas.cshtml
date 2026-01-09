@@ -1,0 +1,105 @@
+﻿@model WebZootecPro.ViewModels.AlimentacionRtm.EntregasVm
+@{
+    ViewData["Title"] = "Entregas RTM";
+}
+
+<h3 class="mb-3">Entregas RTM (Consumo real)</h3>
+
+<form method="get" class="card card-body mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-6">
+            <label class="form-label">Hato/Corral</label>
+            <select class="form-select" name="hatoId" asp-items="ViewBag.HatoId">
+                <option value="">(Todos)</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Fecha</label>
+            <input class="form-control" type="date" name="fecha" value="@Model.fecha.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-3">
+            <button class="btn btn-primary w-100" type="submit">Filtrar</button>
+        </div>
+    </div>
+</form>
+
+<div class="card card-body mb-3">
+    <h5 class="mb-2">Registrar entrega</h5>
+
+    <form method="post" asp-action="EntregasCrear" class="row g-2 align-items-end">
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" name="fecha" value="@Model.fecha.ToString("yyyy-MM-dd")" />
+
+        <div class="col-md-4">
+            <label class="form-label">Hato/Corral</label>
+            <select class="form-select" name="hatoId" asp-items="ViewBag.HatoId"></select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Fórmula</label>
+            <select class="form-select" name="formulaId" asp-items="ViewBag.FormulaId"></select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Hora</label>
+            <input class="form-control" type="time" name="hora" value="06:00" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">kg total</label>
+            <input class="form-control" type="number" step="0.01" name="kgTotal" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label"># vacas</label>
+            <input class="form-control" type="number" name="numeroVacas" value="@Model.numeroVacas" />
+        </div>
+
+        <div class="col-md-10">
+            <label class="form-label">Observación</label>
+            <input class="form-control" type="text" name="observacion" />
+        </div>
+
+        <div class="col-md-12 mt-2">
+            <button class="btn btn-success" type="submit">Guardar entrega</button>
+            <a class="btn btn-outline-success" asp-action="Consumo">Reporte consumo</a>
+            <a class="btn btn-outline-primary" asp-action="Programacion">Programación</a>
+        </div>
+    </form>
+</div>
+
+<table class="table table-sm table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Hora</th>
+            <th>Hato</th>
+            <th>Fórmula</th>
+            <th>kg total</th>
+            <th># vacas</th>
+            <th>kg/vaca</th>
+            <th>Costo total</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var x in Model.items)
+        {
+            <tr>
+                <td class="fw-semibold">@x.hora.ToString(@"hh\:mm")</td>
+                <td>@x.hato</td>
+                <td>@x.formula</td>
+                <td>@x.kgTotal.ToString("0.00")</td>
+                <td>@x.numeroVacas</td>
+                <td>@x.kgPorVaca.ToString("0.0000")</td>
+                <td>@(x.costoTotal?.ToString("0.00") ?? "-")</td>
+                <td class="text-end">
+                    <form method="post" asp-action="EntregaEliminar" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@x.Id" />
+                        <input type="hidden" name="hatoId" value="@Model.hatoId" />
+                        <input type="hidden" name="fecha" value="@Model.fecha.ToString("yyyy-MM-dd")" />
+                        <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,48 @@
+@model IEnumerable<WebZootecPro.ViewModels.Admin.CrearTipoEnfermedadesViewModel>
+
+  @{
+  ViewData["Title"] = "Tipo de enfermedades";
+  }
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Tipo de enfermedades</h2>
+
+    <!-- Botón Agregar Rol -->
+    <a asp-action="CrearTipoEnfermedades" class="btn btn-primary">
+      <i class="bi bi-plus-circle"></i> Agregar tipo de enfermedad
+    </a>
+  </div>
+
+  <table class="table table-striped table-bordered">
+    <thead class="table-dark">
+      <tr>
+        <th>Nombre del Tipo de enfermedad</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (Model != null && Model.Any())
+      {
+      foreach (var rol in Model)
+      {
+      <tr>
+        <td>@rol.Nombre</td>
+        <td>
+          <form asp-action="DeleteTipoEnfermedad" method="post" asp-route-id="@rol.Id"
+            onsubmit="return confirm('¿Eliminar este tipo de enfermedad?');">
+            <button class="btn btn-danger btn-sm">Eliminar</button>
+          </form>
+        </td>
+      </tr>
+      }
+      }
+      else
+      {
+      <tr>
+        <td class="text-center text-muted">
+          No hay roles registrados
+        </td>
+      </tr>
+      }
+    </tbody>
+  </table>

@@ -1,0 +1,62 @@
+﻿@model IEnumerable<WebZootecPro.Data.RegistroProduccionLeche>
+@{
+    ViewData["Title"] = "Calidad";
+}
+
+<h2>Calidad</h2>
+
+<form method="get" class="row mb-3">
+    <div class="col-md-3">
+        <label class="form-label">Desde</label>
+        <input type="date" name="desde" value="@ViewBag.Desde" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Hasta</label>
+        <input type="date" name="hasta" value="@ViewBag.Hasta" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Animal</label>
+        <select name="idAnimal" class="form-select" asp-items="ViewBag.IdAnimal">
+            <option value="">(Todos)</option>
+        </select>
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-secondary w-100">Filtrar</button>
+    </div>
+</form>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Turno</th>
+            <th>Animal</th>
+            <th>Total (L)</th>
+            <th>Calidad</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            var cal = item.Calidads.OrderByDescending(c => c.fechaRegistro).FirstOrDefault();
+            var tiene = (cal != null && (cal.grasa != null || cal.rcs != null || cal.proteina != null || cal.solidosTotales != null || cal.urea != null));
+
+            <tr>
+                <td>@item.fechaOrdeno?.ToString("dd/MM/yyyy")</td>
+                <td>@item.turno</td>
+                <td>@item.idAnimalNavigation?.codigo</td>
+                <td>@item.pesoOrdeno</td>
+                <td>@(tiene ? "✅" : "—")</td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-primary"
+                       asp-controller="Calidad"
+                       asp-action="Editar"
+                       asp-route-idRegistro="@item.Id">
+                        @(tiene ? "Editar" : "Cargar")
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,66 @@
+﻿@model WebZootecPro.ViewModels.Tratamientos.RetiroLecheListadoViewModel
+@{
+    ViewData["Title"] = "Retiro de leche";
+}
+
+<h2>Retiro de leche</h2>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-auto">
+        <label class="form-label">Mostrar próximos (días)</label>
+        <input name="dias" type="number" min="0" max="90" class="form-control" value="@Model.Dias" />
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-primary">Aplicar</button>
+    </div>
+</form>
+
+@if (!Model.Items.Any())
+{
+    <div class="alert alert-success">
+        No hay animales en retiro de leche entre hoy (@Model.Hoy.ToString("dd/MM/yyyy")) y @Model.Hoy.AddDays(Model.Dias).ToString("dd/MM/yyyy").
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">
+        Animales con retiro de leche activo (hoy) o dentro de los próximos @Model.Dias día(s).
+    </div>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Retiro hasta</th>
+                <th>Días restantes</th>
+                <th>Tratamiento (más restrictivo)</th>
+                <th>Inicio</th>
+                <th>Última dosis</th>
+                <th>Retiro (días)</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var x in Model.Items)
+            {
+                var enRetiroHoy = x.RetiroHasta >= Model.Hoy && Model.Hoy <= x.RetiroHasta;
+                <tr>
+                    <td>@x.Codigo</td>
+                    <td>@x.Nombre</td>
+                    <td class="@(enRetiroHoy ? "text-danger fw-bold" : "")">@x.RetiroHasta.ToString("dd/MM/yyyy")</td>
+                    <td>@x.DiasRestantes</td>
+                    <td>@x.TipoTratamiento</td>
+                    <td>@x.InicioTratamiento.ToString("dd/MM/yyyy")</td>
+                    <td>@x.UltimaDosis.ToString("dd/MM/yyyy")</td>
+                    <td>@x.RetiroDias</td>
+                    <td>
+                        <a class="btn btn-sm btn-secondary" asp-controller="Produccion" asp-action="Registrar" asp-route-idAnimal="@x.IdAnimal">
+                            Registrar ordeño
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

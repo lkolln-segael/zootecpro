@@ -1,0 +1,32 @@
+
+@model WebZootecPro.ViewModels.Tratamientos.CrearTratamientoViewModel
+
+@{
+    ViewData["Title"] = "Eliminar Tratamiento";
+}
+
+<h2 class="text-danger">Eliminar Tratamiento</h2>
+
+<div class="alert alert-warning">
+    ¿Está seguro de que desea eliminar este tratamiento?
+</div>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" name="id" value="@ViewBag.Id" />
+
+    <dl class="row">
+        <dt class="col-sm-4">Fecha Inicio</dt>
+        <dd class="col-sm-8">@Model.FechaInicio.ToString("dd/MM/yyyy")</dd>
+
+        <dt class="col-sm-4">Fecha Final Estimada</dt>
+        <dd class="col-sm-8">@(Model.FechaFinalEstimada?.ToString("dd/MM/yyyy") ?? "-")</dd>
+        <dt class="col-sm-4">Costo Estimado</dt>
+        <dd class="col-sm-8">@Model.CostoEstimado.ToString("C")</dd>
+
+        <dt class="col-sm-4">Observaciones</dt>
+        <dd class="col-sm-8">@Model.Observaciones</dd>
+    </dl>
+
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>

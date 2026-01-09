@@ -1,0 +1,198 @@
+﻿@model WebZootecPro.ViewModels.Eventos.RegistrarEventoViewModel
+
+@{
+ViewData["Title"] = "Registrar evento";
+}
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Registrar evento</h5>
+    <span class="text-muted small">
+      Fecha del día: @DateTime.Today.ToString("dd/MM/yy")
+    </span>
+  </div>
+
+  <div class="card-body">
+    @if (TempData["EventosMessage"] != null)
+    {
+    <div class="alert alert-success">
+      @TempData["EventosMessage"]
+    </div>
+    }
+
+    <form asp-action="Registrar" method="post" novalidate>
+      <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-lg-6 col-md-12">
+          <label class="form-label">Animal</label>
+
+          <label asp-for="IdAnimal" class="form-label"></label>
+          <select asp-for="IdAnimal" asp-items="ViewBag.IdAnimal" class="form-select" id="IdAnimal">
+            <option value="">-- Buscar animal (RP / nombre) --</option>
+          </select>
+          <span asp-validation-for="IdAnimal" class="text-danger small"></span>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <label asp-for="FechaEvento" class="form-label"></label>
+          <input asp-for="FechaEvento" type="date" class="form-control" />
+          <span asp-validation-for="FechaEvento" class="text-danger small"></span>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <label asp-for="TipoEvento" class="form-label"></label>
+          <select asp-for="TipoEvento" asp-items="ViewBag.TiposEvento" class="form-select">
+            <option value="">-- Seleccione evento --</option>
+          </select>
+          <span asp-validation-for="TipoEvento" class="text-danger small"></span>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <label asp-for="IdHato" class="form-label"></label>
+          <select asp-for="IdHato" asp-items="ViewBag.IdHato" class="form-select">
+            <option value="">-- (Opcional) Seleccione hato --</option>
+          </select>
+          <span asp-validation-for="IdHato" class="text-danger small"></span>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <label asp-for="EstadoProductivoId" class="form-label"></label>
+          <select asp-for="EstadoProductivoId" asp-items="ViewBag.EstadoProductivo" class="form-select">
+            <option value="">-- (Opcional) Estado reproductivo --</option>
+          </select>
+          <span asp-validation-for="EstadoProductivoId" class="text-danger small"></span>
+        </div>
+      </div>
+
+      <div id="camposEvento" class="mb-3"></div>
+
+      <div class="mb-3" id="bloqueObservaciones">
+        <label asp-for="Observaciones" class="form-label"></label>
+        <textarea asp-for="Observaciones" rows="3" class="form-control"></textarea>
+        <span asp-validation-for="Observaciones" class="text-danger small"></span>
+      </div>
+
+
+      <button type="submit" class="btn btn-primary">Aceptar</button>
+      <a asp-controller="Animales" asp-action="Index" class="btn btn-outline-secondary ms-2">Volver</a>
+    </form>
+  </div>
+</div>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+
+<script>
+  (function () {
+    const tipoSel = document.getElementById("TipoEvento");
+    const animalSel = document.getElementById("IdAnimal");
+    const cont = document.getElementById("camposEvento");
+    const bloqueObs = document.getElementById("bloqueObservaciones");
+    const txtObs = document.getElementById("Observaciones");
+
+    function normTipo(s) {
+      return (s || "")
+        .trim()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .toUpperCase();
+    }
+
+    const tiposSinObservaciones = new Set(["SECA", "ABORTO", "ENFERMEDAD", "MEDICACION"]);
+
+    function toggleObservaciones() {
+      if (!bloqueObs) return;
+      const tipo = normTipo(tipoSel?.value);
+      const ocultar = tiposSinObservaciones.has(tipo);
+      bloqueObs.style.display = ocultar ? "none" : "";
+      if (ocultar && txtObs) txtObs.value = "";
+    }
+
+    async function cargarCampos() {
+      toggleObservaciones();
+
+      const tipo = (tipoSel?.value || "").trim();
+      if (!tipo) {        // sin tipo no tiene sentido pedir partial
+        cont.innerHTML = "";
+        return;
+      }
+
+      const idAnimal = (animalSel?.value || "").trim();
+
+      const url = '@Url.Action("CamposEvento", "Eventos")'
+        + '?tipoEvento=' + encodeURIComponent(tipo)
+        + '&idAnimal=' + encodeURIComponent(idAnimal);
+
+      const res = await fetch(url, {headers: {"X-Requested-With": "XMLHttpRequest"}});
+      cont.innerHTML = await res.text();
+
+      toggleObservaciones();
+    }
+
+    // Exponer la función para poder llamarla desde el script de select2
+    window._evt_cargarCamposEvento = cargarCampos;
+
+    // cambios normales (cuando no hay select2, igual funciona)
+    tipoSel?.addEventListener("change", cargarCampos);
+    animalSel?.addEventListener("change", cargarCampos);
+
+    // inicial
+    toggleObservaciones();
+    if (tipoSel?.value) cargarCampos();
+  })();
+</script>
+
+<script>
+  $(function () {
+    const $animal = $("#IdAnimal");
+
+    $animal.select2({
+      theme: "bootstrap-5",
+      placeholder: "-- Buscar animal (RP / nombre) --",
+      allowClear: true,
+      width: "100%",
+      minimumInputLength: 1,
+      dropdownParent: $animal.closest("form")
+    });
+
+    $animal.on("change select2:select select2:clear", function () {
+      if (window._evt_cargarCamposEvento) {
+        window._evt_cargarCamposEvento();
+      }
+    });
+  });
+</script>
+
+<script>
+  document.addEventListener("change", function (ev) {
+    if (ev.target && ev.target.id === "idPadreAnimal") {
+      const nombreToroInput = document.querySelector("#nombreToro");
+      if (nombreToroInput) {
+        // Si el valor es distinto de vacío, deshabilitar
+        nombreToroInput.disabled = (ev.target.value !== "");
+
+        if (ev.target.value !== "") {
+          nombreToroInput.value = "";
+        }
+      }
+    }
+    if (ev.target && ev.target.id === "sexoCria") {
+      const sexoCriaSelect = document.querySelector("#sexoCria")
+      const rpCria2 = document.querySelector("#rpCria2")
+      const nombreCria2 = document.querySelector("#nombreCria2")
+      const value = parseInt(sexoCriaSelect.value)
+      switch (value) {
+        case 1:
+        case 2:
+          nombreCria2.setAttribute("disabled", true)
+          rpCria2.setAttribute("disabled", true)
+          break
+        default:
+          nombreCria2.removeAttribute("disabled")
+          rpCria2.removeAttribute("disabled")
+          break
+      }
+    }
+  });
+</script>
+}

@@ -1,0 +1,26 @@
+﻿@model WebZootecPro.ViewModels.Eventos.RegistrarEventoViewModel
+
+<div class="row g-3">
+
+    <div class="col-lg-3 col-md-6">
+        <label asp-for="ConfirmacionTipo" class="form-label"></label>
+        <select asp-for="ConfirmacionTipo" class="form-select">
+            <option value="">-- Seleccione --</option>
+            <option value="POSITIVA">POSITIVA</option>
+            <option value="NEGATIVA">NEGATIVA</option>
+        </select>
+        <span asp-validation-for="ConfirmacionTipo" class="text-danger small"></span>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <label asp-for="ConfirmacionMetodo" class="form-label"></label>
+        <select asp-for="ConfirmacionMetodo" class="form-select">
+            <option value="">-- Seleccione método --</option>
+            <option value="ECOGRAFIA">ECOGRAFIA</option>
+            <option value="PALPACION">PALPACION</option>
+            <option value="PRUEBA_LECHE_SANGRE">PRUEBA_LECHE_SANGRE</option>
+        </select>
+        <span asp-validation-for="ConfirmacionMetodo" class="text-danger small"></span>
+    </div>
+
+</div>

@@ -1,0 +1,88 @@
+﻿@model IEnumerable<WebZootecPro.ViewModels.Admin.EmpresaAdminIndexViewModel>
+
+  @{
+  ViewData["Title"] = "Administración de empresas";
+  }
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h4 class="mb-0">Empresas registradas</h4>
+      <small class="text-muted">
+        Dueños, empresas y colaboradores (modo SUPERADMIN)
+      </small>
+    </div>
+
+    <a asp-action="CrearDuenoEmpresa" class="btn btn-primary">
+      Crear empresa
+    </a>
+  </div>
+
+  @if (TempData["AdminMessage"] != null)
+  {
+  <div class="alert alert-success">
+    @TempData["AdminMessage"]
+  </div>
+  }
+
+  @if (!Model.Any())
+  {
+  <div class="alert alert-info">
+    No hay empresas registradas todavía. Usa el botón
+    <strong>Crear Empresa</strong>
+  </div>
+  }
+  else
+  {
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-dark table-hover mb-0 align-middle">
+          <thead>
+            <tr>
+              <th>Empresa</th>
+              <th>RUC</th>
+              <th>Ubicación</th>
+              <th class="text-center">Cap. máx.</th>
+              <th>Dueño</th>
+              <th>Usuario</th>
+              <th>Colaborador</th>
+              <th>DNI</th>
+              <th>Especialidad</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach (var item in Model)
+            {
+            <tr>
+              <td>@item.NombreEmpresa</td>
+              <td>@item.Ruc</td>
+              <td>@item.Ubicacion</td>
+              <td class="text-center">@item.CapacidadMaxima</td>
+              <td>@item.DuenoNombre</td>
+              <td>@item.DuenoUserName (@item.DuenoRol)</td>
+              <td>
+                @if (!string.IsNullOrEmpty(item.DniColaborador))
+                {
+                @item.DuenoNombre
+                }
+                else
+                {
+                <span class="text-muted">Sin colaborador</span>
+                }
+              </td>
+              <td>@item.DniColaborador</td>
+              <td>@item.EspecialidadColaborador</td>
+              <td>
+                <a class="btn btn-warning" href="/Admin/EditDuenoEmpresa/@item.Id">
+                  Editar
+                </a>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  }

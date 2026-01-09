@@ -1,0 +1,285 @@
+@{
+Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <title>ZootecPro | Gestión Ganadera</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+  <!-- Animaciones (opcional) -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --color-primary: #16a34a;
+      /* verde principal */
+      --color-primary-dark: #15803d;
+      --color-primary-soft: #bbf7d0;
+      --color-bg: #020617;
+      --color-bg-soft: #0b1120;
+      --color-bg-elevated: #020617;
+      --color-border-soft: rgba(148, 163, 184, 0.2);
+      --color-text: #e5e7eb;
+      --color-muted: #9ca3af;
+    }
+
+    body {
+      scroll-behavior: smooth;
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(22, 163, 74, .12) 0, transparent 45%),
+        radial-gradient(circle at bottom right, rgba(22, 163, 74, .10) 0, transparent 50%),
+        linear-gradient(135deg, var(--color-bg) 0%, var(--color-bg) 40%, var(--color-bg-soft) 100%);
+      color: var(--color-text);
+      min-height: 100vh;
+    }
+
+
+    .navbar {
+      background: rgba(2, 6, 23, 0.85);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--color-border-soft);
+    }
+
+    .navbar-brand {
+      color: var(--color-primary);
+      font-weight: 700;
+    }
+
+    .navbar-nav .nav-link {
+      color: var(--color-text);
+      transition: color .2s ease;
+    }
+
+    .navbar-nav .nav-link:hover {
+      color: var(--color-primary);
+    }
+
+
+    #home {
+      padding: 120px 0;
+      text-align: center;
+      background:
+        radial-gradient(circle at center, rgba(22, 163, 74, .18), transparent 60%);
+    }
+
+    #home h1 {
+      font-size: clamp(2.5rem, 5vw, 3.5rem);
+      font-weight: 800;
+    }
+
+    #home p {
+      color: var(--color-muted);
+      max-width: 800px;
+      margin: auto;
+    }
+
+    /* Section spacing */
+    section {
+      padding: 80px 0;
+    }
+
+    /* Cards */
+
+    .templatemo-box,
+    .pricing {
+      background: linear-gradient(180deg,
+          rgba(11, 17, 32, .85),
+          rgba(2, 6, 23, .9));
+      border: 1px solid var(--color-border-soft);
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, .4);
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
+
+    .templatemo-box:hover,
+    .pricing:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 30px 60px rgba(22, 163, 74, .15);
+    }
+
+    .templatemo-box i,
+    .service-item i {
+      color: var(--color-primary);
+    }
+
+    h2,
+    h3,
+    h4 {
+      color: var(--color-text);
+    }
+
+    small,
+    .text-muted {
+      color: var(--color-muted);
+    }
+
+    .pricing-title p {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #0d6efd;
+    }
+
+    #contact {
+      background: linear-gradient(180deg,
+          rgba(2, 6, 23, .95),
+          rgba(11, 17, 32, .95));
+    }
+
+    .form-control {
+      background: rgba(2, 6, 23, .8);
+      border: 1px solid var(--color-border-soft);
+      color: var(--color-text);
+    }
+
+    .form-control:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px rgba(22, 163, 74, .25);
+    }
+
+    /* Contact */
+    #contact {
+      background: linear-gradient(rgba(0, 0, 0, .75), rgba(0, 0, 0, .75)),
+        url('https://images.unsplash.com/photo-1581091870627-3d5f81e60f07') center/cover;
+      color: white;
+    }
+
+    footer {
+      background: #0d6efd;
+      color: white;
+      text-align: center;
+      padding: 15px 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-expand-lg fixed-top shadow">
+    <div class="container">
+      <a class="navbar-brand" href="#">ZootecPro</a>
+      <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#menu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="menu">
+        <ul class="navbar-nav ms-auto text-uppercase">
+          <li class="nav-item"><a class="nav-link" href="#home">Inicio</a></li>
+          <li class="nav-item"><a class="nav-link" href="#feature">Servicios</a></li>
+          <li class="nav-item"><a class="nav-link" href="#pricing">Licencia</a></li>
+          <li class="nav-item"><a class="nav-link" href="/Account/Login">Acceder</a></li>
+          <li class="nav-item"><a class="nav-link" href="#contact">Contacto</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section id="home">
+    <div class="container">
+      <h1 class="display-4 fw-bold mb-4">Gestión Ganadera Inteligente</h1>
+      <p class="lead mb-5">
+        Control total de producción, sanidad y reproducción en una sola plataforma.
+      </p>
+      <a href="/Account/Login" class="btn btn-light btn-lg">
+        <i class="fa-solid fa-right-to-bracket"></i> Acceder
+      </a>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="divider">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="templatemo-box text-center">
+            <i class="fa-solid fa-globe fa-3x text-primary mb-3"></i>
+            <h4>Gestión Online</h4>
+            <p>Accede desde cualquier lugar y administra tu establo en tiempo real.</p>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="templatemo-box text-center">
+            <i class="fa-solid fa-cow fa-3x text-primary mb-3"></i>
+            <h4>Control Animal</h4>
+            <p>Registro sanitario, reproductivo y productivo completo.</p>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="templatemo-box text-center">
+            <i class="fa-solid fa-chart-line fa-3x text-primary mb-3"></i>
+            <h4>Producción</h4>
+            <p>Análisis y reportes detallados para maximizar rentabilidad.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing">
+    <div class="container text-center">
+      <h2 class="mb-5">Licencia</h2>
+      <div class="row justify-content-center">
+        <div class="col-md-4">
+          <div class="pricing">
+            <h4>Plan Pro Indefinido</h4>
+            <ul class="list-unstyled my-4">
+              <li>✔ Hasta 10000 animales</li>
+              <li>✔ 1 Establo</li>
+              <li>✔ Hatos ilimitados</li>
+              <li>✔ Reportes y estadísticas</li>
+              <li>✔ Soporte incluido</li>
+            </ul>
+            <a href="/registrar" class="btn btn-primary w-100">Registrar</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <h3>Contacto</h3>
+          <p>¿Tienes dudas? Escríbenos y te asesoramos.</p>
+          <p><i class="fa fa-envelope"></i> info@zootecpro.com</p>
+        </div>
+        <div class="col-md-6">
+          <form>
+            <input class="form-control mb-3" placeholder="Nombre">
+            <input class="form-control mb-3" placeholder="Email">
+            <textarea class="form-control mb-3" rows="4" placeholder="Mensaje"></textarea>
+            <button class="btn btn-primary w-100">Enviar</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p class="mb-0">© 2025 ZootecPro</p>
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>

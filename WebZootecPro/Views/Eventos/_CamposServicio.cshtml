@@ -1,0 +1,38 @@
+﻿@model WebZootecPro.ViewModels.Eventos.RegistrarEventoViewModel
+
+<div class="row g-3">
+
+  <div class="col-lg-3 col-md-6">
+    <label asp-for="HoraServicio" class="form-label"></label>
+    <input asp-for="HoraServicio" type="time" class="form-control" />
+    <span asp-validation-for="HoraServicio" class="text-danger small"></span>
+  </div>
+
+  <div class="col-lg-6 col-md-12">
+    <label asp-for="IdPadreAnimal" class="form-label">Toro (si está registrado)</label>
+    <select id="idPadreAnimal" asp-for="IdPadreAnimal" asp-items="ViewBag.IdPadreAnimal" class="form-select">
+      <option value="">-- Seleccione toro (opcional) --</option>
+    </select>
+    <span asp-validation-for="IdPadreAnimal" class="text-danger small"></span>
+  </div>
+
+  <div class="col-lg-6 col-md-12">
+    <label asp-for="NombreToro" class="form-label"></label>
+    <input id="nombreToro" asp-for="NombreToro" class="form-control"
+      placeholder="Ej: TORO X (si no está en el sistema)" />
+    <span asp-validation-for="NombreToro" class="text-danger small"></span>
+  </div>
+
+  <div class="col-lg-3 col-md-6">
+    <label asp-for="CodigoNaab" class="form-label"></label>
+    <input asp-for="CodigoNaab" class="form-control" placeholder="Ej: 7HO12345" />
+    <span asp-validation-for="CodigoNaab" class="text-danger small"></span>
+  </div>
+
+  <div class="col-lg-6 col-md-12">
+    <label asp-for="Protocolo" class="form-label"></label>
+    <input asp-for="Protocolo" class="form-control" placeholder="Ej: Ovsynch / Presynch / etc" />
+    <span asp-validation-for="Protocolo" class="text-danger small"></span>
+  </div>
+
+</div>

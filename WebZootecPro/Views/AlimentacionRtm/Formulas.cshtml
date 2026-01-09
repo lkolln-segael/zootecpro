@@ -1,0 +1,38 @@
+﻿@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "Fórmulas RTM";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Fórmulas RTM</h3>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" asp-action="Ingredientes">Ingredientes</a>
+        <a class="btn btn-primary" asp-action="FormulaCrear">Nueva fórmula</a>
+        <a class="btn btn-outline-success" asp-action="Programacion">Programación</a>
+        <a class="btn btn-outline-success" asp-action="Entregas">Entregas</a>
+    </div>
+</div>
+
+<table class="table table-sm table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Activo</th>
+            <th>Costo/kg</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var f in Model)
+        {
+            <tr>
+                <td class="fw-semibold">@f.nombre</td>
+                <td>@(f.activo ? "SI" : "NO")</td>
+                <td>@(f.costoKg?.ToString("0.0000") ?? "-")</td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-secondary" asp-action="FormulaEditar" asp-route-id="@f.Id">Editar</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

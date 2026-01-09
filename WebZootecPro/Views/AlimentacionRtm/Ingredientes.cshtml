@@ -1,0 +1,40 @@
+﻿@model List<WebZootecPro.ViewModels.AlimentacionRtm.IngredienteVm>
+@{
+    ViewData["Title"] = "Ingredientes RTM";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Ingredientes RTM</h3>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" asp-action="Formulas">Fórmulas</a>
+        <a class="btn btn-primary" asp-action="IngredienteCrear">Nuevo ingrediente</a>
+    </div>
+</div>
+
+<table class="table table-sm table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Unidad</th>
+            <th>Costo/kg</th>
+            <th>MS%</th>
+            <th>Activo</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var x in Model)
+        {
+            <tr>
+                <td class="fw-semibold">@x.nombre</td>
+                <td>@(x.unidad ?? "-")</td>
+                <td>@(x.costoKg?.ToString("0.0000") ?? "-")</td>
+                <td>@(x.msPct?.ToString("0.00") ?? "-")</td>
+                <td>@(x.activo ? "SI" : "NO")</td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-secondary" asp-action="IngredienteEditar" asp-route-id="@x.Id">Editar</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

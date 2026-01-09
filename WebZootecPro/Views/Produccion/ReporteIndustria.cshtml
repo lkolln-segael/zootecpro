@@ -1,0 +1,61 @@
+﻿@model IEnumerable<WebZootecPro.ViewModels.Produccion.ReporteIndustriaRowViewModel>
+
+
+@{
+    ViewData["Title"] = "Reporte industria (peso reportado)";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form method="get" class="row mb-3">
+    <div class="col-md-3">
+        <label class="form-label">Desde</label>
+        <input type="date" name="desde" value="@ViewBag.Desde" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Hasta</label>
+        <input type="date" name="hasta" value="@ViewBag.Hasta" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Hato</label>
+        <select name="idHato" class="form-select" asp-items="ViewBag.IdHato">
+            <option value="">(Todos)</option>
+        </select>
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-secondary w-100">Filtrar</button>
+    </div>
+</form>
+
+<p>
+    <a asp-action="RegistrarReporteIndustria" class="btn btn-primary">Nuevo reporte</a>
+    <a asp-action="ComparativoIndustria" class="btn btn-outline-dark ms-2">Ver comparativo</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Turno</th>
+            <th>Hato</th>
+            <th>Peso reportado</th>
+            <th>Obs.</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var x in Model)
+        {
+            <tr>
+                <td>@x.Fecha.ToString("dd/MM/yyyy")</td>
+                <td>@x.Turno</td>
+                <td>@x.HatoNombre</td>
+                <td>@x.PesoReportado</td>
+                <td>@x.Observacion</td>
+                <td class="text-end">
+                    <a asp-action="RegistrarReporteIndustria" asp-route-id="@x.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

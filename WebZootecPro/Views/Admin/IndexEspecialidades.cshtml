@@ -1,0 +1,53 @@
+@model IEnumerable<WebZootecPro.ViewModels.Admin.CrearEspecialidadesViewModel>
+
+  @{
+  ViewData["Title"] = "Especialidades";
+  }
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Especialidad</h2>
+
+    <!-- Botón Agregar Especialidad -->
+    <a asp-action="CrearEspecialidad" class="btn btn-primary">
+      <i class="bi bi-plus-circle"></i> Agregar Especialidad
+    </a>
+  </div>
+
+  <table class="table table-striped table-bordered">
+    <thead class="table-dark">
+      <tr>
+        <th>Nombre de la Especialidad</th>
+        <th>
+          Acciones
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (Model != null && Model.Any())
+      {
+      foreach (var especialidad in Model)
+      {
+      <tr>
+        <td>@especialidad.Nombre</td>
+        <td>
+          <a href="/Admin/EditEspecialidad/@especialidad.Id" class="btn btn-warning">
+            Editar
+          </a>
+          <form asp-action="DeleteEspecialidad" method="post" asp-route-id="@especialidad.Id"
+            onsubmit="return confirm('¿Eliminar esta especialidad?');">
+            <button class="btn btn-danger btn-sm">Eliminar</button>
+          </form>
+        </td>
+      </tr>
+      }
+      }
+      else
+      {
+      <tr>
+        <td class="text-center text-muted">
+          No hay especialidades registrados
+        </td>
+      </tr>
+      }
+    </tbody>
+  </table>

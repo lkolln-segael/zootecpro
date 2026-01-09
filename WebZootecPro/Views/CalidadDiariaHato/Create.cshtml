@@ -1,0 +1,68 @@
+﻿@model WebZootecPro.Data.CalidadDiariaHato
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+ViewData["Title"] = "Nuevo registro de calidad";
+var hatos = ViewBag.Hatos as List<SelectListItem> ?? new();
+  }
+
+  <h2>Nuevo registro de calidad</h2>
+
+  <form asp-action="Create" method="post" class="card p-3">
+    <div class="row g-3">
+
+      <div class="col-md-4">
+        <label class="form-label">Fecha</label>
+        <input asp-for="fecha" type="date" class="form-control" />
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Hato</label>
+        <select asp-for="idHato" class="form-select" asp-items="hatos"></select>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Fuente</label>
+        <input asp-for="fuente" class="form-control" placeholder="GLORIA" />
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Grasa</label>
+        <input asp-for="grasa" type="number" step="0.01" min="0" max="100" class="form-control" />
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Proteína</label>
+        <input asp-for="proteina" type="number" step="0.01" min="0" max="100" class="form-control" />
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">ST</label>
+        <input asp-for="solidosTotales" type="number" step="0.01" min="0" max="100" class="form-control" />
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Urea</label>
+        <input asp-for="urea" type="number" step="0.01" class="form-control" />
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">RCS</label>
+        <input asp-for="rcs" type="number" step="0.01" class="form-control" />
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Observaciones</label>
+        <textarea asp-for="observaciones" class="form-control" rows="3"></textarea>
+      </div>
+
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-primary">Guardar</button>
+        <a class="btn btn-outline-secondary" asp-action="Index">Cancelar</a>
+      </div>
+    </div>
+  </form>
+
+  @section Scripts {
+  <partial name="_ValidationScriptsPartial" />
+  }

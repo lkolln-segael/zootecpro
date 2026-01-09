@@ -1,0 +1,66 @@
+﻿@model IEnumerable<WebZootecPro.Data.Establo>
+@{
+    ViewData["Title"] = "Establos";
+    var empresas = ViewBag.Empresas as IDictionary<int, string>;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0">Establos</h2>
+        <p class="text-muted small mb-0">
+            Gestión de establos de la empresa
+        </p>
+    </div>
+    <a class="btn btn-primary" asp-action="Create">Nuevo establo</a>
+</div>
+
+<div class="card card-list mt-3">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-borderless mb-0 table-establos align-middle">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th class="text-center">Cap. máx.</th>
+                        <th class="text-center">Área total (ha)</th>
+                        <th>Empresa</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        string nombreEmpresa = "-";
+                        if (empresas != null && empresas.ContainsKey(item.EmpresaId))
+                        {
+                            nombreEmpresa = empresas[item.EmpresaId];
+                        }
+
+                        <tr>
+                            <td class="establo-nombre">
+                                @item.nombre
+                            </td>
+                            <td class="text-center">
+                                @item.capacidadMaxima
+                            </td>
+                            <td class="text-center">
+                                @item.areaTotal
+                            </td>
+                            <td>
+                                @nombreEmpresa
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@item.Id"
+                                   class="btn btn-sm btn-outline-secondary me-1">Editar</a>
+                                <a asp-action="Details" asp-route-id="@item.Id"
+                                   class="btn btn-sm btn-outline-info me-1">Detalles</a>
+                                <a asp-action="Delete" asp-route-id="@item.Id"
+                                   class="btn btn-sm btn-outline-danger">Eliminar</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

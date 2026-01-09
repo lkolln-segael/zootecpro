@@ -1,0 +1,60 @@
+﻿@model IEnumerable<WebZootecPro.ViewModels.Produccion.ComparativoIndustriaRowViewModel>
+@{
+    ViewData["Title"] = "Comparativo: Producido vs Entregado vs Reportado";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form method="get" class="row mb-3">
+    <div class="col-md-3">
+        <label class="form-label">Desde</label>
+        <input type="date" name="desde" value="@ViewBag.Desde" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Hasta</label>
+        <input type="date" name="hasta" value="@ViewBag.Hasta" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Hato</label>
+        <select name="idHato" class="form-select" asp-items="ViewBag.IdHato">
+            <option value="">(Todos)</option>
+        </select>
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-secondary w-100">Filtrar</button>
+    </div>
+</form>
+
+<p>
+    <a asp-action="ReporteIndustria" class="btn btn-outline-primary">Ir a reportes industria</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Turno</th>
+            <th>Hato</th>
+            <th class="text-end">Producido</th>
+            <th class="text-end">Entregado (Industria)</th>
+            <th class="text-end">Reportado (Industria)</th>
+            <th class="text-end">Dif (Prod-Entr)</th>
+            <th class="text-end">Dif (Entr-Rep)</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var r in Model)
+        {
+            <tr>
+                <td>@r.Fecha.ToString("dd/MM/yyyy")</td>
+                <td>@r.Turno</td>
+                <td>@r.Hato</td>
+                <td class="text-end">@r.ProducidoTotal</td>
+                <td class="text-end">@r.EntregadoIndustria</td>
+                <td class="text-end">@(r.ReportadoIndustria?.ToString() ?? "—")</td>
+                <td class="text-end">@r.DifProducidoVsEntregado</td>
+                <td class="text-end">@(r.DifEntregadoVsReportado?.ToString() ?? "—")</td>
+            </tr>
+        }
+    </tbody>
+</table>

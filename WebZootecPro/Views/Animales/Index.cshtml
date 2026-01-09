@@ -1,0 +1,109 @@
+﻿@model IEnumerable<WebZootecPro.ViewModels.Animales.AnimalListadoVm>
+
+  <h2>Animales</h2>
+
+  @if (User.IsInRole("SUPERADMIN") || User.IsInRole("ADMIN_EMPRESA"))
+  {
+  <a asp-action="Create" class="btn btn-success mb-3">+ Nuevo</a>
+  }
+
+  <table class="table table-bordered table-striped">
+    <thead class="table-dark">
+      <tr>
+        <th>Código</th>
+        <th>Nombre</th>
+        <th>Sexo</th>
+        <th>Hato</th>
+        <th>Edad</th>
+        <th>N° Partos</th>
+        <th>Padre</th>
+        <th>Madre</th>
+        <th>Abuelo paterno</th>
+        <th>Abuelo materno</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var a in Model)
+      {
+      <tr>
+        <td>@(a.Codigo ?? "-")</td>
+        <td>@(a.Nombre ?? "-")</td>
+        <td>@(a.Sexo ?? "-")</td>
+        <td>@a.Hato</td>
+        <td>@a.EdadTexto</td>
+        <td>@a.NumeroPartos</td>
+        <td>@a.Padre</td>
+        <td>@a.Madre</td>
+        <td>@a.AbueloPaterno</td>
+        <td>@a.AbueloMaterno</td>
+        <td>
+          <a asp-action="Details" asp-route-id="@a.Id" class="btn btn-info btn-sm">Ver</a>
+
+          @if (User.IsInRole("SUPERADMIN") || User.IsInRole("ADMIN_EMPRESA"))
+          {
+          <a asp-action="Edit" asp-route-id="@a.Id" class="btn btn-warning btn-sm">Editar</a>
+          <a asp-action="Delete" asp-route-id="@a.Id" class="btn btn-danger btn-sm">Eliminar</a>
+          }
+
+          <a href="#" class="btn btn-secondary btn-sm btn-historial" data-id="@a.Id">
+            Historial
+          </a>
+        </td>
+
+      </tr>
+      }
+    </tbody>
+  </table>
+
+  @* MODAL BOOTSTRAP PARA EL HISTORIAL *@
+  <div class="modal fade" id="historialModal" tabindex="-1" aria-labelledby="historialModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title text-dark" id="historialModalLabel">Historial del animal</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="text-center my-3" id="historial-loading" style="display:none;">
+            Cargando historial...
+          </div>
+          <div id="historial-content">
+            @* aquí se cargará el partial _HistorialAnimal *@
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @section Scripts {
+  <script>
+    (function () {
+      const baseUrl = '@Url.Action("Historial", "Animales")';
+
+      $(document).on('click', '.btn-historial', function (e) {
+        e.preventDefault();
+
+        const id = $(this).data('id');
+        if (!id) return;
+
+        $('#historial-content').empty();
+        $('#historial-loading').show();
+
+        $('#historialModal').modal('show');
+
+        $.get(baseUrl, {id: id})
+          .done(function (html) {
+            $('#historial-loading').hide();
+            $('#historial-content').html(html);
+          })
+          .fail(function () {
+            $('#historial-loading').hide();
+            $('#historial-content').html(
+              '<div class="alert alert-danger">No se pudo cargar el historial.</div>'
+            );
+          });
+      });
+    })();
+  </script>
+  }

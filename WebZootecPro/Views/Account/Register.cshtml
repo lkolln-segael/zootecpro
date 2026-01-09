@@ -1,0 +1,83 @@
+﻿@model WebZootecPro.ViewModels.Usuario.RegisterUserViewModel
+@{
+    ViewData["Title"] = "Crear usuario";
+    Layout = "_Layout";
+    ViewBag.BodyClass = "auth-body";
+    ViewBag.HideNavbar = true;
+}
+
+<div class="auth-wrapper">
+    <div class="card auth-card shadow-lg">
+        <div class="card-body p-4 p-md-5">
+            <div class="text-center mb-4">
+                <div class="auth-logo-circle mb-3">
+                    EP
+                </div>
+                <div class="auth-title">Crear usuario</div>
+                <div class="auth-subtitle">
+                    Configura el acceso para el sistema de establos.
+                </div>
+            </div>
+
+            <form asp-action="Register" method="post" novalidate>
+                <div class="mb-3">
+                    <label asp-for="UserName" class="form-label small text-uppercase text-muted mb-1"></label>
+                    <input asp-for="UserName" class="form-control" autocomplete="username" />
+                    <span asp-validation-for="UserName" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Nombre" class="form-label small text-uppercase text-muted mb-1"></label>
+                    <input asp-for="Nombre" class="form-control" />
+                    <span asp-validation-for="Nombre" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label small text-uppercase text-muted mb-1"></label>
+                    <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ConfirmPassword" class="form-label small text-uppercase text-muted mb-1"></label>
+                    <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="IdRol" class="form-label"></label>
+                    <select asp-for="IdRol" asp-items="Model.Roles" class="form-select"></select>
+                    <span asp-validation-for="IdRol" class="text-danger"></span>
+                </div>
+
+
+                <div class="row">
+                    <div class="col-12 col-md-6 mb-3">
+                        <label asp-for="IdEstablo" class="form-label small text-uppercase text-muted mb-1"></label>
+                        <input asp-for="IdEstablo" class="form-control" />
+                        <span asp-validation-for="IdEstablo" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12 col-md-6 mb-3">
+                        <label asp-for="IdHato" class="form-label small text-uppercase text-muted mb-1"></label>
+                        <input asp-for="IdHato" class="form-control" />
+                        <span asp-validation-for="IdHato" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 mb-3">
+                    Guardar usuario
+                </button>
+
+                <div class="text-center auth-secondary-link">
+                    <a asp-controller="Account" asp-action="Login" class="link-light text-decoration-none">
+                        Volver al inicio de sesión
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

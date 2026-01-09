@@ -1,0 +1,58 @@
+
+@model WebZootecPro.ViewModels.Admin.CrearTipoTratamientoViewModel
+
+@{
+    ViewData["Title"] = "Crear Tipo de Tratamiento";
+}
+
+<h2>Crear Tipo de Tratamiento</h2>
+
+<form asp-action="CrearTipoTratamiento" method="post">
+    <div class="form-group">
+        <label asp-for="Nombre" class="control-label"></label>
+        <input asp-for="Nombre" class="form-control" />
+        <span asp-validation-for="Nombre" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mt-3">
+        <label asp-for="Costo" class="control-label"></label>
+        <input asp-for="Costo" class="form-control" />
+        <span asp-validation-for="Costo" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mt-3">
+        <label asp-for="Cantidad" class="control-label"></label>
+        <input asp-for="Cantidad" class="form-control" />
+        <span asp-validation-for="Cantidad" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mt-3">
+        <label asp-for="Unidad" class="control-label"></label>
+        <input asp-for="Unidad" class="form-control" />
+        <span asp-validation-for="Unidad" class="text-danger"></span>
+    </div>
+    <div class="form-group mt-3">
+        <label asp-for="RetiroLecheDias" class="control-label"></label>
+        <input asp-for="RetiroLecheDias" class="form-control" />
+        <span asp-validation-for="RetiroLecheDias" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mt-3">
+        <label asp-for="IdTipoEnfermedad" class="control-label"></label>
+        <select asp-for="IdTipoEnfermedad"
+                asp-items="Model.Enfermedades"
+                class="form-control">
+            <option value="">-- Seleccione tipo de enfermedad --</option>
+        </select>
+        <span asp-validation-for="IdTipoEnfermedad" class="text-danger"></span>
+    </div>
+
+    <br />
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

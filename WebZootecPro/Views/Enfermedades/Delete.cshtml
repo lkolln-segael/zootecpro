@@ -1,0 +1,35 @@
+@model WebZootecPro.ViewModels.Enfermedades.CrearEnfermedadViewModel
+
+@{
+    ViewData["Title"] = "Eliminar Enfermedad";
+}
+
+<h2 class="text-danger">Eliminar Enfermedad</h2>
+
+<div class="alert alert-warning">
+    <strong>⚠️ Atención:</strong> ¿Está seguro de que desea eliminar esta enfermedad?
+</div>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" name="id" value="@ViewBag.Id" />
+
+    <dl class="row">
+        <dt class="col-sm-4">Fecha Diagnóstico</dt>
+        <dd class="col-sm-8">@Model.FechaDiagnostico.ToString("dd/MM/yyyy")</dd>
+
+        <dt class="col-sm-4">Fecha Recuperación</dt>
+        <dd class="col-sm-8">@Model.FechaRecuperacion?.ToString("dd/MM/yyyy")</dd>
+
+        <dt class="col-sm-4">Animal (ID)</dt>
+        <dd class="col-sm-8">@Model.IdAnimal</dd>
+
+        <dt class="col-sm-4">Veterinario (ID)</dt>
+        <dd class="col-sm-8">@Model.IdVeterinario</dd>
+
+        <dt class="col-sm-4">Tipo Enfermedad (ID)</dt>
+        <dd class="col-sm-8">@Model.IdTipoEnfermedad</dd>
+    </dl>
+
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>

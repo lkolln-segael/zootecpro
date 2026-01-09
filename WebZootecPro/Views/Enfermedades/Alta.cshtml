@@ -1,0 +1,23 @@
+﻿@model WebZootecPro.ViewModels.Enfermedades.AltaEnfermeriaViewModel
+@{
+    ViewData["Title"] = "Dar Alta (Enfermería)";
+}
+
+<h2>Dar Alta (Enfermería)</h2>
+
+<form asp-action="Alta" method="post">
+    <input type="hidden" asp-for="IdEnfermedad" />
+
+    <div class="mb-3">
+        <label asp-for="FechaAlta" class="form-label"></label>
+        <input asp-for="FechaAlta" class="form-control" type="date" />
+        <span asp-validation-for="FechaAlta" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Confirmar Alta</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,484 @@
+/* --------- PALETA / BÁSICO --------- */
+:root {
+  --color-primary: #16a34a;
+  /* verde principal */
+  --color-primary-dark: #15803d;
+  --color-primary-soft: #bbf7d0;
+  --color-bg: #020617;
+  --color-bg-soft: #0b1120;
+  --color-bg-elevated: #020617;
+  --color-border-soft: rgba(148, 163, 184, 0.2);
+  --color-text: #e5e7eb;
+  --color-muted: #9ca3af;
+}
+
+/* --------- BODY / LAYOUT --------- */
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* fondo más neutro, el verde solo como toque suave */
+  background: radial-gradient(circle at top left, rgba(22, 163, 74, 0.12) 0, transparent 45%), radial-gradient(circle at bottom right, rgba(22, 163, 74, 0.10) 0, transparent 50%), linear-gradient(135deg, #020617 0%, #020617 40%, #0b1120 100%);
+  color: var(--color-text);
+  min-height: 100vh;
+}
+
+.main-content {
+  min-height: calc(100vh - 64px);
+}
+
+/* --------- NAVBAR --------- */
+.navbar-main {
+  background: linear-gradient(90deg, #064e3b, #022c22);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+}
+
+.navbar-main .navbar-brand {
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.navbar-main .nav-link {
+  color: rgba(249, 250, 251, 0.9);
+  font-size: 0.93rem;
+  padding-inline: 0.9rem;
+}
+
+.navbar-main .nav-link:hover,
+.navbar-main .nav-link.active,
+.navbar-main .navbar-nav .nav-link.show {
+  color: #ffffff;
+}
+
+.brand-logo {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: #064e3b;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+/* texto pequeño usuario en navbar */
+.nav-text-small {
+  font-size: 0.9rem;
+}
+
+/* --------- CARDS --------- */
+.card {
+  background: radial-gradient(circle at top, rgba(15, 23, 42, 0.98), #020617);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 1rem;
+  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.85), 0 0 0 1px rgba(15, 23, 42, 0.6);
+  color: var(--color-text);
+}
+
+.card-header {
+  border-bottom-color: var(--color-border-soft);
+  background: transparent;
+}
+
+/* --------- TABLAS --------- */
+/* --------- TABLAS (FIX STRIPED EN CELDAS) --------- */
+.table {
+  color: var(--color-text);
+  border-color: rgba(148, 163, 184, 0.25);
+}
+
+/* Fondo base: aplica a TD/TH (no solo TR) */
+.table> :not(caption)>*>* {
+  background-color: rgba(15, 23, 42, 0.90) !important;
+  color: var(--color-text) !important;
+}
+
+/* Stripe suave: también en TD/TH */
+.table.table-striped>tbody>tr:nth-of-type(odd)>* {
+  background-color: rgba(15, 23, 42, 0.87) !important;
+}
+
+/* Hover */
+.table.table-hover>tbody>tr:hover>* {
+  background-color: rgba(30, 64, 175, 0.25) !important;
+}
+
+/* Opcional: líneas */
+.table> :not(caption)>*>* {
+  border-bottom-color: rgba(148, 163, 184, 0.25) !important;
+}
+
+
+
+/* --------- FORM CONTROLS --------- */
+.form-control,
+.form-select {
+  background-color: rgba(15, 23, 42, 0.96);
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border-soft);
+  color: var(--color-text);
+}
+
+.form-control::placeholder {
+  color: var(--color-muted);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.15rem rgba(34, 197, 94, 0.35);
+  background-color: rgba(15, 23, 42, 0.98);
+  color: var(--color-text);
+}
+
+/* --------- BOTONES --------- */
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  border: none;
+  border-radius: 999px;
+  padding-block: 0.6rem;
+  padding-inline: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background: linear-gradient(135deg, var(--color-primary-dark), #15803d);
+}
+
+.btn-outline-light {
+  border-radius: 999px;
+}
+
+/* botones pequeños en tablas */
+.table .btn.btn-sm {
+  border-radius: 999px;
+  font-size: 0.75rem;
+}
+
+/* --------- AUTH (LOGIN/REGISTER) --------- */
+body.auth-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 0;
+  background: radial-gradient(circle at top, rgba(34, 197, 94, 0.18) 0, transparent 60%), linear-gradient(135deg, #020617 0%, #020617 40%, #0b1120 100%);
+}
+
+.auth-wrapper {
+  width: 100%;
+  max-width: 420px;
+  margin-inline: auto;
+}
+
+.auth-card {
+  border-radius: 1.5rem;
+  background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.17), rgba(15, 23, 42, 0.98));
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.auth-logo-circle {
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.18);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--color-primary-soft);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.auth-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.auth-subtitle {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+.auth-secondary-link {
+  font-size: 0.9rem;
+}
+
+/* --------- RESPONSIVE --------- */
+@media (max-width: 575.98px) {
+  .navbar-main .navbar-brand span:last-child {
+    font-size: 0.95rem;
+  }
+
+  .main-content .container-fluid {
+    padding-inline: 1rem;
+  }
+
+  .auth-wrapper {
+    max-width: 100%;
+    padding-inline: 1rem;
+  }
+}
+
+/* ======= SHELL + SIDEBAR ======= */
+#app-shell {
+  min-height: 100vh;
+}
+
+/* panel lateral */
+.sidebar {
+  width: 240px;
+  background: var(--color-bg-soft);
+  border-right: 1px solid var(--color-border-soft);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.85);
+  position: relative;
+  z-index: 1030;
+}
+
+.sidebar-header {
+  padding-top: 0.5rem;
+}
+
+.sidebar-menu .nav-link {
+  color: var(--color-muted);
+  font-size: 0.92rem;
+  border-radius: 0.75rem;
+  padding: 0.45rem 0.75rem;
+  margin-inline: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.sidebar-menu .nav-link i {
+  font-size: 1.05rem;
+}
+
+.sidebar-menu .nav-link:hover,
+.sidebar-menu .nav-link.active {
+  color: #fff;
+  background: linear-gradient(90deg, var(--color-primary), #0ea5e9);
+}
+
+.sidebar-section-title {
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
+}
+
+.sidebar-user {
+  font-size: 0.85rem;
+}
+
+/* main junto al sidebar */
+.app-main {
+  background: transparent;
+}
+
+/* ======= RESPONSIVE: sidebar como offcanvas ======= */
+#sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 991.98px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease-in-out;
+  }
+
+  body.sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+
+  #sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 1029;
+  }
+
+  body.sidebar-open #sidebar-backdrop {
+    display: block;
+  }
+}
+
+
+.navbar-main .navbar-brand {
+  white-space: nowrap;
+  /* evita salto de línea */
+}
+
+/* Campo bloqueado (Empresa) con look dark */
+.empresa-locked {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  opacity: 1 !important;
+}
+
+.empresa-locked:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.validation-summary-valid.alert {
+  display: none;
+}
+
+/* ===== Select2 Dark Theme (Establo Pro) ===== */
+.select2-container {
+  width: 100% !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection {
+  background: rgba(255, 255, 255, .03) !important;
+  border: 1px solid rgba(255, 255, 255, .12) !important;
+  color: rgba(255, 255, 255, .92) !important;
+  border-radius: 14px !important;
+  min-height: 44px !important;
+  box-shadow: none !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection__rendered {
+  color: rgba(255, 255, 255, .92) !important;
+  line-height: 32px !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection__placeholder {
+  color: rgba(255, 255, 255, .55) !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection__arrow {
+  height: 42px !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection__clear {
+  color: rgba(255, 255, 255, .75) !important;
+}
+
+/* Dropdown */
+.select2-container--bootstrap-5 .select2-dropdown {
+  background: rgba(10, 16, 28, .98) !important;
+  border: 1px solid rgba(255, 255, 255, .12) !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+}
+
+/* Search input */
+.select2-container--bootstrap-5 .select2-search__field {
+  background: rgba(255, 255, 255, .04) !important;
+  border: 1px solid rgba(255, 255, 255, .12) !important;
+  color: rgba(255, 255, 255, .92) !important;
+  border-radius: 12px !important;
+  outline: none !important;
+}
+
+/* Options */
+.select2-container--bootstrap-5 .select2-results__option {
+  color: rgba(255, 255, 255, .90) !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option--highlighted {
+  background: rgba(255, 255, 255, .10) !important;
+  color: rgba(255, 255, 255, .95) !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option[aria-selected="true"] {
+  background: rgba(0, 170, 90, .20) !important;
+  /* verde suave */
+}
+
+/* Focus ring (verde como tu diseño) */
+.select2-container--bootstrap-5.select2-container--focus .select2-selection {
+  border-color: rgba(0, 200, 100, .70) !important;
+  box-shadow: 0 0 0 3px rgba(0, 200, 100, .15) !important;
+}
+
+/* ==== COLAPSAR SIDEBAR EN ESCRITORIO (ICONS RAIL) ==== */
+@media (min-width: 992px) {
+
+  /* ancho de la barra cuando está colapsada */
+  body.sidebar-collapsed .sidebar {
+    width: 72px;
+  }
+
+  /* centramos solo el círculo EP y ocultamos texto del header */
+  body.sidebar-collapsed .sidebar-header {
+    justify-content: center;
+  }
+
+  body.sidebar-collapsed .sidebar-header .d-flex.flex-column,
+  body.sidebar-collapsed .sidebar-header span,
+  body.sidebar-collapsed .sidebar-header small {
+    display: none !important;
+  }
+
+  /* MENÚ PRINCIPAL: solo ícono centrado, sin márgenes raros */
+  body.sidebar-collapsed .sidebar-menu>.nav-item>a {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+    margin-inline: 0;
+  }
+
+  body.sidebar-collapsed .sidebar-menu>.nav-item>a i {
+    margin-right: 0;
+  }
+
+  /* ocultar texto solo en el rail principal */
+  body.sidebar-collapsed .sidebar-menu>.nav-item>a span {
+    display: none;
+  }
+
+  /* ocultar la flecha "›" cuando está colapsado */
+  body.sidebar-collapsed .sidebar-menu>.nav-item.has-children>a::after {
+    display: none;
+  }
+
+  /* ocultar títulos de sección (ADMINISTRACIÓN, etc.) */
+  body.sidebar-collapsed .sidebar-section-title {
+    display: none;
+  }
+
+  /* zona de usuario: esconder info y botón (si quieres lo puedes mostrar luego) */
+  body.sidebar-collapsed .sidebar-user .flex-grow-1,
+  body.sidebar-collapsed .sidebar-user form {
+    display: none;
+  }
+}
+
+/* SUBMENÚS: siempre muestran texto (con o sin colapsado) */
+.sidebar-submenu .nav-link span {
+  display: inline-block;
+}
+
+body.sidebar-collapsed .sidebar-submenu .nav-link span {
+  display: inline-block !important;
+}
+
+/* icono sin margen a la derecha */
+body.sidebar-collapsed .sidebar-menu>.nav-item>a i {
+  margin-right: 0;
+}
+
+/* ocultar texto SOLO en menú principal cuando está colapsado */
+body.sidebar-collapsed .sidebar-menu>.nav-item>a span {
+  display: none;
+}
+
+/* ocultar la flecha "›" en modo colapsado, para que no desalineé */
+body.sidebar-collapsed .sidebar-menu>.nav-item.has-children>a::after {
+  display: none;
+}
+
+/* PERO en los submenús, el texto SIEMPRE se ve */
+body.sidebar-collapsed .sidebar-submenu .nav-link span {
+  display: inline-block !important;
+}

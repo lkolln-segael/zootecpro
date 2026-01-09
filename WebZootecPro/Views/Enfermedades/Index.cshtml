@@ -1,0 +1,58 @@
+@model IEnumerable<WebZootecPro.ViewModels.Enfermedades.CrearEnfermedadViewModel>
+
+@{
+    ViewData["Title"] = "Enfermedades";
+}
+
+<h2>Listado de Enfermedades</h2>
+
+<a asp-action="Create" class="btn btn-success mb-3">+ Registrar Enfermedad</a>
+
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Animal</th>
+            <th>Tipo</th>
+            <th>Veterinario</th>
+            <th>Diagnóstico</th>
+            <th>Alta</th>
+            <th>Estado</th>
+            <th>Días en enfermería</th>
+            <th style="width: 220px;">Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@ViewBag.IdAnimal[item.IdAnimal]</td>
+                <td>@ViewBag.IdTipoEnfermedad[item.IdTipoEnfermedad]</td>
+                <td>@ViewBag.IdVeterinario[item.IdVeterinario]</td>
+                <td>@item.FechaDiagnostico.ToString("dd/MM/yyyy")</td>
+                <td>@(item.FechaRecuperacion?.ToString("dd/MM/yyyy") ?? "-")</td>
+                <td>
+                    @if (item.EnEnfermeria)
+                    {
+                        <span class="text-danger fw-bold">EN ENFERMERÍA</span>
+                    }
+                    else
+                    {
+                        <span class="text-success fw-bold">ALTA</span>
+                    }
+                </td>
+                <td>@item.DiasEnEnfermeria</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.IdEnfermedad" class="btn btn-warning btn-sm">Editar</a>
+                    <a asp-action="Delete" asp-route-id="@item.IdEnfermedad" class="btn btn-danger btn-sm">Eliminar</a>
+
+                    @if (item.EnEnfermeria)
+                    {
+                        <a asp-action="Alta" asp-route-id="@item.IdEnfermedad" class="btn btn-primary btn-sm ms-1">
+                            Dar Alta
+                        </a>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

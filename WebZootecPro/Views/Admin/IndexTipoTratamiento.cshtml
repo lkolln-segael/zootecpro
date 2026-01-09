@@ -1,0 +1,51 @@
+@model IEnumerable<WebZootecPro.ViewModels.Admin.CrearTipoTratamientoViewModel>
+
+@{
+    ViewData["Title"] = "Tipos de Tratamiento";
+}
+
+<h2>Tipos de Tratamiento</h2>
+
+<a asp-action="CrearTipoTratamiento" class="btn btn-success mb-3">+ Nuevo Tratamiento</a>
+
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Nombre</th>
+            <th>Costo</th>
+            <th>Cantidad</th>
+            <th>Unidad</th>
+            <th>Tipo Enfermedad</th>
+            <th style="width: 150px;">Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+    @if (Model.Any())
+    {
+        foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Nombre</td>
+                <td>@item.Costo.ToString("C")</td>
+                <td>@item.Cantidad</td>
+                <td>@item.Unidad</td>
+                <td>@ViewBag.IdTipoEnfermedad[@item.IdTipoEnfermedad]</td>
+                <td>
+                    <a asp-action="EditTipoTratamiento"
+                       asp-route-id="@item.IdTipoTratamiento"
+                       class="btn btn-warning btn-sm">Editar</a>
+                    <a asp-action="DeleteTipoTratamiento"
+                       asp-route-id="@item.IdTipoTratamiento"
+                       class="btn btn-danger btn-sm">Eliminar</a>
+                </td>
+            </tr>
+        }
+    }
+    else
+    {
+        <tr>
+            <td colspan="6" class="text-center">No hay tratamientos registrados</td>
+        </tr>
+    }
+    </tbody>
+</table>

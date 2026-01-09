@@ -1,0 +1,24 @@
+@model WebZootecPro.ViewModels.Admin.CrearRolViewModel
+
+@{
+    ViewData["Title"] = "Crear Rol";
+}
+<h2>Crear Rol</h2>
+
+<form asp-action="CrearRoles" method="post">
+    <div class="form-group">
+        <label asp-for="Nombre" class="control-label"></label>
+        <input asp-for="Nombre" class="form-control" />
+        <span asp-validation-for="Nombre" class="text-danger"></span>
+    </div>
+
+    <br />
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}
+

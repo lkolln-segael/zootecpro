@@ -1,0 +1,163 @@
+﻿@model WebZootecPro.ViewModels.Costos.MovimientoCostoVm
+@{
+ViewData["Title"] = Model.IdMovimientoCosto.HasValue ? "Editar costo" : "Nuevo costo";
+}
+
+<h3 class="mb-3">@ViewData["Title"]</h3>
+
+<form method="post" class="card card-body">
+  @Html.AntiForgeryToken()
+
+  <div class="row g-3">
+    <div class="col-md-3">
+      <label class="form-label">Fecha</label>
+      <input asp-for="Fecha" type="date" class="form-control" />
+      <span asp-validation-for="Fecha" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Centro de costo</label>
+      <select asp-for="IdCentroCosto" class="form-select" asp-items="Model.CentrosCosto"></select>
+      <span asp-validation-for="IdCentroCosto" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Tipo de costo</label>
+      <select asp-for="IdTipoCosto" class="form-select" asp-items="Model.TiposCosto"></select>
+      <span asp-validation-for="IdTipoCosto" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Monto</label>
+      <input asp-for="MontoTotal" class="form-control" />
+      <span asp-validation-for="MontoTotal" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Descripción</label>
+      <input asp-for="Descripcion" class="form-control" />
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">Establo</label>
+      <select asp-for="IdEstablo" class="form-select" asp-items="Model.Establos">
+        <option value="">(Opcional)</option>
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">Hato/Corral</label>
+      <select asp-for="IdCorral" class="form-select" asp-items="Model.Hatos">
+        <option value="">(Opcional)</option>
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">Animal</label>
+      <select asp-for="IdAnimal" class="form-select" asp-items="Model.Animales">
+        <option value="">(Opcional)</option>
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">Producción (Id)</label>
+      <div class="row">
+        <div class="col-6">
+          <input id="idRegistroProduccionLeche" asp-for="IdRegistroProduccionLeche" class="form-control text-dark" readonly />
+        </div>
+        <div class="col-6">
+          <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#modalProduccion">
+            Seleccionar produccion
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 d-flex gap-2">
+      <button class="btn btn-primary" type="submit">Guardar</button>
+      <a class="btn btn-outline-secondary" asp-action="Index">Volver</a>
+    </div>
+  </div>
+</form>
+<div class="modal fade" id="modalProduccion" tabindex="-1" aria-labelledby="modalProduccionLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-dark" id="modalProduccionLabel">Seleccionar Registro de Producción</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Turno</th>
+                <th>Animal</th>
+                <th>Total (L)</th>
+                <th>Industria</th>
+                <th>Terneros</th>
+                <th>Descartada</th>
+                <th>Venta directa</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @foreach (var item in ViewBag.Producciones)
+              {
+              <tr>
+                @{
+                TimeSpan? Diff(DateTime? a, DateTime? b)
+                {
+                if (!a.HasValue || !b.HasValue) return null;
+                if (b.Value < a.Value) return null; return b.Value - a.Value; } string Min(TimeSpan? ts)=> ts.HasValue ?
+                  $"{(int)ts.Value.TotalMinutes} min" : "—";
+
+                  var tPrep = Diff(item.fechaPreparacion, item.fechaLimpieza);
+                  var tLimp = Diff(item.fechaLimpieza, item.fechaDespunte);
+                  var tDesp = Diff(item.fechaDespunte, item.fechaColocacionPezoneras);
+                  var tColo = Diff(item.fechaColocacionPezoneras, item.fechaOrdeno);
+                  var tOrdeno = Diff(item.fechaOrdeno, item.fechaRetirada);
+                  var tTotal = Diff(item.fechaPreparacion, item.fechaRetirada);
+
+                  var detalle = $"Prep:{Min(tPrep)}, Limp:{Min(tLimp)}, Desp:{Min(tDesp)}, Coloc:{Min(tColo)},Ordeño:{Min(tOrdeno)}";
+                  }
+
+                  <td>@item.fechaOrdeno?.ToString("dd/MM/yyyy")</td>
+                  <td>@item.turno</td>
+                  <td>@item.idAnimalNavigation?.codigo</td>
+                  <td>@item.pesoOrdeno</td>
+                  <td>@item.cantidadIndustria</td>
+                  <td>@item.cantidadTerneros</td>
+                  <td>@item.cantidadDescartada</td>
+                  <td>@item.cantidadVentaDirecta</td>
+                  <td>
+                    <button id-produccion="@item.Id" class="btn btn-primary seleccionar-producciones" data-bs-dismiss="modal">
+                      Seleccionar
+                    </button>
+                  </td>
+            </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+<script>
+  (function(){
+    const seleccionarButtons = document.querySelectorAll(".seleccionar-producciones")
+    const registroReproduccionLeche = document.querySelector("#idRegistroProduccionLeche")
+    seleccionarButtons.forEach(s => {
+      s.addEventListener("click",(ev) => {
+        const idProduccion = parseInt(ev.target.getAttribute('id-produccion'))
+        registroReproduccionLeche.value = idProduccion
+      })
+    })
+  })();
+</script>
+}

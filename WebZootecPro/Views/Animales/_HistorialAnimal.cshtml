@@ -1,0 +1,35 @@
+﻿@model WebZootecPro.ViewModels.Animales.HistorialAnimalViewModel
+
+@if (Model.Movimientos == null || !Model.Movimientos.Any())
+{
+    <div class="alert alert-secondary mb-0">
+        Este animal no tiene movimientos registrados todavía.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="width:170px;">Fecha</th>
+                    <th style="width:140px;">Módulo</th>
+                    <th style="width:200px;">Evento</th>
+                    <th>Detalle</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var m in Model.Movimientos)
+                {
+                    var fechaTxt = m.Fecha.HasValue ? m.Fecha.Value.ToString("dd/MM/yyyy HH:mm") : "—";
+                    <tr>
+                        <td>@fechaTxt</td>
+                        <td><span class="badge text-bg-secondary">@m.Fuente</span></td>
+                        <td>@m.Evento</td>
+                        <td>@m.Detalle</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

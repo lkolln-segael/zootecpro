@@ -1,0 +1,121 @@
+﻿@model WebZootecPro.ViewModels.Reportes.ElegiblesInseminacionViewModel
+@{
+    ViewData["Title"] = "Elegibles a inseminar";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h3 class="mb-0"><i class="bi bi-list-check me-2"></i>Elegibles a inseminar</h3>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" asp-controller="Reportes" asp-action="ReproduccionKpi">
+            <i class="bi bi-graph-up me-1"></i>KPI
+        </a>
+        <a class="btn btn-outline-primary" asp-controller="Reportes" asp-action="RevisionPrenez">
+            <i class="bi bi-calendar2-check me-1"></i>Revisión
+        </a>
+        <a class="btn btn-primary" asp-controller="Eventos" asp-action="Registrar">
+            <i class="bi bi-activity me-1"></i>Registrar eventos
+        </a>
+    </div>
+</div>
+
+<form method="get" class="card card-body mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Fecha corte</label>
+            <input class="form-control" type="date" name="fechaCorte" value="@Model.FechaCorte.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">PVE (días)</label>
+            <input class="form-control" type="number" name="pveDias" value="@Model.PveDias" min="0" max="365" />
+        </div>
+        <div class="col-md-5">
+            <label class="form-label">Hato</label>
+            <select class="form-select" name="idHato" asp-items="ViewBag.IdHato">
+                <option value="">(Todos)</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100" type="submit">
+                <i class="bi bi-funnel me-1"></i>Filtrar
+            </button>
+        </div>
+    </div>
+</form>
+
+@{
+    var total = Model.Items.Count;
+    var elegVac = Model.Items.Count(x => x.Estado.Contains("VACÍA"));
+    var eleg = Model.Items.Count(x => x.Estado.StartsWith("ELEGIBLE"));
+    var pend = Model.Items.Count(x => x.Estado.Contains("PENDIENTE"));
+    var noPve = Model.Items.Count(x => x.Estado.Contains("PVE"));
+    var pre = Model.Items.Count(x => x.Estado.Contains("PREÑADA"));
+    var seca = Model.Items.Count(x => x.Estado.Contains("SECA"));
+}
+
+<div class="row g-2 mb-3">
+    <div class="col-md-2"><div class="card card-body"><div class="text-muted small">Total</div><div class="fw-semibold fs-4">@total</div></div></div>
+    <div class="col-md-2"><div class="card card-body"><div class="text-muted small">Elegibles</div><div class="fw-semibold fs-4">@eleg</div></div></div>
+    <div class="col-md-2"><div class="card card-body"><div class="text-muted small">Vacías</div><div class="fw-semibold fs-4">@elegVac</div></div></div>
+    <div class="col-md-2"><div class="card card-body"><div class="text-muted small">Pend. diagnóstico</div><div class="fw-semibold fs-4">@pend</div></div></div>
+    <div class="col-md-2"><div class="card card-body"><div class="text-muted small">No PVE</div><div class="fw-semibold fs-4">@noPve</div></div></div>
+    <div class="col-md-2"><div class="card card-body"><div class="text-muted small">Preñadas/Seca</div><div class="fw-semibold fs-4">@(pre + seca)</div></div></div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Hato</th>
+                <th>Estado Prod.</th>
+                <th>Últ. Parto</th>
+                <th>Últ. Insem</th>
+                <th>Últ. Confirmación</th>
+                <th>Ref</th>
+                <th>Min Insem</th>
+                <th>Días</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.Items)
+            {
+                string badge =
+                r.Estado.Contains("PREÑADA") ? "bg-warning text-dark" :
+                r.Estado.Contains("SECA") ? "bg-secondary" :
+                r.Estado.Contains("NO CUMPLE") ? "bg-danger" :
+                r.Estado.Contains("PENDIENTE") ? "bg-info text-dark" :
+                r.Estado.StartsWith("ELEGIBLE") ? "bg-success" : "bg-light text-dark";
+
+                <tr>
+                    <td class="fw-semibold">@r.Codigo</td>
+                    <td>@r.Nombre</td>
+                    <td>@r.Hato</td>
+                    <td>@r.EstadoProductivo</td>
+                    <td>@(r.UltimoParto?.ToString("dd/MM/yyyy") ?? "-")</td>
+                    <td>@(r.UltimaInseminacion?.ToString("dd/MM/yyyy") ?? "-")</td>
+                    <td>
+                        @if (!string.IsNullOrWhiteSpace(r.UltimaConfirmacionTipo))
+                        {
+                            <span class="badge bg-dark">@r.UltimaConfirmacionTipo</span>
+                            @if (!string.IsNullOrWhiteSpace(r.UltimaConfirmacionMetodo))
+                            {
+                                <span class="badge bg-light text-dark ms-1">@r.UltimaConfirmacionMetodo</span>
+                            }
+                            <span class="text-muted ms-1">@r.UltimaConfirmacionFecha?.ToString("dd/MM/yyyy")</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">-</span>
+                        }
+                    </td>
+                    <td>@(r.FechaReferencia?.ToString("dd/MM/yyyy") ?? "-")</td>
+                    <td>@(r.FechaMinimaInseminar?.ToString("dd/MM/yyyy") ?? "-")</td>
+                    <td>@(r.DiasDesdeReferencia?.ToString() ?? "-")</td>
+                    <td><span class="badge @badge">@r.Estado</span></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,93 @@
+﻿@model WebZootecPro.ViewModels.AlimentacionRtm.ProgramacionVm
+@{
+    ViewData["Title"] = "Programación por corral";
+}
+
+<h3 class="mb-3">Programación (Hato/Corral)</h3>
+
+<form method="get" class="card card-body mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-6">
+            <label class="form-label">Hato/Corral</label>
+            <select class="form-select" name="hatoId" asp-items="ViewBag.HatoId">
+                <option value="">(Todos)</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100" type="submit">Filtrar</button>
+        </div>
+        <div class="col-md-4 text-end">
+            <a class="btn btn-outline-primary" asp-action="Formulas">Fórmulas</a>
+            <a class="btn btn-outline-success" asp-action="Entregas">Entregas</a>
+            <a class="btn btn-outline-success" asp-action="Consumo">Reporte consumo</a>
+        </div>
+    </div>
+</form>
+
+<div class="card card-body mb-3">
+    <h5 class="mb-2">Nueva ración programada</h5>
+
+    <form method="post" asp-action="ProgramacionCrear" class="row g-2 align-items-end">
+        @Html.AntiForgeryToken()
+
+        <div class="col-md-4">
+            <label class="form-label">Hato/Corral</label>
+            <select class="form-select" name="hatoId" asp-items="ViewBag.HatoId"></select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Fórmula</label>
+            <select class="form-select" name="formulaId" asp-items="ViewBag.FormulaId"></select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Hora</label>
+            <input class="form-control" type="time" name="hora" value="06:00" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">kg/vaca</label>
+            <input class="form-control" type="number" step="0.01" name="kgRtmPorVaca" />
+        </div>
+
+        <div class="col-md-12 mt-2">
+            <button class="btn btn-success" type="submit">Agregar programación</button>
+        </div>
+    </form>
+</div>
+
+<table class="table table-sm table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Hato</th>
+            <th>Fórmula</th>
+            <th>Hora</th>
+            <th>kg/vaca</th>
+            <th>Activo</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var r in Model.items)
+        {
+            <tr>
+                <td>@r.hato</td>
+                <td>@r.formula</td>
+                <td>@r.hora.ToString(@"hh\:mm")</td>
+                <td>@r.kgRtmPorVaca.ToString("0.00")</td>
+                <td>@(r.activo ? "SI" : "NO")</td>
+                <td class="text-end">
+                    <form method="post" asp-action="ProgramacionToggle" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@r.Id" />
+                        <input type="hidden" name="hatoId" value="@Model.hatoId" />
+                        <button class="btn btn-sm btn-outline-secondary" type="submit">Toggle</button>
+                    </form>
+                    <form method="post" asp-action="ProgramacionEliminar" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@r.Id" />
+                        <input type="hidden" name="hatoId" value="@Model.hatoId" />
+                        <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

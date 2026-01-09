@@ -1,0 +1,204 @@
+﻿@model WebZootecPro.Data.Animal
+@{
+    ViewData["Title"] = "Nuevo animal";
+    var tienePadre = Model.idPadre.HasValue;
+    var tieneMadre = Model.idMadre.HasValue;
+}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Registrar animal</h5>
+    </div>
+
+    <div class="card-body">
+        <form asp-action="Create" method="post" novalidate>
+            <div asp-validation-summary="All" class="text-danger small mb-3"></div>
+
+            <div class="row g-3">
+
+                <!-- 1ra fila -->
+                <div class="col-12 col-lg-6">
+                    <label asp-for="nombre" class="form-label">Nombre</label>
+                    <input asp-for="nombre" class="form-control" />
+                    <span asp-validation-for="nombre" class="text-danger small"></span>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label asp-for="sexo" class="form-label">Sexo</label>
+                    <select asp-for="sexo" class="form-select">
+                        <option value="">-- Seleccione --</option>
+                        <option value="HEMBRA">HEMBRA</option>
+                        <option value="MACHO">MACHO</option>
+                    </select>
+                    <span asp-validation-for="sexo" class="text-danger small"></span>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label asp-for="codigo" class="form-label">Código / RP</label>
+                    <input asp-for="codigo" class="form-control" />
+                    <span asp-validation-for="codigo" class="text-danger small"></span>
+                </div>
+
+                <!-- 2da fila (4 columnas) -->
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label asp-for="IdentificadorElectronico" class="form-label">Identificador electrónico</label>
+                    <input asp-for="IdentificadorElectronico" class="form-control" />
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label asp-for="OtroIdentificador" class="form-label">Otro identificador</label>
+                    <input asp-for="OtroIdentificador" class="form-control" />
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label asp-for="color" class="form-label">Color</label>
+                    <input asp-for="color" class="form-control" />
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label asp-for="idHato" class="form-label">Hato</label>
+                    <select asp-for="idHato" asp-items="ViewBag.IdHato" class="form-select">
+                        <option value="">-- Seleccione --</option>
+                    </select>
+                    <span asp-validation-for="idHato" class="text-danger small"></span>
+                </div>
+
+                <!-- 3ra fila (4 columnas) -->
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label asp-for="fechaNacimiento" class="form-label">Fecha de nacimiento</label>
+                    <input asp-for="fechaNacimiento" type="date" class="form-control" id="fechaNacimiento" />
+                    <small class="text-muted d-block mt-1" id="edadInfo"></small>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-3 d-flex align-items-end">
+                    <div class="form-check form-switch mb-1">
+                        <input class="form-check-input" type="checkbox" asp-for="nacimientoEstimado" />
+                        <label class="form-check-label" asp-for="nacimientoEstimado">Nacimiento estimado</label>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label asp-for="idRaza" class="form-label">Raza</label>
+                    <select asp-for="idRaza" asp-items="ViewBag.IdRaza" class="form-select">
+                        <option value="">-- Seleccione --</option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label asp-for="procedenciaId" class="form-label">Procedencia</label>
+                    <select asp-for="procedenciaId" asp-items="ViewBag.ProcedenciaId" class="form-select">
+                        <option value="">-- Seleccione --</option>
+                    </select>
+                </div>
+
+                <!-- 4ta fila (4 columnas) -->
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label asp-for="propositoId" class="form-label">Propósito</label>
+                    <select asp-for="propositoId" asp-items="ViewBag.PropositoId" class="form-select">
+                        <option value="">-- Seleccione --</option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label asp-for="estadoId" class="form-label">Estado (inventario)</label>
+                    <select asp-for="estadoId" asp-items="ViewBag.EstadoId" class="form-select">
+                        <option value="">-- Seleccione --</option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label asp-for="estadoProductivoId" class="form-label">Estado productivo</label>
+                    <select asp-for="estadoProductivoId" asp-items="ViewBag.EstadoProductivoId" class="form-select">
+                        <option value="">-- Seleccione --</option>
+                    </select>
+                </div>
+
+                <!-- (opcional) hueco para que no se “descuadre” en 4 columnas -->
+                <div class="col-12 col-md-6 col-lg-3"></div>
+
+                <!-- Padres / Madres en 2 columnas -->
+                <div class="col-12 col-lg-6">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="chkPadre" @(tienePadre ? "checked" : "") />
+                        <label class="form-check-label" for="chkPadre">Asignar padre</label>
+                    </div>
+
+                    <div id="padreWrap" style="display:@(tienePadre ? "block" : "none");" class="mt-2">
+                        <label asp-for="idPadre" class="form-label">Padre</label>
+                        <select asp-for="idPadre" asp-items="ViewBag.IdPadre" class="form-select">
+                            <option value="">-- Seleccione --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-6">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="chkMadre" @(tieneMadre ? "checked" : "") />
+                        <label class="form-check-label" for="chkMadre">Asignar madre</label>
+                    </div>
+
+                    <div id="madreWrap" style="display:@(tieneMadre ? "block" : "none");" class="mt-2">
+                        <label asp-for="idMadre" class="form-label">Madre</label>
+                        <select asp-for="idMadre" asp-items="ViewBag.IdMadre" class="form-select">
+                            <option value="">-- Seleccione --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Observaciones full width -->
+                <div class="col-12">
+                    <label asp-for="observaciones" class="form-label">Observaciones</label>
+                    <textarea asp-for="observaciones" class="form-control" rows="2"></textarea>
+                </div>
+
+            </div>
+
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <a asp-action="Index" class="btn btn-outline-secondary ms-2">Volver</a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const chkPadre = document.getElementById('chkPadre');
+            const chkMadre = document.getElementById('chkMadre');
+            const padreWrap = document.getElementById('padreWrap');
+            const madreWrap = document.getElementById('madreWrap');
+
+            const fecha = document.getElementById('fechaNacimiento');
+            const edadInfo = document.getElementById('edadInfo');
+
+            function toggle(wrap, chk) {
+                wrap.style.display = chk.checked ? 'block' : 'none';
+                if (!chk.checked) {
+                    const sel = wrap.querySelector('select');
+                    if (sel) sel.value = '';
+                }
+            }
+
+            chkPadre.addEventListener('change', () => toggle(padreWrap, chkPadre));
+            chkMadre.addEventListener('change', () => toggle(madreWrap, chkMadre));
+
+            function calcEdad() {
+                if (!fecha.value) { edadInfo.textContent = ''; return; }
+                const nac = new Date(fecha.value + 'T00:00:00');
+                const hoy = new Date();
+                let meses = (hoy.getFullYear() - nac.getFullYear()) * 12 + (hoy.getMonth() - nac.getMonth());
+                if (hoy.getDate() < nac.getDate()) meses--;
+                if (meses < 0) meses = 0;
+                const anios = Math.floor(meses / 12);
+                const rem = meses % 12;
+                edadInfo.textContent = `Edad aprox: ${anios} año(s) ${rem} mes(es)`;
+            }
+
+            fecha.addEventListener('change', calcEdad);
+            calcEdad();
+        })();
+    </script>
+}

@@ -1,0 +1,55 @@
+﻿@model WebZootecPro.ViewModels.Medidores.LecturaMedidorVm
+@{
+    ViewData["Title"] = "Nueva lectura";
+}
+
+<h3 class="mb-3">Nueva lectura (Medidor)</h3>
+
+<form method="post" class="card card-body">
+    @Html.AntiForgeryToken()
+
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label">Código medidor</label>
+            <input asp-for="CodigoMedidor" class="form-control" />
+            <span asp-validation-for="CodigoMedidor" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Código animal (del equipo)</label>
+            <input asp-for="CodigoAnimal" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Fecha/Hora</label>
+            <input asp-for="FechaHoraLectura" type="datetime-local" class="form-control" />
+            <span asp-validation-for="FechaHoraLectura" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Kg leche</label>
+            <input asp-for="PesoLecheKg" class="form-control" />
+            <span asp-validation-for="PesoLecheKg" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-1">
+            <label class="form-label">Ordeño</label>
+            <input asp-for="NumeroOrdeno" class="form-control" />
+            <span asp-validation-for="NumeroOrdeno" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-12">
+            <label class="form-label">Observación</label>
+            <input asp-for="Observacion" class="form-control" />
+        </div>
+
+        <div class="col-12 d-flex gap-2">
+            <button class="btn btn-primary" type="submit">Guardar</button>
+            <a class="btn btn-outline-secondary" asp-action="Index">Volver</a>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

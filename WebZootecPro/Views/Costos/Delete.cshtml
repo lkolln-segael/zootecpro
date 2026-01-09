@@ -1,0 +1,24 @@
+﻿@model WebZootecPro.Data.MovimientoCosto
+@{
+    ViewData["Title"] = "Eliminar costo";
+}
+
+<h3 class="mb-3">Eliminar costo</h3>
+
+<div class="alert alert-warning">
+    ¿Seguro que deseas eliminar este movimiento?
+</div>
+
+<ul class="list-group mb-3">
+    <li class="list-group-item"><b>Fecha:</b> @Model.Fecha.ToString("yyyy-MM-dd")</li>
+    <li class="list-group-item"><b>Centro:</b> @Model.IdCentroCostoNavigation?.Nombre</li>
+    <li class="list-group-item"><b>Tipo:</b> @Model.IdTipoCostoNavigation?.Nombre</li>
+    <li class="list-group-item"><b>Monto:</b> @Model.MontoTotal.ToString("N2")</li>
+    <li class="list-group-item"><b>Descripción:</b> @Model.Descripcion</li>
+</ul>
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    <button class="btn btn-danger" type="submit">Eliminar</button>
+    <a class="btn btn-outline-secondary" asp-action="Index">Cancelar</a>
+</form>

@@ -1,0 +1,78 @@
+﻿@model WebZootecPro.ViewModels.Reportes.ProduccionDiariaVm
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Producción diaria";
+    var hatos = ViewBag.Hatos as List<SelectListItem> ?? new();
+}
+
+<h2>Producción diaria (por hato)</h2>
+
+<form method="get" class="card p-3 mb-3">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Hato</label>
+            <select name="hatoId" class="form-select">
+                <option value="">-- Todos --</option>
+                @foreach (var h in hatos)
+                {
+                    var selected = (Model.HatoId?.ToString() == h.Value) ? "selected" : "";
+                    <option value="@h.Value" selected="@selected">@h.Text</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Desde</label>
+            <input class="form-control" type="date" name="desde" value="@Model.Desde.ToString("yyyy-MM-dd")" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Hasta</label>
+            <input class="form-control" type="date" name="hasta" value="@Model.Hasta.ToString("yyyy-MM-dd")" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Turno</label>
+            <input class="form-control" name="turno" value="@Model.Turno" placeholder="MAÑANA" />
+        </div>
+
+        <div class="col-md-2">
+            <button class="btn btn-dark w-100">Filtrar</button>
+        </div>
+    </div>
+</form>
+
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Fecha</th>
+            <th>Hato</th>
+            <th>Turno</th>
+            <th class="text-end">Producido</th>
+            <th class="text-end">Industria</th>
+            <th class="text-end">Terneros</th>
+            <th class="text-end">Descartada</th>
+            <th class="text-end">Venta</th>
+            <th class="text-end">Vacas</th>
+            <th class="text-end">Registros</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var x in Model.Items)
+        {
+            <tr>
+                <td>@x.Fecha.ToString("dd/MM/yyyy")</td>
+                <td>@x.Hato</td>
+                <td>@x.Turno</td>
+                <td class="text-end">@x.Producido.ToString("0.00")</td>
+                <td class="text-end">@x.Industria.ToString("0.00")</td>
+                <td class="text-end">@x.Terneros.ToString("0.00")</td>
+                <td class="text-end">@x.Descartada.ToString("0.00")</td>
+                <td class="text-end">@x.VentaDirecta.ToString("0.00")</td>
+                <td class="text-end">@x.VacasOrdeñadas</td>
+                <td class="text-end">@x.Registros</td>
+            </tr>
+        }
+    </tbody>
+</table>

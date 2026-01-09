@@ -1,0 +1,77 @@
+﻿@model IEnumerable<WebZootecPro.Data.CalidadDiariaHato>
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Calidad diaria por hato";
+    var hatos = ViewBag.Hatos as List<SelectListItem> ?? new();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Calidad diaria por hato</h2>
+    <a class="btn btn-primary" asp-action="Create">Nuevo registro</a>
+</div>
+
+<form method="get" class="card p-3 mb-3">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Hato</label>
+            <select class="form-select" name="hatoId">
+                <option value="">-- Todos --</option>
+                @foreach (var h in hatos)
+                {
+                    var selected = (ViewBag.HatoId?.ToString() == h.Value) ? "selected" : "";
+                    <option value="@h.Value" selected="@selected">@h.Text</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Desde</label>
+            <input class="form-control" type="date" name="desde" value="@ViewBag.Desde" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Hasta</label>
+            <input class="form-control" type="date" name="hasta" value="@ViewBag.Hasta" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Fuente</label>
+            <input class="form-control" name="fuente" value="@ViewBag.Fuente" placeholder="GLORIA" />
+        </div>
+
+        <div class="col-md-2">
+            <button class="btn btn-dark w-100">Filtrar</button>
+        </div>
+    </div>
+</form>
+
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Fecha</th>
+            <th>Hato</th>
+            <th>Fuente</th>
+            <th class="text-end">Grasa</th>
+            <th class="text-end">Proteína</th>
+            <th class="text-end">ST</th>
+            <th class="text-end">Urea</th>
+            <th class="text-end">RCS</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var x in Model)
+        {
+            <tr>
+                <td>@x.fecha.ToString("dd/MM/yyyy")</td>
+                <td>@x.idHatoNavigation?.nombre</td>
+                <td>@x.fuente</td>
+                <td class="text-end">@((x.grasa ?? 0).ToString("0.00"))</td>
+                <td class="text-end">@((x.proteina ?? 0).ToString("0.00"))</td>
+                <td class="text-end">@((x.solidosTotales ?? 0).ToString("0.00"))</td>
+                <td class="text-end">@((x.urea ?? 0).ToString("0.00"))</td>
+                <td class="text-end">@((x.rcs ?? 0).ToString())</td>
+            </tr>
+        }
+    </tbody>
+</table>

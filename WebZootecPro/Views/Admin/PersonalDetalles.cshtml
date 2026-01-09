@@ -1,0 +1,41 @@
+﻿@model WebZootecPro.ViewModels.Admin.EditarPersonalViewModel
+@{
+    ViewData["Title"] = "Detalles Personal";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Detalles - @Model.Tipo</h5>
+    </div>
+
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Usuario</dt>
+            <dd class="col-sm-9">@Model.UserName</dd>
+
+            <dt class="col-sm-3">Nombre</dt>
+            <dd class="col-sm-9">@Model.Nombre @Model.Apellido</dd>
+
+            <dt class="col-sm-3">DNI</dt>
+            <dd class="col-sm-9">@Model.DNI</dd>
+
+            <dt class="col-sm-3">Dirección</dt>
+            <dd class="col-sm-9">@Model.Direccion</dd>
+
+            <dt class="col-sm-3">Provincia</dt>
+            <dd class="col-sm-9">@Model.Provincia</dd>
+
+            <dt class="col-sm-3">Localidad</dt>
+            <dd class="col-sm-9">@Model.Localidad</dd>
+
+            <dt class="col-sm-3">Código Postal</dt>
+            <dd class="col-sm-9">@Model.CodigoPostal</dd>
+
+            <dt class="col-sm-3">Teléfono</dt>
+            <dd class="col-sm-9">@Model.Telefono</dd>
+        </dl>
+
+        <a asp-action="Personal" class="btn btn-outline-secondary">Volver</a>
+        <a asp-action="EditarPersonal" asp-route-id="@Model.Id" class="btn btn-primary ms-2">Editar</a>
+    </div>
+</div>

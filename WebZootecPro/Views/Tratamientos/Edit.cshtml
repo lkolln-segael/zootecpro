@@ -1,0 +1,61 @@
+
+@model WebZootecPro.ViewModels.Tratamientos.CrearTratamientoViewModel
+
+@{
+    ViewData["Title"] = "Editar Tratamiento";
+}
+
+<h2>Editar Tratamiento</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" name="id" value="@ViewBag.Id" />
+
+    <div class="form-group">
+        <label asp-for="FechaInicio"></label>
+        <input asp-for="FechaInicio" class="form-control" />
+        <span asp-validation-for="FechaInicio" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mt-3">
+        <label asp-for="FechaFinalEstimada"></label>
+        <input asp-for="FechaFinalEstimada" class="form-control" />
+        <span asp-validation-for="FechaFinalEstimada" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mt-3">
+        <label asp-for="CostoEstimado"></label>
+        <input asp-for="CostoEstimado" class="form-control" />
+        <span asp-validation-for="CostoEstimado" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mt-3">
+        <label asp-for="Observaciones"></label>
+        <textarea asp-for="Observaciones" class="form-control"></textarea>
+        <span asp-validation-for="Observaciones" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mt-3">
+        <label asp-for="IdTipoTratamiento"></label>
+        <select asp-for="IdTipoTratamiento" asp-items="Model.TipoTratamientos" class="form-control">
+            <option value="">-- Seleccione tipo tratamiento --</option>
+        </select>
+        <span asp-validation-for="IdTipoTratamiento" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mt-3">
+        <label asp-for="IdEnfermedad"></label>
+        <select asp-for="IdEnfermedad" asp-items="Model.Enfermedades" class="form-control">
+            <option value="">-- Seleccione enfermedad --</option>
+        </select>
+        <span asp-validation-for="IdEnfermedad" class="text-danger"></span>
+    </div>
+
+    <br />
+
+    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

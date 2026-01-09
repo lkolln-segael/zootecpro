@@ -1,0 +1,56 @@
+﻿@model WebZootecPro.ViewModels.AlimentacionRtm.ConsumoVm
+@{
+    ViewData["Title"] = "Reporte consumo RTM";
+}
+
+<h3 class="mb-3">Reporte consumo RTM</h3>
+
+<form method="get" class="card card-body mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-5">
+            <label class="form-label">Hato/Corral</label>
+            <select class="form-select" name="hatoId" asp-items="ViewBag.HatoId">
+                <option value="">(Todos)</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Desde</label>
+            <input class="form-control" type="date" name="desde" value="@Model.desde.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Hasta</label>
+            <input class="form-control" type="date" name="hasta" value="@Model.hasta.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-1">
+            <button class="btn btn-primary w-100" type="submit">OK</button>
+        </div>
+    </div>
+</form>
+
+<table class="table table-sm table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Hato</th>
+            <th>kg total</th>
+            <th>Costo total</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var r in Model.items)
+        {
+            <tr>
+                <td class="fw-semibold">@r.fecha.ToString("dd/MM/yyyy")</td>
+                <td>@r.hato</td>
+                <td>@r.kgTotal.ToString("0.00")</td>
+                <td>@(r.costoTotal?.ToString("0.00") ?? "-")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="mt-2">
+    <a class="btn btn-outline-primary" asp-action="Entregas">Volver a entregas</a>
+    <a class="btn btn-outline-primary" asp-action="Programacion">Programación</a>
+    <a class="btn btn-outline-primary" asp-action="Formulas">Fórmulas</a>
+</div>

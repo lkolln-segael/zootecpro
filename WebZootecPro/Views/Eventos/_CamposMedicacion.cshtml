@@ -1,0 +1,55 @@
+﻿@model WebZootecPro.ViewModels.Eventos.RegistrarEventoViewModel
+
+<div class="row g-3">
+    <div class="col-lg-4 col-md-6">
+        <label asp-for="IdEnfermedad" class="form-label">Caso (Enfermedad)</label>
+        <select asp-for="IdEnfermedad"
+                asp-items="ViewBag.IdEnfermedad"
+                class="form-select"
+                id="IdEnfermedad">
+            <option value="">-- Seleccione caso --</option>
+        </select>
+        <span asp-validation-for="IdEnfermedad" class="text-danger small"></span>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <label asp-for="IdTipoTratamiento" class="form-label"></label>
+        <select asp-for="IdTipoTratamiento"
+                asp-items="ViewBag.IdTipoTratamiento"
+                class="form-select"
+                id="IdTipoTratamiento">
+            <option value="">-- Seleccione tratamiento --</option>
+        </select>
+        <span asp-validation-for="IdTipoTratamiento" class="text-danger small"></span>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <label asp-for="CostoEstimado" class="form-label"></label>
+        <input asp-for="CostoEstimado" class="form-control" />
+        <span asp-validation-for="CostoEstimado" class="text-danger small"></span>
+    </div>
+</div>
+
+<script>
+    // cuando cambia el caso, cargar tratamientos
+    document.addEventListener("change", async (e) => {
+        if (!e.target || e.target.id !== "IdEnfermedad") return;
+
+        const idEnfermedad = e.target.value;
+        const ddlTrat = document.getElementById("IdTipoTratamiento");
+
+        ddlTrat.innerHTML = `<option value="">-- Seleccione tratamiento --</option>`;
+
+        if (!idEnfermedad) return;
+
+        const url  = `/Eventos/TiposTratamientoPorCaso?idEnfermedad=${encodeURIComponent(idEnfermedad)}`;
+        const data = await fetch(url).then(r => r.json());
+
+        for (const item of data) {
+            const op = document.createElement("option");
+            op.value = item.value;
+            op.textContent = item.text;
+            ddlTrat.appendChild(op);
+        }
+    });
+</script>

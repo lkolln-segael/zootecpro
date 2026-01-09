@@ -1,0 +1,19 @@
+﻿@model WebZootecPro.ViewModels.Eventos.RegistrarEventoViewModel
+
+<div class="row g-3">
+    <div class="col-lg-4 col-md-6">
+        <label asp-for="IdTipoEnfermedad" class="form-label"></label>
+        <select asp-for="IdTipoEnfermedad" asp-items="ViewBag.IdTipoEnfermedad" class="form-select">
+            <option value="">-- Seleccione enfermedad --</option>
+        </select>
+        <span asp-validation-for="IdTipoEnfermedad" class="text-danger small"></span>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <label asp-for="IdVeterinario" class="form-label"></label>
+        <select asp-for="IdVeterinario" asp-items="ViewBag.IdVeterinario" class="form-select">
+            <option value="">-- Seleccione veterinario --</option>
+        </select>
+        <span asp-validation-for="IdVeterinario" class="text-danger small"></span>
+    </div>
+</div>

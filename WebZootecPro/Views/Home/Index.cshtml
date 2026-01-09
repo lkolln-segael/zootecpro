@@ -1,0 +1,105 @@
+﻿@model WebZootecPro.ViewModels.Dashboard.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+@if (User.IsInRole("SUPERADMIN"))
+{
+    <!-- No mostrar nada -->
+}
+else
+{
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-end mb-3">
+            <div>
+                <h3 class="mb-0">Dashboard de Empresa</h3>
+                <small class="text-muted">Periodo: @Model.Desde.ToString("dd/MM/yyyy") - @Model.Hasta.ToString("dd/MM/yyyy")</small>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted">Producción (Hoy)</div>
+                        <div class="fs-4 fw-bold">@Model.ProduccionHoyLitros.ToString("N2") L</div>
+                        <div class="text-muted small">
+                            Vacas: @Model.VacasProduciendoHoy | Prom: @Model.PromedioLitrosPorVacaHoy.ToString("N2") L/vaca
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted">Producción (7 días)</div>
+                        <div class="fs-4 fw-bold">@Model.ProduccionUltimos7DiasLitros.ToString("N2") L</div>
+                        <div class="text-muted small">Prom diario: @Model.PromedioDiario7Dias.ToString("N2") L/día</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted">Reproducción (30 días)</div>
+                        <div class="fs-4 fw-bold">TP: @Model.TasaPrenezPct.ToString("N2")%</div>
+                        <div class="text-muted small">
+                            Servicios: @Model.ServiciosEnPeriodo | Concepciones: @Model.ConcepcionesEnPeriodo
+                            <br />IA: @Model.TasaInseminacionPct.ToString("N2")%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted">Enfermería</div>
+                        <div class="fs-4 fw-bold">@Model.CasosEnfermeriaActivos</div>
+                        <div class="text-muted small">Nuevos (7 días): @Model.CasosNuevos7Dias</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Alimentación RTM (Hoy)</h5>
+                        <div class="fs-5 fw-bold">@Model.EntregasRtmHoy entregas</div>
+                        <div class="text-muted">Total: @Model.KgRtmHoy.ToString("N2") kg</div>
+
+                        <hr />
+
+                        <div class="d-grid gap-2">
+                            <a class="btn btn-outline-success" asp-controller="AlimentacionRtm" asp-action="Entregas">Ver Entregas</a>
+                            <a class="btn btn-outline-success" asp-controller="AlimentacionRtm" asp-action="Consumo">Ver Consumo</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Costos (30 días)</h5>
+                        <div class="fs-5 fw-bold">S/ @Model.CostoUltimos30Dias.ToString("N2")</div>
+                        <div class="text-muted">Costo/L aprox: S/ @Model.CostoPorLitroAprox.ToString("N4")</div>
+
+                        <hr />
+
+                        <div class="d-grid gap-2">
+                            <a class="btn btn-outline-dark" asp-controller="Costos" asp-action="Index">Ver Costos</a>
+                            <a class="btn btn-outline-primary" asp-controller="Reportes" asp-action="ReproduccionKpi">KPI Reproducción</a>
+                            <a class="btn btn-outline-danger" asp-controller="Reportes" asp-action="Enfermeria">Enfermería</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}

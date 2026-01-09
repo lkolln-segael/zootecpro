@@ -1,0 +1,147 @@
+﻿@model WebZootecPro.ViewModels.Admin.CrearPersonalViewModel
+@{
+    ViewData["Title"] = "Crear Personal";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Registrar personal (solo Inspector / Veterinario)</h5>
+    </div>
+
+    <div class="card-body">
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div asp-validation-summary="All" class="alert alert-danger"></div>
+        }
+
+        <form asp-action="CrearPersonal" method="post" novalidate>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Tipo" class="form-label"></label>
+                    <select asp-for="Tipo" class="form-select">
+                        <option value="USUARIO_EMPRESA">OPERADOR</option>
+                        <option value="VETERINARIO">VETERINARIO</option>
+                        <option value="INSPECTOR">INSPECTOR</option>
+                        <option value="LABORATORISTA">LABORATORISTA</option>
+                    </select>
+                    <span asp-validation-for="Tipo" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label asp-for="UserName" class="form-label"></label>
+                    <input asp-for="UserName" class="form-control" autocomplete="username" />
+                    <span asp-validation-for="UserName" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Password" class="form-label"></label>
+                    <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Nombre" class="form-label"></label>
+                    <input asp-for="Nombre" class="form-control" />
+                    <span asp-validation-for="Nombre" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Apellido" class="form-label"></label>
+                    <input asp-for="Apellido" class="form-control" />
+                    <span asp-validation-for="Apellido" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label asp-for="DNI" class="form-label"></label>
+                    <input asp-for="DNI" class="form-control" />
+                    <span asp-validation-for="DNI" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Direccion" class="form-label"></label>
+                <input asp-for="Direccion" class="form-control" />
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Provincia" class="form-label"></label>
+                    <input asp-for="Provincia" class="form-control" />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Localidad" class="form-label"></label>
+                    <input asp-for="Localidad" class="form-control" />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="CodigoPostal" class="form-label"></label>
+                    <input asp-for="CodigoPostal" class="form-control" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Telefono" class="form-label"></label>
+                <input asp-for="Telefono" class="form-control" />
+            </div>
+            @if (User.IsInRole("SUPERADMIN"))
+            {
+                <div class="col-md-6 mb-3">
+                    <label asp-for="EmpresaId" class="form-label">Empresa</label>
+                    <select asp-for="EmpresaId" asp-items="Model.Empresas" class="form-select">
+                        <option value="">-- Seleccione empresa --</option>
+                    </select>
+                    <span asp-validation-for="EmpresaId" class="text-danger small"></span>
+                </div>
+
+            }
+            <div class="col-md-6 mb-3">
+                <label asp-for="EstabloId" class="form-label">Establo</label>
+                <select asp-for="EstabloId" asp-items="Model.Establos" class="form-select">
+                    <option value="">-- Seleccione establo --</option>
+                </select>
+                <span asp-validation-for="EstabloId" class="text-danger small"></span>
+            </div>
+
+
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a asp-action="Personal" class="btn btn-outline-secondary ms-2">Cancelar</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    @if (User.IsInRole("SUPERADMIN"))
+    {
+        <script>
+            (function () {
+                const empresaSel = document.querySelector('[name="EmpresaId"]');
+                const establoSel = document.querySelector('[name="EstabloId"]');
+                if (!empresaSel || !establoSel) return;
+
+                async function loadEstablos(empresaId) {
+                    establoSel.innerHTML = '<option value="">-- Seleccione establo --</option>';
+                    if (!empresaId) return;
+
+                    const url = '@Url.Action("GetEstablosPorEmpresa", "Admin")' + '?empresaId=' + encodeURIComponent(empresaId);
+                    const res = await fetch(url);
+                    if (!res.ok) return;
+
+                    const data = await res.json();
+                    data.forEach(x => {
+                        const opt = document.createElement('option');
+                        opt.value = x.id;
+                        opt.textContent = x.nombre;
+                        establoSel.appendChild(opt);
+                    });
+                }
+
+                empresaSel.addEventListener('change', e => loadEstablos(e.target.value));
+                if (empresaSel.value) loadEstablos(empresaSel.value);
+            })();
+        </script>
+    }
+}
+

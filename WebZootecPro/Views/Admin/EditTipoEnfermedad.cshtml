@@ -1,0 +1,24 @@
+@model WebZootecPro.ViewModels.Admin.CrearTipoEnfermedadesViewModel
+
+@{
+ViewData["Title"] = "Editar Tipo de Enfermedad";
+}
+
+<div class="card">
+  <div class="card-header">
+    <h5>Editar Tipo de Enfermedad</h5>
+  </div>
+
+  <div class="card-body">
+    <form asp-action="EditTipoEnfermedad" method="post">
+      <div class="mb-3">
+        <label asp-for="Nombre" class="form-label"></label>
+        <input asp-for="Nombre" class="form-control" />
+        <span asp-validation-for="Nombre" class="text-danger"></span>
+      </div>
+
+      <button class="btn btn-primary">Guardar</button>
+      <a asp-action="IndexTipoEnfermedad" class="btn btn-secondary">Cancelar</a>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,60 @@
+﻿@model WebZootecPro.Data.CampaniaLechera
+@{
+ViewData["Title"] = "Nueva campaña";
+var establos = ViewBag.Establos as List<SelectListItem> ?? new();
+  }
+
+  <h2>Nueva campaña</h2>
+
+  <form asp-action="Create" method="post" class="card p-3">
+    <div class="row g-3">
+
+      <div class="col-md-6">
+        <label class="form-label">Establo</label>
+        <select asp-for="EstabloId" class="form-select" asp-items="establos"></select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Nombre</label>
+        <input asp-for="nombre" class="form-control" />
+        <span asp-validation-for="nombre" class="text-danger"></span>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Fecha inicio</label>
+        <input asp-for="fechaInicio" class="form-control" type="date" />
+        <span asp-validation-for="fechaInicio" class="text-danger"></span>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Fecha fin</label>
+        <input asp-for="fechaFin" class="form-control" type="date" />
+        <span asp-validation-for="fechaFin" class="text-danger"></span>
+
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Activa</label>
+        <select asp-for="activa" class="form-select">
+          <option value="true">Sí</option>
+          <option value="false">No</option>
+        </select>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Observaciones</label>
+        <textarea asp-for="observaciones" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="observaciones" class="text-danger"></span>
+      </div>
+
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-primary">Guardar</button>
+        <a class="btn btn-outline-secondary" asp-action="Index">Cancelar</a>
+      </div>
+
+    </div>
+  </form>
+
+  @section Scripts {
+  <partial name="_ValidationScriptsPartial" />
+  }

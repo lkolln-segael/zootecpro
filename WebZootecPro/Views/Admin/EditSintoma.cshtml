@@ -1,0 +1,36 @@
+@model WebZootecPro.ViewModels.Admin.CrearSintomaViewModel
+
+@{
+ViewData["Title"] = "Editar Síntoma";
+}
+
+<div class="card">
+  <div class="card-header">
+    <h5>Editar Síntoma</h5>
+  </div>
+
+  <div class="card-body">
+    <form asp-action="EditSintoma" method="post">
+      <div class="mb-3">
+        <label asp-for="Nombre" class="form-label"></label>
+        <input asp-for="Nombre" class="form-control" />
+        <span asp-validation-for="Nombre" class="text-danger"></span>
+      </div>
+
+      <div class="mb-3">
+        <label asp-for="IdEnfermedad" class="form-label"></label>
+        <select asp-for="IdEnfermedad" asp-items="Model.Enfermedades" class="form-select">
+          <option value="">-- Seleccione enfermedad --</option>
+        </select>
+        <span asp-validation-for="IdEnfermedad" class="text-danger"></span>
+      </div>
+
+      <button class="btn btn-primary">Guardar</button>
+      <a asp-action="IndexSintoma" class="btn btn-secondary">Cancelar</a>
+    </form>
+  </div>
+</div>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+}

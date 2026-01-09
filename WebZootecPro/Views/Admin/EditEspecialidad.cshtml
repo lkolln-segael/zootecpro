@@ -1,0 +1,24 @@
+@model WebZootecPro.ViewModels.Admin.CrearEspecialidadesViewModel
+
+@{
+ViewData["Title"] = "Editar Especialidad";
+}
+
+<div class="card">
+  <div class="card-header">
+    <h5>Editar Especialidad</h5>
+  </div>
+
+  <div class="card-body">
+    <form asp-action="EditEspecialidad" method="post">
+      <div class="mb-3">
+        <label asp-for="Nombre" class="form-label"></label>
+        <input asp-for="Nombre" class="form-control" />
+        <span asp-validation-for="Nombre" class="text-danger"></span>
+      </div>
+
+      <button class="btn btn-primary">Guardar</button>
+      <a asp-action="IndexEspecialidades" class="btn btn-secondary">Cancelar</a>
+    </form>
+  </div>
+</div>

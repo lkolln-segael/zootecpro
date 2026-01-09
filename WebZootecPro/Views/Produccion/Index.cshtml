@@ -1,0 +1,128 @@
+﻿@model IEnumerable<WebZootecPro.Data.RegistroProduccionLeche>
+
+@{
+    ViewData["Title"] = "Producción de leche";
+}
+
+<h2>@ViewData["Title"]</h2>
+@if (TempData["ProduccionMessage"] != null)
+{
+    <div class="alert alert-warning">
+        @TempData["ProduccionMessage"]
+    </div>
+}
+
+<form method="get" class="row mb-3">
+    <div class="col-md-3">
+        <label class="form-label">Desde</label>
+        <input type="date" name="desde" value="@ViewBag.Desde" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Hasta</label>
+        <input type="date" name="hasta" value="@ViewBag.Hasta" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Animal</label>
+        <select name="idAnimal" class="form-select" asp-items="ViewBag.IdAnimal">
+            <option value="">(Todos)</option>
+        </select>
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-secondary w-100">Filtrar</button>
+    </div>
+</form>
+
+@if (User.IsInRole("SUPERADMIN") || User.IsInRole("ADMIN_EMPRESA") ||  User.IsInRole("USUARIO_EMPRESA"))
+{
+    <p>
+        <a asp-action="Registrar" class="btn btn-primary">Nuevo registro</a>
+    </p>
+}
+
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Turno</th>
+            <th>Animal</th>
+            <th>Total (L)</th>
+            <th>Industria</th>
+            <th>Terneros</th>
+            <th>Descartada</th>
+            <th>Venta directa</th>
+            <th>DEL</th>
+            <th>Calidad</th>
+            <th>Tiempos</th>
+
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                @{
+                    TimeSpan? Diff(DateTime? a, DateTime? b)
+                    {
+                        if (!a.HasValue || !b.HasValue) return null;
+                        if (b.Value < a.Value) return null;
+                        return b.Value - a.Value;
+                    }
+
+                    string Min(TimeSpan? ts) => ts.HasValue ? $"{(int)ts.Value.TotalMinutes} min" : "—";
+
+                    var tPrep = Diff(item.fechaPreparacion, item.fechaLimpieza);
+                    var tLimp = Diff(item.fechaLimpieza, item.fechaDespunte);
+                    var tDesp = Diff(item.fechaDespunte, item.fechaColocacionPezoneras);
+                    var tColo = Diff(item.fechaColocacionPezoneras, item.fechaOrdeno);
+                    var tOrdeno = Diff(item.fechaOrdeno, item.fechaRetirada);
+                    var tTotal = Diff(item.fechaPreparacion, item.fechaRetirada);
+
+                    var detalle = $"Prep:{Min(tPrep)}, Limp:{Min(tLimp)}, Desp:{Min(tDesp)}, Coloc:{Min(tColo)}, Ordeño:{Min(tOrdeno)}";
+                }
+
+                <td>@item.fechaOrdeno?.ToString("dd/MM/yyyy")</td>
+                <td>@item.turno</td>
+                <td>@item.idAnimalNavigation?.codigo</td>
+                <td>@item.pesoOrdeno</td>
+                <td>@item.cantidadIndustria</td>
+                <td>@item.cantidadTerneros</td>
+                <td>@item.cantidadDescartada</td>
+                <td>@item.cantidadVentaDirecta</td>
+                <td>@item.diasEnLeche</td>
+                <td>
+                    @{
+                        var cal = item.Calidads.OrderByDescending(c => c.fechaRegistro).FirstOrDefault();
+                        var tiene = (cal != null && (cal.grasa != null || cal.rcs != null || cal.proteina != null || cal.solidosTotales != null || cal.urea != null));
+                    }
+
+                    @if (tiene)
+                    {
+                        <span title="Tiene datos">✅</span>
+                    }
+                    else
+                    {
+                        <span title="Sin datos">—</span>
+                    }
+
+                    @if (User.IsInRole("SUPERADMIN") || User.IsInRole("ADMIN_EMPRESA") || User.IsInRole("USUARIO_EMPRESA"))
+                    {
+                        <a class="btn btn-sm btn-outline-primary ms-2"
+                           asp-controller="Calidad"
+                           asp-action="Editar"
+                           asp-route-idRegistro="@item.Id">
+                            Editar
+                        </a>
+                    }
+                </td>
+                <td title="@detalle">
+                    <strong>@Min(tTotal)</strong>
+                    <div class="text-muted" style="font-size: 0.85em;">
+                        Ordeño: @Min(tOrdeno)
+                    </div>
+                </td>
+
+            </tr>
+        }
+    </tbody>
+</table>

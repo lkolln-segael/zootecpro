@@ -1,0 +1,32 @@
+@model WebZootecPro.ViewModels.Admin.CrearTipoTratamientoViewModel
+
+@{
+    ViewData["Title"] = "Eliminar Tipo de Tratamiento";
+}
+
+<h2 class="text-danger">Eliminar Tipo de Tratamiento</h2>
+
+<div class="alert alert-warning">
+    ¿Está seguro de que desea eliminar este tipo de tratamiento?
+</div>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" name="id" value="@ViewBag.Id" />
+
+    <dl class="row">
+        <dt class="col-sm-4">Nombre</dt>
+        <dd class="col-sm-8">@Model.Nombre</dd>
+
+        <dt class="col-sm-4">Costo</dt>
+        <dd class="col-sm-8">@Model.Costo.ToString("C")</dd>
+
+        <dt class="col-sm-4">Cantidad</dt>
+        <dd class="col-sm-8">@Model.Cantidad</dd>
+
+        <dt class="col-sm-4">Unidad</dt>
+        <dd class="col-sm-8">@Model.Unidad</dd>
+    </dl>
+
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>

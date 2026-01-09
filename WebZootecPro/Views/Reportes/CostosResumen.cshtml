@@ -1,0 +1,48 @@
+﻿@model WebZootecPro.ViewModels.Reportes.CostosResumenVm
+@{
+    ViewData["Title"] = "Costos - Resumen";
+}
+
+<h2>Costos - Resumen</h2>
+
+<form method="get" class="card p-3 mb-3">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Desde</label>
+            <input class="form-control" type="date" name="desde" value="@Model.Desde.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Hasta</label>
+            <input class="form-control" type="date" name="hasta" value="@Model.Hasta.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-dark w-100">Filtrar</button>
+        </div>
+    </div>
+</form>
+
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Año</th>
+            <th>Mes</th>
+            <th>Centro costo</th>
+            <th>Tipo costo</th>
+            <th class="text-end">Monto</th>
+            <th class="text-end">Movs</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var x in Model.Items)
+        {
+            <tr>
+                <td>@x.Anio</td>
+                <td>@x.Mes</td>
+                <td>@x.CentroCosto</td>
+                <td>@x.TipoCosto</td>
+                <td class="text-end">@x.MontoTotal.ToString("0.00")</td>
+                <td class="text-end">@x.Movimientos</td>
+            </tr>
+        }
+    </tbody>
+</table>

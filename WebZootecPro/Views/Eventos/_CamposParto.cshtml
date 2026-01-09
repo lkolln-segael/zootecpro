@@ -1,0 +1,57 @@
+﻿@model WebZootecPro.ViewModels.Eventos.RegistrarEventoViewModel
+
+<div class="row g-3">
+  <div class="col-lg-3 col-md-6">
+    <label asp-for="IdSexoCria" class="form-label"></label>
+    <select id="sexoCria" asp-for="IdSexoCria" asp-items="ViewBag.IdSexoCria" class="form-select">
+      <option value="">-- Seleccione --</option>
+    </select>
+    <span asp-validation-for="IdSexoCria" class="text-danger small"></span>
+  </div>
+
+  <div class="col-lg-3 col-md-6">
+    <label asp-for="IdTipoParto" class="form-label"></label>
+    <select asp-for="IdTipoParto" asp-items="ViewBag.IdTipoParto" class="form-select">
+      <option value="">-- Seleccione --</option>
+    </select>
+    <span asp-validation-for="IdTipoParto" class="text-danger small"></span>
+  </div>
+
+  <div class="col-lg-3 col-md-6">
+    <label asp-for="IdEstadoCria" class="form-label"></label>
+    <select asp-for="IdEstadoCria" asp-items="ViewBag.IdEstadoCria" class="form-select">
+      <option value="">-- Seleccione --</option>
+    </select>
+    <span asp-validation-for="IdEstadoCria" class="text-danger small"></span>
+  </div>
+
+  <div class="col-lg-3 col-md-6">
+    <label asp-for="HoraParto" class="form-label"></label>
+    <input asp-for="HoraParto" type="time" class="form-control" />
+    <span asp-validation-for="HoraParto" class="text-danger small"></span>
+  </div>
+
+  <div class="col-lg-3 col-md-6">
+    <label asp-for="RpCria1" class="form-label"></label>
+    <input asp-for="RpCria1" class="form-control" />
+    <span asp-validation-for="RpCria1" class="text-danger small"></span>
+  </div>
+
+  <div class="col-lg-3 col-md-6">
+    <label asp-for="NombreCria1" class="form-label"></label>
+    <input asp-for="NombreCria1" class="form-control" />
+    <span asp-validation-for="NombreCria1" class="text-danger small"></span>
+  </div>
+
+  <div class="col-lg-3 col-md-6">
+    <label asp-for="RpCria2" class="form-label"></label>
+    <input id="rpCria2" asp-for="RpCria2" class="form-control" />
+    <span asp-validation-for="RpCria2" class="text-danger small"></span>
+  </div>
+
+  <div class="col-lg-3 col-md-6">
+    <label asp-for="NombreCria2" class="form-label"></label>
+    <input id="nombreCria2" asp-for="NombreCria2" class="form-control" />
+    <span asp-validation-for="NombreCria2" class="text-danger small"></span>
+  </div>
+</div>

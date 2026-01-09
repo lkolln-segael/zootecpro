@@ -1,0 +1,69 @@
+@model IEnumerable<WebZootecPro.ViewModels.Tratamientos.CrearTratamientoViewModel>
+@{
+    ViewData["Title"] = "Tratamientos";
+}
+
+<h2>Tratamientos</h2>
+<a asp-action="RetiroLeche" class="btn btn-outline-primary mb-3 ms-2">Ver retiro de leche</a>
+<a asp-action="Create" class="btn btn-success mb-3">+ Nuevo Tratamiento</a>
+
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Inicio</th>
+            <th>Final Estimado</th>
+            <th>Costo</th>
+            <th>Tipo Tratamiento</th>
+            <th>Fecha Diagnostico</th>
+            <th>Días enfermería</th>
+            <th>Última dosis</th>
+            <th>Fin retiro leche</th>
+
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.FechaInicio.ToString("dd/MM/yyyy")</td>
+
+                <td>@(item.FechaFinalEstimada?.ToString("dd/MM/yyyy") ?? "-")</td>
+
+                <td>@item.CostoEstimado.ToString("C")</td>
+
+                <td>@ViewBag.IdTipoTratamiento[item.IdTipoTratamiento]</td>
+
+                <td>@ViewBag.IdEnfermedad[item.IdEnfermedad]</td>
+
+                <td>@item.DiasEnEnfermeria</td>
+
+                <td>@item.UltimaDosis.ToString("dd/MM/yyyy")</td>
+
+                <td>
+                    @if (item.RetiroHasta.HasValue)
+                    {
+                        <span class="@(item.EnRetiroHoy ? "text-danger fw-bold" : "")">
+                            @item.RetiroHasta.Value.ToString("dd/MM/yyyy")
+                        </span>
+                    }
+                    else
+                    {
+                        <span>-</span>
+                    }
+                </td>
+
+                <td>
+                    <a asp-action="Edit"
+                       asp-route-id="@item.IdTratamiento"
+                       class="btn btn-warning btn-sm">Editar</a>
+
+                    <a asp-action="Delete"
+                       asp-route-id="@item.IdTratamiento"
+                       class="btn btn-danger btn-sm">Eliminar</a>
+                </td>
+            </tr>
+        }
+
+    </tbody>
+</table>

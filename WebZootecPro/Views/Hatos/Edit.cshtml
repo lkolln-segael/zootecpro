@@ -1,0 +1,50 @@
+﻿@model WebZootecPro.Data.Hato
+@{
+    ViewData["Title"] = "Editar hato";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Editar hato</h5>
+    </div>
+    <div class="card-body">
+        <form asp-action="Edit" method="post" novalidate>
+            <input type="hidden" asp-for="Id" />
+            <div asp-validation-summary="All" class="text-danger small mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="nombre" class="form-label"></label>
+                <input asp-for="nombre" class="form-control" />
+                <span asp-validation-for="nombre" class="text-danger small"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="sistemaProduccion" class="form-label"></label>
+                    <input asp-for="sistemaProduccion" class="form-control" />
+                    <span asp-validation-for="sistemaProduccion" class="text-danger small"></span>
+                </div>
+               @*  <div class="col-md-6 mb-3">
+                    <label asp-for="idEstablo" class="form-label">Establo</label>
+                    <select asp-for="idEstablo" asp-items="ViewBag.IdEstablo" class="form-select">
+                        <option value="">-- Seleccione establo --</option>
+                    </select>
+                    <span asp-validation-for="idEstablo" class="text-danger small"></span>
+                </div> *@
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ubicacion" class="form-label"></label>
+                <input asp-for="ubicacion" class="form-control" />
+                <span asp-validation-for="ubicacion" class="text-danger small"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            <a asp-action="Index" class="btn btn-outline-secondary ms-2">Volver</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

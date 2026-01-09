@@ -1,0 +1,91 @@
+﻿@model WebZootecPro.ViewModels.Reportes.RevisionPrenezViewModel
+@{
+    ViewData["Title"] = "Revisión de preñez";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h3 class="mb-0"><i class="bi bi-calendar2-check me-2"></i>Revisión de preñez</h3>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" asp-controller="Reportes" asp-action="ReproduccionKpi">
+            <i class="bi bi-graph-up me-1"></i>KPI
+        </a>
+        <a class="btn btn-outline-primary" asp-controller="Reportes" asp-action="ElegiblesInseminacion">
+            <i class="bi bi-list-check me-1"></i>Elegibles
+        </a>
+        <a class="btn btn-primary" asp-controller="Eventos" asp-action="Registrar">
+            <i class="bi bi-activity me-1"></i>Registrar eventos
+        </a>
+    </div>
+</div>
+
+<form method="get" class="card card-body mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Método</label>
+            <select class="form-select" name="metodo">
+                <option value="ECOGRAFIA" selected="@(Model.Metodo == "ECOGRAFIA")">ECOGRAFIA (35 días)</option>
+                <option value="PALPACION" selected="@(Model.Metodo == "PALPACION")">PALPACION (60 días)</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Desde</label>
+            <input class="form-control" type="date" name="desde" value="@Model.Desde.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Hasta</label>
+            <input class="form-control" type="date" name="hasta" value="@Model.Hasta.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Hato</label>
+            <select class="form-select" name="idHato" asp-items="ViewBag.IdHato">
+                <option value="">(Todos)</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100" type="submit">
+                <i class="bi bi-funnel me-1"></i>Filtrar
+            </button>
+        </div>
+    </div>
+</form>
+
+<div class="alert alert-info">
+    Método: <b>@Model.Metodo</b> | Mínimo días: <b>@Model.MinDias</b> |
+    Items: <b>@Model.Items.Count</b>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Fecha revisión</th>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Hato</th>
+                <th>Fecha insem</th>
+                <th>Días desde</th>
+                <th>#Servicio</th>
+                <th>Toro</th>
+                <th>NAAB</th>
+                <th>Protocolo</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.Items)
+            {
+                <tr>
+                    <td class="fw-semibold">@r.FechaRevision.ToString("dd/MM/yyyy")</td>
+                    <td>@r.Codigo</td>
+                    <td>@r.Nombre</td>
+                    <td>@r.Hato</td>
+                    <td>@r.FechaInseminacion.ToString("dd/MM/yyyy")</td>
+                    <td>@r.DiasDesdeInseminacion</td>
+                    <td>@(r.NumeroServicio?.ToString() ?? "-")</td>
+                    <td>@(r.NombreToro ?? "-")</td>
+                    <td>@(r.CodigoNaab ?? "-")</td>
+                    <td>@(r.Protocolo ?? "-")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

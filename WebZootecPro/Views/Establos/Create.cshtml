@@ -1,0 +1,77 @@
+﻿@model WebZootecPro.Data.Establo
+@{
+    ViewData["Title"] = "Nuevo establo";
+    var empresaUnica = (ViewBag.EmpresaUnica as bool?) ?? false;
+    var empresaUnicaNombre = ViewBag.EmpresaUnicaNombre as string;
+}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Crear establo</h5>
+    </div>
+    <div class="card-body">
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div asp-validation-summary="All" class="alert alert-danger"></div>
+        }
+
+        <form asp-action="Create" method="post" novalidate>
+            <div class="mb-3">
+                <label asp-for="nombre" class="form-label"></label>
+                <input asp-for="nombre" class="form-control" />
+                <span asp-validation-for="nombre" class="text-danger small"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="capacidadMaxima" class="form-label"></label>
+                    <input asp-for="capacidadMaxima" class="form-control" />
+                    <span asp-validation-for="capacidadMaxima" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="areaTotal" class="form-label"></label>
+                    <input asp-for="areaTotal" class="form-control" />
+                    <span asp-validation-for="areaTotal" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">P.V.E (días)</label>
+                    <input asp-for="pveDias" class="form-control" type="number" min="0" max="365" />
+                    <small class="text-muted">Periodo Voluntario de Espera para inseminación (por establo).</small>
+                    <span asp-validation-for="pveDias" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label asp-for="EmpresaId" class="form-label">Empresa</label>
+
+                    @if (empresaUnica && !string.IsNullOrWhiteSpace(empresaUnicaNombre))
+                    {
+                        <input type="hidden" asp-for="EmpresaId" />
+                        <input class="form-control empresa-locked" value="@empresaUnicaNombre" readonly />
+                    }
+                    else
+                    {
+                        <select asp-for="EmpresaId" asp-items="ViewBag.IdEmpresa" class="form-select">
+                            <option value="">-- Seleccione empresa --</option>
+                        </select>
+                    }
+
+                    <span asp-validation-for="EmpresaId" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ubicacion" class="form-label"></label>
+                <input asp-for="ubicacion" class="form-control" />
+                <span asp-validation-for="ubicacion" class="text-danger small"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a asp-action="Index" class="btn btn-outline-secondary ms-2">Volver</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

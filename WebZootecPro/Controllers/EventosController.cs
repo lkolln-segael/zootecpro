@@ -1,0 +1,1227 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using WebZootecPro.Data;
+using WebZootecPro.ViewModels.Eventos;
+
+namespace WebZootecPro.Controllers
+{
+  [Authorize(Roles = "SUPERADMIN,ADMIN_EMPRESA,VETERINARIO,USUARIO_EMPRESA")]
+  public class EventosController : Controller
+  {
+    private readonly ZootecContext _context;
+    private readonly int MINIMA_EDAD_INSEMINACION = 5;
+
+    public EventosController(ZootecContext context)
+    {
+      _context = context;
+    }
+
+    private async Task<Usuario?> GetUsuarioActualAsync()
+    {
+      var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+      if (!int.TryParse(userIdStr, out var userId)) return null;
+
+      return await _context.Usuarios
+          .Include(u => u.Rol)
+          .FirstOrDefaultAsync(u => u.Id == userId);
+    }
+
+    private int? GetUsuarioId()
+    {
+      var s = User.FindFirstValue(ClaimTypes.NameIdentifier);
+      return int.TryParse(s, out var id) ? id : (int?)null;
+    }
+
+    private async Task CargarVeterinariosAsync(RegistrarEventoViewModel vm)
+    {
+      // 1) ID de Especialidad = VETERINARIO
+      var idEspVet = await _context.Especialidads
+          .AsNoTracking()
+          .Where(e => e.Nombre == "VETERINARIO")
+          .Select(e => (int?)e.Id)
+          .FirstOrDefaultAsync();
+
+      // Si no existe esa especialidad aún
+      if (idEspVet == null)
+      {
+        ViewBag.IdVeterinario = new List<SelectListItem>();
+        return;
+      }
+
+      // 2) Usuario actual (para filtrar por su establo/hato si aplica)
+      var usuarioId = GetUsuarioId();
+      var u = usuarioId == null
+          ? null
+          : await _context.Usuarios.AsNoTracking().FirstOrDefaultAsync(x => x.Id == usuarioId.Value);
+
+      // 3) Si el logueado ES veterinario, preseleccionarlo
+      if (vm.IdVeterinario == null && usuarioId != null)
+      {
+        var soyVet = await _context.Colaboradors.AsNoTracking()
+            .AnyAsync(c => c.idUsuario == usuarioId.Value && c.EspecialidadId == idEspVet.Value);
+
+        if (soyVet)
+          vm.IdVeterinario = usuarioId.Value; // queda seleccionado en el combo
+      }
+
+      // 4) Lista de veterinarios (Colaborador) -> Value = UsuarioId, Text = Colaborador.nombre
+      var q = _context.Colaboradors
+          .AsNoTracking()
+          .Include(c => c.idUsuarioNavigation)
+          .Where(c => c.EspecialidadId == idEspVet.Value);
+
+      // (Opcional pero recomendado) filtrar por el mismo establo/hato del usuario logueado
+      if (u?.idEstablo != null)
+        q = q.Where(c => c.idUsuarioNavigation.idEstablo == u.idEstablo);
+
+      if (u?.idHato != null)
+        q = q.Where(c => c.idUsuarioNavigation.idHato == u.idHato);
+
+      var veterinarios = await q
+          .OrderBy(c => c.nombre)
+          .Select(c => new SelectListItem
+          {
+            Value = c.idUsuario.ToString(),
+            Text = c.nombre
+          })
+          .ToListAsync();
+
+      ViewBag.IdVeterinario = veterinarios;
+    }
+    private int? GetCurrentUserId()
+    {
+      var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+      return int.TryParse(idStr, out var id) ? id : null;
+    }
+
+    private async Task<Usuario?> GetCurrentUserAsync()
+    {
+      var userId = GetCurrentUserId();
+      if (userId == null) return null;
+
+      return await _context.Usuarios
+          .AsNoTracking()
+          .Include(u => u.idHatoNavigation).ThenInclude(h => h.Establo)
+          .FirstOrDefaultAsync(u => u.Id == userId.Value);
+    }
+    private async Task<Empresa?> GetEmpresaAsync()
+    {
+      var usuarioId = GetCurrentUserId();
+      var usuario = await GetCurrentUserAsync();
+      return await _context.Empresas.FirstOrDefaultAsync(e => e.usuarioID == usuarioId
+          || e.Colaboradors.Select(e => e.idUsuario).Contains(usuarioId.Value));
+    }
+
+    private async Task CargarCombosAsync(RegistrarEventoViewModel? model = null)
+    {
+      var empresa = await GetEmpresaAsync();
+      var establo = await _context.Establos.FirstOrDefaultAsync(e => e.EmpresaId == e.Id);
+      var u = await GetUsuarioActualAsync();
+
+      // ---- Animales filtrados por alcance del usuario (si tiene idHato o idEstablo)
+      var animalesQ = _context.Animals.AsQueryable();
+
+      if (u?.idHato != null)
+        animalesQ = animalesQ.Where(a => a.idHato == u.idHato.Value);
+      else if (u?.idEstablo != null)
+        animalesQ = animalesQ.Where(a => a.idHatoNavigation.EstabloId == u.idEstablo.Value);
+
+      var limite = DateOnly.FromDateTime(DateTime.Today).AddYears(-MINIMA_EDAD_INSEMINACION);
+
+      if (u != null && u?.idHato != null && u.idEstablo != null)
+      {
+        var animales = await animalesQ
+            .OrderBy(a => a.codigo)
+            .Where(a =>
+                a.fechaNacimiento.HasValue &&
+                a.fechaNacimiento.Value < limite
+            )
+            .Select(a => new SelectListItem
+            {
+              Value = a.Id.ToString(),
+              Text = (a.codigo ?? "-") + " - " + a.nombre
+            })
+            .ToListAsync();
+        ViewBag.IdAnimal = animales;
+      }
+      else
+      {
+        ViewBag.IdAnimal = new List<SelectListItem>();
+      }
+      // ---- Hatos
+      var hatosQ = _context.Hatos.AsQueryable();
+      if (u?.idEstablo != null) hatosQ = hatosQ.Where(h => h.EstabloId == u.idEstablo.Value);
+      if (u?.idHato != null) hatosQ = hatosQ.Where(h => h.Id == u.idHato.Value);
+      if (u != null && u?.idHato != null && u?.idEstablo != null)
+      {
+        ViewBag.IdHato = new SelectList(
+                  await hatosQ.OrderBy(h => h.nombre).ToListAsync(),
+                  "Id", "nombre", model?.IdHato
+              );
+      }
+      else
+      {
+        ViewBag.IdHato = new List<SelectListItem>();
+      }
+
+
+      // ---- Estado productivo
+      ViewBag.EstadoProductivo = new SelectList(
+          await _context.EstadoProductivos.OrderBy(e => e.nombre).ToListAsync(),
+          "Id", "nombre", model?.EstadoProductivoId
+      );
+
+      // ---- Tipos de evento
+      ViewBag.TiposEvento = new List<SelectListItem>
+                {
+                    new("Parto",               "PARTO"),
+                    new("Inseminación",        "SERVICIO"),
+                    new("Confirmación preñez", "CONFIRMACION_PREÑEZ"),
+                    new("Seca",                "SECA"),
+                    new("Aborto",              "ABORTO"),
+                    new("Enfermedad",          "ENFERMEDAD"),
+                    new("Medicación",          "MEDICACION"),
+                    //new("Producción leche", "PRODUCCION_LECHE"),
+
+                    // ====== COMENTADOS (no están en el TXT de requerimientos) ======
+                    // new("Celo",                "CELO"),
+                    // new("Venta",               "VENTA"),
+                    // new("Muerte",              "MUERTE"),
+                    // new("Rechazo",             "RECHAZO"),
+                    // new("Análisis",            "ANALISIS"),
+                    // new("Indicación especial", "INDICACION_ESPECIAL"),
+                };
+
+
+      // combos usados por Enfermedad/Medicacion
+      ViewBag.IdTipoEnfermedad = new SelectList(
+          await _context.TipoEnfermedades.OrderBy(t => t.nombre).ToListAsync(),
+          "Id", "nombre", model?.IdTipoEnfermedad
+      );
+
+      ViewBag.IdCausaAborto = new SelectList(
+          await _context.CausaAbortos
+              .Where(x => !x.Oculto)
+              .OrderBy(x => x.Nombre)
+              .ToListAsync(),
+          "Id", "Nombre", model?.IdCausaAborto
+      );
+
+      // Para MEDICACION: combos vacíos por defecto
+      ViewBag.IdEnfermedad = new SelectList(Enumerable.Empty<SelectListItem>());
+      ViewBag.IdTipoTratamiento = new SelectList(Enumerable.Empty<SelectListItem>());
+
+      await CargarVeterinariosAsync(model ?? new RegistrarEventoViewModel());
+
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Registrar()
+    {
+      var vm = new RegistrarEventoViewModel
+      {
+        FechaEvento = DateOnly.FromDateTime(DateTime.Today)
+      };
+
+      await CargarCombosAsync(vm);
+      return View(vm);
+    }
+
+    // ====== ENDPOINT para cargar partial según TipoEvento ======
+    // GET /Eventos/CamposEvento
+    [HttpGet]
+    public async Task<IActionResult> CamposEvento(string tipoEvento, int? idAnimal)
+    {
+      var vm = new RegistrarEventoViewModel { TipoEvento = tipoEvento, IdAnimal = idAnimal };
+
+      await CargarCombosAsync(vm);
+
+      if (tipoEvento == "PARTO")
+        await CargarCombosPartoAsync(vm);
+
+      if (tipoEvento == "SERVICIO")
+      {
+        ViewBag.IdPadreAnimal = new SelectList(
+            await _context.Animals
+                .Where(a => a.sexo != null && a.sexo.ToUpper() == "MACHO")
+                .OrderBy(a => a.codigo)
+                .Select(a => new { a.Id, Texto = (a.codigo ?? "-") + " - " + a.nombre })
+                .ToListAsync(),
+            "Id", "Texto", vm.IdPadreAnimal
+        );
+      }
+
+      // ✅ usar el helper completo que ya tienes
+      if (tipoEvento == "MEDICACION")
+        await PrepararMedicacionAsync(vm);
+
+      return tipoEvento switch
+      {
+        "PARTO" => PartialView("_CamposParto", vm),
+        "SERVICIO" => PartialView("_CamposServicio", vm),
+        "CONFIRMACION_PREÑEZ" => PartialView("_CamposConfirmacionPrenez", vm),
+        "SECA" => PartialView("_CamposSeca", vm),
+        "ABORTO" => PartialView("_CamposAborto", vm),
+        "ENFERMEDAD" => PartialView("_CamposEnfermedad", vm),
+        "MEDICACION" => PartialView("_CamposMedicacion", vm),
+        // "PRODUCCION_LECHE" => PartialView("_CamposProduccionLeche", vm),
+
+        _ => PartialView("_CamposVacios", vm)
+      };
+    }
+
+
+
+
+
+    private async Task PrepararMedicacionAsync(RegistrarEventoViewModel vm)
+    {
+      // Casos (enfermedad) por animal
+      if (vm.IdAnimal == null)
+      {
+        ViewBag.IdEnfermedad = new SelectList(Enumerable.Empty<SelectListItem>());
+        ViewBag.IdTipoTratamiento = new SelectList(Enumerable.Empty<SelectListItem>());
+        return;
+      }
+
+      var casos = await _context.Enfermedads
+          .AsNoTracking()
+          .Include(e => e.idTipoEnfermedadNavigation)
+          .Where(e => e.idAnimal == vm.IdAnimal.Value && e.fechaRecuperacion == null) // abiertos
+          .OrderByDescending(e => e.fechaDiagnostico)
+          .Select(e => new
+          {
+            e.Id,
+            Texto = $"{e.idTipoEnfermedadNavigation.nombre} ({e.fechaDiagnostico:dd/MM/yyyy})"
+          })
+          .ToListAsync();
+
+      var casoSel = vm.IdEnfermedad ?? casos.FirstOrDefault()?.Id;
+      vm.IdEnfermedad = casoSel;
+
+      ViewBag.IdEnfermedad = new SelectList(casos, "Id", "Texto", casoSel);
+
+      // Tratamientos según el tipo de enfermedad del caso seleccionado
+      if (casoSel == null)
+      {
+        ViewBag.IdTipoTratamiento = new SelectList(Enumerable.Empty<SelectListItem>());
+        return;
+      }
+
+      var idTipoEnf = await _context.Enfermedads
+          .AsNoTracking()
+          .Where(e => e.Id == casoSel.Value)
+          .Select(e => (int?)e.idTipoEnfermedad)
+          .FirstOrDefaultAsync();
+
+      if (idTipoEnf == null)
+      {
+        ViewBag.IdTipoTratamiento = new SelectList(Enumerable.Empty<SelectListItem>());
+        return;
+      }
+
+      var tratamientos = await _context.TipoTratamientos
+          .AsNoTracking()
+          .Where(t => t.idTipoEnfermedad == idTipoEnf.Value)
+          .OrderBy(t => t.nombre)
+          .ToListAsync();
+
+      var tratSel = vm.IdTipoTratamiento ?? tratamientos.FirstOrDefault()?.Id;
+      vm.IdTipoTratamiento = tratSel;
+
+      ViewBag.IdTipoTratamiento = new SelectList(tratamientos, "Id", "nombre", tratSel);
+    }
+
+
+    // Para medicación: cargar tratamientos según tipo enfermedad
+    [HttpGet]
+    public async Task<IActionResult> TiposTratamientoPorEnfermedad(int idTipoEnfermedad)
+    {
+      var data = await _context.TipoTratamientos
+          .Where(t => t.idTipoEnfermedad == idTipoEnfermedad)
+          .OrderBy(t => t.nombre)
+          .Select(t => new { value = t.Id, text = t.nombre })
+          .ToListAsync();
+
+      return Json(data);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> TiposTratamientoPorCaso(int idEnfermedad)
+    {
+      var idTipoEnfermedad = await _context.Enfermedads
+          .Where(e => e.Id == idEnfermedad)
+          .Select(e => (int?)e.idTipoEnfermedad)
+          .FirstOrDefaultAsync();
+
+      if (idTipoEnfermedad == null)
+        return Json(Array.Empty<object>());
+
+      var data = await _context.TipoTratamientos
+          .Where(t => t.idTipoEnfermedad == idTipoEnfermedad.Value)
+          .OrderBy(t => t.nombre)
+          .Select(t => new { value = t.Id, text = t.nombre })
+          .ToListAsync();
+
+      return Json(data);
+    }
+
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Registrar(RegistrarEventoViewModel model)
+    {
+      if (!ModelState.IsValid)
+      {
+        await CargarCombosAsync(model);
+        return View(model);
+      }
+
+      var animal = await _context.Animals.FirstOrDefaultAsync(a => a.Id == model.IdAnimal);
+      if (animal == null)
+      {
+        ModelState.AddModelError(nameof(model.IdAnimal), "El animal seleccionado no existe.");
+        await CargarCombosAsync(model);
+        return View(model);
+      }
+
+      var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+      int? userId = int.TryParse(userIdStr, out var u) ? u : null;
+
+      var fechaEvt = model.FechaEvento!.Value.ToDateTime(TimeOnly.MinValue);
+
+      using var tx = await _context.Database.BeginTransactionAsync();
+
+      // si el usuario eligió estado productivo, lo actualizamos
+      if (model.EstadoProductivoId != null)
+      {
+        animal.estadoProductivoId = model.EstadoProductivoId;
+        _context.Update(animal);
+      }
+
+      switch (model.TipoEvento)
+      {
+        case "PARTO":
+          {
+            // Validaciones básicas
+            if (model.IdSexoCria == null)
+              ModelState.AddModelError(nameof(model.IdSexoCria), "Seleccione el sexo de la cría.");
+
+            if (model.IdTipoParto == null)
+              ModelState.AddModelError(nameof(model.IdTipoParto), "Seleccione el tipo de parto.");
+
+            if (model.IdEstadoCria == null)
+              ModelState.AddModelError(nameof(model.IdEstadoCria), "Seleccione el estado de la cría.");
+
+            if (model.HoraParto == null)
+              ModelState.AddModelError(nameof(model.HoraParto), "Ingrese la hora del parto.");
+
+            if (string.IsNullOrWhiteSpace(model.RpCria1))
+              ModelState.AddModelError(nameof(model.RpCria1), "Ingrese el RP/Areté de la cría.");
+
+            // Leer texto del sexo (para saber si es mellizo y si requiere nombre)
+            var sexoTxt = "";
+            if (model.IdSexoCria != null)
+            {
+              sexoTxt = await _context.SexoCria
+                  .Where(x => x.Id == model.IdSexoCria.Value)
+                  .Select(x => x.Nombre)
+                  .FirstOrDefaultAsync() ?? "";
+            }
+
+            var t = sexoTxt.ToUpperInvariant();
+
+            bool esMellizo = false, hembra1 = false, hembra2 = false;
+
+            if (t.Contains("HEMBRA-HEMBRA")) { esMellizo = true; hembra1 = true; hembra2 = true; }
+            else if (t.Contains("HEMBRA-MACHO")) { esMellizo = true; hembra1 = true; hembra2 = false; }
+            else if (t.Contains("MACHO-HEMBRA")) { esMellizo = true; hembra1 = false; hembra2 = true; }
+            else if (t.Contains("MACHO-MACHO")) { esMellizo = true; hembra1 = false; hembra2 = false; }
+            else if (t.Contains("HEMBRA")) { esMellizo = false; hembra1 = true; hembra2 = false; }
+
+            if (hembra1 && string.IsNullOrWhiteSpace(model.NombreCria1))
+              ModelState.AddModelError(nameof(model.NombreCria1), "Ingrese el nombre de la cría.");
+
+            if (esMellizo && string.IsNullOrWhiteSpace(model.RpCria2))
+              ModelState.AddModelError(nameof(model.RpCria2), "Ingrese el RP/Areté de la cría 2 (mellizo).");
+
+            if (esMellizo && hembra2 && string.IsNullOrWhiteSpace(model.NombreCria2))
+              ModelState.AddModelError(nameof(model.NombreCria2), "Ingrese el nombre de la cría 2.");
+            // RP1 no puede existir ya
+            if (!string.IsNullOrWhiteSpace(model.RpCria1))
+            {
+              var existeRp1 = await _context.Animals.AnyAsync(a => a.codigo == model.RpCria1);
+              if (existeRp1)
+                ModelState.AddModelError(nameof(model.RpCria1), "Ya existe un animal con ese RP/Areté.");
+            }
+
+            // Si hay mellizo: RP2 obligatorio, no igual a RP1, y no duplicado en BD
+            if (esMellizo)
+            {
+              if (model.RpCria2 == model.RpCria1)
+                ModelState.AddModelError(nameof(model.RpCria2), "El RP/Areté de la cría 2 no puede ser igual al de la cría 1.");
+
+              if (!string.IsNullOrWhiteSpace(model.RpCria2))
+              {
+                var existeRp2 = await _context.Animals.AnyAsync(a => a.codigo == model.RpCria2);
+                if (existeRp2)
+                  ModelState.AddModelError(nameof(model.RpCria2), "Ya existe un animal con ese RP/Areté (cría 2).");
+              }
+            }
+
+            if (!ModelState.IsValid)
+            {
+              await tx.RollbackAsync();
+              await CargarCombosAsync(model);
+              await CargarCombosPartoAsync(model);
+              return View(model);
+            }
+
+            // Fecha + hora del parto
+            var fechaHoraParto = model.FechaEvento!.Value.ToDateTime(model.HoraParto!.Value);
+
+            // Texto de tipo parto para la columna legacy "tipo"
+            var tipoPartoNombre = await _context.TipoPartos
+                .Where(x => x.Id == model.IdTipoParto!.Value)
+                .Select(x => x.Nombre)
+                .FirstOrDefaultAsync() ?? "PARTO";
+
+            var ciclo = await (
+                from p in _context.Prenezs
+                join c in _context.ConfirmacionPrenezs on p.idRegistroReproduccion equals c.idRegistroReproduccion
+                where p.idMadreAnimal == animal.Id
+                      && c.tipo == "POSITIVA"
+                      && !_context.Partos.Any(x => x.idRegistroReproduccion == p.idRegistroReproduccion)
+                      && !_context.Abortos.Any(x => x.idRegistroReproduccion == p.idRegistroReproduccion)
+                orderby c.fechaRegistro descending
+                select new { rrId = p.idRegistroReproduccion, padreId = p.idPadreAnimal }
+            ).FirstOrDefaultAsync();
+
+            if (ciclo == null)
+            {
+              ModelState.AddModelError("", "No se puede registrar PARTO: no hay preñez confirmada (POSITIVA) activa.");
+              await tx.RollbackAsync();
+              await CargarCombosAsync(model);
+              await CargarCombosPartoAsync(model);
+              return View(model);
+            }
+
+            // exigir seca antes de parto
+            var tieneSeca = await _context.Secas.AnyAsync(s => s.idRegistroReproduccion == ciclo.rrId);
+            if (!tieneSeca)
+            {
+              ModelState.AddModelError("", "No se puede registrar PARTO: primero registra la SECA de este ciclo.");
+              await tx.RollbackAsync();
+              await CargarCombosAsync(model);
+              await CargarCombosPartoAsync(model);
+              return View(model);
+            }
+
+            var rrIdCiclo = ciclo.rrId;
+            var padreIdCiclo = ciclo.padreId;
+
+            // ===== Parto =====
+            var parto = new Parto
+            {
+              idRegistroReproduccion = rrIdCiclo,
+              tipo = tipoPartoNombre,
+              fechaRegistro = fechaHoraParto,
+              idSexoCria = model.IdSexoCria.Value,
+              idTipoParto = model.IdTipoParto.Value,
+              idEstadoCria = model.IdEstadoCria.Value,
+              rpCria1 = model.RpCria1,
+              rpCria2 = esMellizo ? model.RpCria2 : null,
+              nombreCria1 = hembra1 ? model.NombreCria1 : null,
+              nombreCria2 = (esMellizo && hembra2) ? model.NombreCria2 : null,
+              horaParto = model.HoraParto.Value   // columna time(0)
+            };
+
+            // ✅ Validación RQ: PARTO no puede ser anterior a inseminación/confirmación/seca
+            var errFechasParto = await ValidarFechaPartoVsEventosAsync(rrIdCiclo, fechaHoraParto);
+            if (errFechasParto != null)
+            {
+              ModelState.AddModelError("", errFechasParto);
+              await tx.RollbackAsync();
+              await CargarCombosAsync(model);
+              await CargarCombosPartoAsync(model);
+              return View(model);
+            }
+
+            _context.Partos.Add(parto);
+            await _context.SaveChangesAsync();
+
+            // ===== Crear animales crías =====
+            var idActivo = await _context.EstadoAnimals
+                .Where(x => x.nombre == "ACTIVO")
+                .Select(x => x.Id)
+                .FirstAsync();
+
+            var fechaNac = model.FechaEvento!.Value;
+
+
+            var nombreCria1 = !string.IsNullOrWhiteSpace(model.NombreCria1)
+             ? model.NombreCria1.Trim()
+             : $"CRIA {model.RpCria1}".Trim();
+
+            var cria1 = new Animal
+            {
+              nombre = nombreCria1,
+              codigo = model.RpCria1,
+              sexo = hembra1 ? "HEMBRA" : "MACHO",
+              fechaNacimiento = fechaNac,
+              idMadre = animal.Id,
+              idPadre = padreIdCiclo,
+              idHato = animal.idHato,
+              idRaza = animal.idRaza,
+              estadoId = idActivo,
+              nacimientoEstimado = false
+            };
+
+
+            _context.Animals.Add(cria1);
+
+            Animal? cria2 = null;
+            if (esMellizo)
+            {
+              var nombreCria2 = !string.IsNullOrWhiteSpace(model.NombreCria2)
+                  ? model.NombreCria2.Trim()
+                  : $"CRIA {model.RpCria2}".Trim();
+
+              cria2 = new Animal
+              {
+                nombre = nombreCria2,
+                codigo = model.RpCria2,
+                sexo = hembra2 ? "HEMBRA" : "MACHO",
+                fechaNacimiento = fechaNac,
+                idMadre = animal.Id,
+                idPadre = padreIdCiclo,
+                idHato = animal.idHato,
+                idRaza = animal.idRaza,
+                estadoId = idActivo,
+                nacimientoEstimado = false
+              };
+
+
+              _context.Animals.Add(cria2);
+            }
+
+            // Guardamos para obtener los Id de las crías
+            await _context.SaveChangesAsync();
+
+            // ===== Registro de ALTA para las crías 
+            var fechaIngreso = DateOnly.FromDateTime(fechaHoraParto);
+            var ahora = DateTime.Now;
+
+            // Cría 1
+            var codigoIngreso1 = $"ING-{ahora:yyyyMMddHHmmss}-{cria1.Id}";
+            _context.RegistroIngresos.Add(new RegistroIngreso
+            {
+              codigoIngreso = codigoIngreso1,
+              tipoIngreso = "ALTA",
+              idAnimal = cria1.Id,
+              fechaIngreso = fechaIngreso,
+              idHato = cria1.idHato,
+              usuarioId = userId,
+              origen = "NACIMIENTO",
+              observacion = "Alta automática por parto"
+            });
+
+            // Cría 2 (si existe)
+            if (cria2 != null)
+            {
+              var codigoIngreso2 = $"ING-{ahora:yyyyMMddHHmmss}-{cria2.Id}";
+              _context.RegistroIngresos.Add(new RegistroIngreso
+              {
+                codigoIngreso = codigoIngreso2,
+                tipoIngreso = "ALTA",
+                idAnimal = cria2.Id,
+                fechaIngreso = fechaIngreso,
+                idHato = cria2.idHato,
+                usuarioId = userId,
+                origen = "NACIMIENTO",
+                observacion = "Alta automática por parto (mellizo)"
+              });
+            }
+            /* ✅ AQUÍ PEGAS EL BLOQUE DE RegistroNacimiento */
+            _context.RegistroNacimientos.Add(new RegistroNacimiento
+            {
+              idAnimal = cria1.Id,
+              idRegistroReproduccion = rrIdCiclo,
+              fecha = fechaNac,
+              observacionesNacimiento = "Nacimiento automático por PARTO"
+            });
+
+            if (cria2 != null)
+            {
+              _context.RegistroNacimientos.Add(new RegistroNacimiento
+              {
+                idAnimal = cria2.Id,
+                idRegistroReproduccion = rrIdCiclo,
+                fecha = fechaNac,
+                observacionesNacimiento = "Nacimiento automático por PARTO (mellizo)"
+              });
+            }
+            /* ✅ FIN BLOQUE */
+
+            await _context.SaveChangesAsync();
+            break;
+
+          }
+
+
+
+        case "CELO":
+          {
+            var rr = new RegistroReproduccion { idAnimal = animal.Id, fechaRegistro = fechaEvt };
+            _context.RegistroReproduccions.Add(rr);
+            await _context.SaveChangesAsync();
+
+            _context.Prenezs.Add(new Prenez
+            {
+              idRegistroReproduccion = rr.Id,
+              fechaCelo = model.FechaEvento.Value,
+              idMadreAnimal = animal.Id,
+              idPadreAnimal = null,
+              fechaInseminacion = null,
+              observacion = model.Observaciones
+            });
+
+            await _context.SaveChangesAsync();
+            break;
+          }
+
+        case "SERVICIO":
+          {
+            var DIAS_PVE = await GetPveDiasPorAnimalAsync(animal);
+
+            var fechaUltimoParto = await _context.Partos
+                .Include(p => p.idRegistroReproduccionNavigation)
+                .Where(p => p.idRegistroReproduccionNavigation.idAnimal == animal.Id)
+                .MaxAsync(p => (DateTime?)p.fechaRegistro);
+
+
+            DateOnly? fechaUltimoServicioDate = await _context.Prenezs
+                .Where(p => p.idMadreAnimal == animal.Id && p.fechaInseminacion != null)
+                .MaxAsync(p => p.fechaInseminacion);
+
+            DateTime? fechaUltimoServicio = fechaUltimoServicioDate.HasValue
+                ? fechaUltimoServicioDate.Value.ToDateTime(TimeOnly.MinValue)
+                : null;
+
+            DateTime? fechaRef = null;
+            if (fechaUltimoParto != null && fechaUltimoServicio != null)
+              fechaRef = fechaUltimoParto > fechaUltimoServicio ? fechaUltimoParto : fechaUltimoServicio;
+            else
+              fechaRef = fechaUltimoParto ?? fechaUltimoServicio;
+
+            if (fechaUltimoServicio != null && fechaEvt < fechaUltimoServicio.Value)
+            {
+              ModelState.AddModelError("", "No se permiten inseminaciones con fecha anterior a la última inseminación registrada.");
+            }
+
+            if (fechaRef != null && fechaEvt < fechaRef.Value.AddDays(DIAS_PVE))
+            {
+              var fechaMin = fechaRef.Value.AddDays(DIAS_PVE);
+              ModelState.AddModelError("",
+                  $"Debe respetar el P.V.E de {DIAS_PVE} días. Fecha mínima para inseminar: {fechaMin:dd/MM/yyyy}.");
+            }
+
+
+            var idSeca = await _context.EstadoProductivos
+                .Where(e => e.nombre == "SECA")
+                .Select(e => (int?)e.Id)
+                .FirstOrDefaultAsync();
+
+            if (idSeca != null && animal.estadoProductivoId == idSeca)
+            {
+              ModelState.AddModelError("", "No se puede inseminar un animal en estado SECA.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+              await tx.RollbackAsync();
+              await CargarCombosAsync(model);
+              return View(model);
+            }
+
+
+            var rr = new RegistroReproduccion { idAnimal = animal.Id, fechaRegistro = fechaEvt };
+            _context.RegistroReproduccions.Add(rr);
+            await _context.SaveChangesAsync();
+
+            const int DIAS_GESTACION = 280;
+            const int DIAS_SECA_ANTES_PARTO = 60;
+
+            if (model.HoraServicio == null)
+              ModelState.AddModelError(nameof(model.HoraServicio), "Ingrese hora de servicio.");
+
+            var nroServ = await _context.Prenezs
+              .CountAsync(p => p.idMadreAnimal == animal.Id && p.fechaInseminacion != null) + 1;
+
+            var fechaInsem = model.FechaEvento!.Value;
+            var fechaProbParto = fechaInsem.AddDays(DIAS_GESTACION);
+            var fechaProbSeca = fechaProbParto.AddDays(-DIAS_SECA_ANTES_PARTO);
+
+            _context.Prenezs.Add(new Prenez
+            {
+              idRegistroReproduccion = rr.Id,
+              idMadreAnimal = animal.Id,
+              idPadreAnimal = model.IdPadreAnimal,
+
+              fechaInseminacion = fechaInsem,
+              horaServicio = model.HoraServicio,
+              numeroServicio = nroServ,
+
+              nombreToro = model.NombreToro,
+              codigoNaab = model.CodigoNaab,
+              protocolo = model.Protocolo,
+
+              fechaProbableParto = fechaProbParto,
+              fechaProbableSeca = fechaProbSeca,
+
+              observacion = model.Observaciones
+            });
+
+            await _context.SaveChangesAsync();
+            break;
+          }
+
+
+        case "CONFIRMACION_PREÑEZ":
+          {
+            if (string.IsNullOrWhiteSpace(model.ConfirmacionTipo))
+              ModelState.AddModelError(nameof(model.ConfirmacionTipo), "Seleccione POSITIVA o NEGATIVA.");
+
+            if (string.IsNullOrWhiteSpace(model.ConfirmacionMetodo))
+              ModelState.AddModelError(nameof(model.ConfirmacionMetodo), "Seleccione el método de confirmación.");
+
+            // Último servicio (inseminación)
+            var lastServicio = await _context.Prenezs
+                .Where(p => p.idMadreAnimal == animal.Id && p.fechaInseminacion != null)
+                .OrderByDescending(p => p.fechaInseminacion)
+                .Select(p => new { p.idRegistroReproduccion, p.fechaInseminacion })
+                .FirstOrDefaultAsync();
+
+            if (lastServicio == null)
+              ModelState.AddModelError("", "No se puede confirmar preñez: el animal no tiene inseminación registrada.");
+
+            if (!ModelState.IsValid)
+            {
+              await tx.RollbackAsync();
+              await CargarCombosAsync(model);
+              return View(model);
+            }
+
+            // Reglas por método (mínimos recomendados)
+            // Reglas por método (RQ)
+            int minDias = GetMinDiasConfirmacionPrenez(model.ConfirmacionMetodo);
+
+            var fechaMin = lastServicio!.fechaInseminacion!.Value.AddDays(minDias);
+            if (model.FechaEvento!.Value < fechaMin)
+              ModelState.AddModelError("", $"No se puede confirmar preñez por {model.ConfirmacionMetodo} antes de {minDias} días. Fecha mínima: {fechaMin:dd/MM/yyyy}.");
+
+            if (!ModelState.IsValid)
+            {
+              await tx.RollbackAsync();
+              await CargarCombosAsync(model);
+              return View(model);
+            }
+
+            _context.ConfirmacionPrenezs.Add(new ConfirmacionPrenez
+            {
+              tipo = model.ConfirmacionTipo!,
+              metodo = model.ConfirmacionMetodo,          // <-- NUEVO
+              fechaRegistro = fechaEvt,
+              idRegistroReproduccion = lastServicio.idRegistroReproduccion,
+              observacion = model.Observaciones
+            });
+
+            await _context.SaveChangesAsync();
+            break;
+          }
+
+
+        case "SECA":
+          {
+            if (string.IsNullOrWhiteSpace(model.SecaMotivo))
+              ModelState.AddModelError(nameof(model.SecaMotivo), "Ingrese motivo de seca.");
+
+            // Buscar ciclo activo: servicio con confirmación POSITIVA y sin PARTO/ABORTO
+            var ciclo = await (
+                from p in _context.Prenezs
+                join c in _context.ConfirmacionPrenezs on p.idRegistroReproduccion equals c.idRegistroReproduccion
+                where p.idMadreAnimal == animal.Id
+                      && c.tipo == "POSITIVA"
+                      && !_context.Partos.Any(x => x.idRegistroReproduccion == p.idRegistroReproduccion)
+                      && !_context.Abortos.Any(x => x.idRegistroReproduccion == p.idRegistroReproduccion)
+                orderby c.fechaRegistro descending
+                select new { rrId = p.idRegistroReproduccion }
+            ).FirstOrDefaultAsync();
+
+            if (ciclo == null)
+              ModelState.AddModelError("", "No se puede registrar SECA: no hay preñez confirmada (POSITIVA) activa.");
+
+            if (!ModelState.IsValid)
+            {
+              await tx.RollbackAsync();
+              await CargarCombosAsync(model);
+              return View(model);
+            }
+
+            // Evitar duplicado de seca por ciclo
+            var yaSeca = await _context.Secas.AnyAsync(s => s.idRegistroReproduccion == ciclo!.rrId);
+            if (yaSeca)
+              ModelState.AddModelError("", "Este ciclo ya tiene SECA registrada.");
+
+            if (!ModelState.IsValid)
+            {
+              await tx.RollbackAsync();
+              await CargarCombosAsync(model);
+              return View(model);
+            }
+
+            _context.Secas.Add(new Seca
+            {
+              idRegistroReproduccion = ciclo!.rrId,  // <-- MISMO RR DEL SERVICIO
+              fechaSeca = fechaEvt,                 // <-- NUEVO
+              motivo = model.SecaMotivo!
+            });
+
+            await _context.SaveChangesAsync();
+            break;
+          }
+
+
+        case "ABORTO":
+          {
+            if (model.IdCausaAborto == null)
+              ModelState.AddModelError(nameof(model.IdCausaAborto), "Seleccione la causa del aborto.");
+
+            var ciclo = await (
+                from p in _context.Prenezs
+                join c in _context.ConfirmacionPrenezs on p.idRegistroReproduccion equals c.idRegistroReproduccion
+                where p.idMadreAnimal == animal.Id
+                      && c.tipo == "POSITIVA"
+                      && !_context.Partos.Any(x => x.idRegistroReproduccion == p.idRegistroReproduccion)
+                      && !_context.Abortos.Any(x => x.idRegistroReproduccion == p.idRegistroReproduccion)
+                orderby c.fechaRegistro descending
+                select new { rrId = p.idRegistroReproduccion, fInsem = p.fechaInseminacion }
+            ).FirstOrDefaultAsync();
+
+            if (ciclo == null)
+              ModelState.AddModelError("", "No se puede registrar aborto: no hay preñez confirmada (POSITIVA) activa.");
+
+            if (!ModelState.IsValid)
+            {
+              await tx.RollbackAsync();
+              await CargarCombosAsync(model);
+              return View(model);
+            }
+
+            var fInsem = ciclo!.fInsem!.Value;
+            var fAborto = model.FechaEvento!.Value;
+
+            if (fAborto < fInsem)
+              ModelState.AddModelError(nameof(model.FechaEvento), "La fecha de aborto no puede ser anterior a la inseminación.");
+
+            if (!ModelState.IsValid)
+            {
+              await tx.RollbackAsync();
+              await CargarCombosAsync(model);
+              return View(model);
+            }
+
+            int diasATermino = fAborto.DayNumber - fInsem.DayNumber;
+
+            var aborto = new Aborto
+            {
+              idRegistroReproduccion = ciclo.rrId,  // <-- MISMO RR DEL SERVICIO
+              idCausaAborto = model.IdCausaAborto.Value,
+              fechaRegistro = fechaEvt,
+              diasATermino = diasATermino           // <-- NUEVO
+            };
+
+            _context.Abortos.Add(aborto);
+            await _context.SaveChangesAsync();
+            break;
+          }
+
+
+
+        case "VENTA":
+        case "MUERTE":
+          {
+            // Registrar salida
+            _context.RegistroSalida.Add(new RegistroSalidum
+            {
+              nombre = model.DestinoSalida ?? "-",
+              tipoSalida = model.TipoEvento,
+              idAnimal = animal.Id,
+              fechaSalida = model.FechaEvento.Value,
+              idHato = animal.idHato,
+              usuarioId = userId,
+              destino = model.DestinoSalida,
+              observacion = model.Observaciones
+            });
+
+            var inactivoId = await _context.EstadoAnimals
+                .Where(x => x.nombre == "INACTIVO")
+                .Select(x => (int?)x.Id)
+                .FirstOrDefaultAsync();
+
+            animal.estadoId = inactivoId;
+            _context.Update(animal);
+
+            await _context.SaveChangesAsync();
+            break;
+          }
+
+        case "ENFERMEDAD":
+          {
+            if (model.IdTipoEnfermedad == null)
+              ModelState.AddModelError(nameof(model.IdTipoEnfermedad), "Seleccione tipo de enfermedad.");
+            if (model.IdVeterinario == null)
+              ModelState.AddModelError(nameof(model.IdVeterinario), "Seleccione veterinario.");
+
+            if (!ModelState.IsValid) { await tx.RollbackAsync(); await CargarCombosAsync(model); return View(model); }
+
+            _context.Enfermedads.Add(new Enfermedad
+            {
+              fechaDiagnostico = fechaEvt,
+              fechaRecuperacion = null,
+              idVeterinario = model.IdVeterinario!.Value,
+              idTipoEnfermedad = model.IdTipoEnfermedad!.Value,
+              idAnimal = animal.Id
+            });
+
+            await _context.SaveChangesAsync();
+            break;
+          }
+
+        case "MEDICACION":
+          {
+            if (model.IdAnimal == null)
+              ModelState.AddModelError(nameof(model.IdAnimal), "Seleccione un animal.");
+
+            if (model.IdEnfermedad == null)
+              ModelState.AddModelError(nameof(model.IdEnfermedad), "Seleccione el caso (enfermedad).");
+
+            if (model.IdTipoTratamiento == null)
+              ModelState.AddModelError(nameof(model.IdTipoTratamiento), "Seleccione el tratamiento.");
+
+            if (model.FechaEvento == null)
+              ModelState.AddModelError(nameof(model.FechaEvento), "Seleccione la fecha del evento.");
+
+            if (!ModelState.IsValid)
+            {
+              await tx.RollbackAsync();
+              await CargarCombosAsync(model);
+              await PrepararMedicacionAsync(model);
+              return View(model);
+
+            }
+
+            // model.FechaEvento ES DateOnly? -> convertir a DateTime (datetime2)
+            var fechaInicioDt = model.FechaEvento.Value.ToDateTime(TimeOnly.MinValue);
+
+            var enf = await _context.Enfermedads
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == model.IdEnfermedad.Value
+                                       && e.idAnimal == model.IdAnimal.Value);
+
+            if (enf == null)
+            {
+              ModelState.AddModelError(nameof(model.IdEnfermedad), "El caso seleccionado no pertenece al animal.");
+              await tx.RollbackAsync();
+              await CargarCombosAsync(model);
+              await PrepararMedicacionAsync(model);
+              return View(model);
+            }
+
+            var trat = new Tratamiento
+            {
+              idEnfermedad = enf.Id,
+              idTipoTratamiento = model.IdTipoTratamiento.Value,
+              fechaInicio = fechaInicioDt,
+              fechaFinalEstimada = null,
+              costoEstimado = model.CostoEstimado,
+              observaciones = model.Observaciones
+            };
+
+            _context.Tratamientos.Add(trat);
+            await _context.SaveChangesAsync();
+
+            await tx.CommitAsync();
+            TempData["EventosMessage"] = "Tratamiento registrado.";
+            return RedirectToAction(nameof(Registrar));
+          }
+
+        default:
+          {
+            // Validaciones por tipo
+            if (model.TipoEvento == "ANALISIS")
+            {
+              if (string.IsNullOrWhiteSpace(model.TipoAnalisis))
+                ModelState.AddModelError(nameof(model.TipoAnalisis), "Ingrese el tipo de análisis.");
+
+              if (string.IsNullOrWhiteSpace(model.Resultado))
+                ModelState.AddModelError(nameof(model.Resultado), "Ingrese el resultado.");
+            }
+
+            // Para RECHAZO / INDICACION_ESPECIAL, al menos algo de texto
+            if ((model.TipoEvento == "RECHAZO" || model.TipoEvento == "INDICACION_ESPECIAL") &&
+                string.IsNullOrWhiteSpace(model.Observaciones))
+            {
+              ModelState.AddModelError(nameof(model.Observaciones), "Ingrese una descripción / observación.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+              await tx.RollbackAsync();
+              await CargarCombosAsync(model);
+              return View(model);
+            }
+
+            _context.EventoGenerals.Add(new EventoGeneral
+            {
+              idAnimal = animal.Id,
+              fechaEvento = fechaEvt,
+              tipoEvento = model.TipoEvento,
+              tipoAnalisis = model.TipoEvento == "ANALISIS" ? model.TipoAnalisis : null,
+              resultado = model.TipoEvento == "ANALISIS" ? model.Resultado : null,
+              descripcion = model.Observaciones,
+              idHato = model.IdHato ?? animal.idHato,
+              usuarioId = userId
+            });
+
+            await _context.SaveChangesAsync();
+            break;
+          }
+
+      }
+
+      await tx.CommitAsync();
+
+      TempData["EventosMessage"] = "Evento registrado correctamente.";
+      return RedirectToAction(nameof(Registrar));
+    }
+
+    private async Task CargarEnfermedadesPorAnimalAsync(int? idAnimal)
+    {
+      // si no hay animal, combos vacíos
+      if (idAnimal == null)
+      {
+        ViewBag.IdEnfermedad = new SelectList(Enumerable.Empty<SelectListItem>());
+        ViewBag.IdTipoTratamiento = new SelectList(Enumerable.Empty<SelectListItem>());
+        return;
+      }
+
+      // casos (enfermedad) abiertos del animal
+      var casos = await _context.Enfermedads
+          .AsNoTracking()
+          .Include(e => e.idTipoEnfermedadNavigation)
+          .Where(e => e.idAnimal == idAnimal.Value && e.fechaRecuperacion == null)
+          .OrderByDescending(e => e.fechaDiagnostico)
+          .Select(e => new
+          {
+            e.Id,
+            Texto = $"{e.idTipoEnfermedadNavigation.nombre} ({e.fechaDiagnostico:dd/MM/yyyy})"
+          })
+          .ToListAsync();
+
+      ViewBag.IdEnfermedad = new SelectList(casos, "Id", "Texto");
+      ViewBag.IdTipoTratamiento = new SelectList(Enumerable.Empty<SelectListItem>());
+    }
+
+
+    private async Task CargarCombosPartoAsync(RegistrarEventoViewModel? model = null)
+    {
+      ViewBag.IdSexoCria = new SelectList(
+          await _context.SexoCria.OrderBy(x => x.Nombre).ToListAsync(),
+          "Id", "Nombre", model?.IdSexoCria
+      );
+
+      ViewBag.IdTipoParto = new SelectList(
+          await _context.TipoPartos.OrderBy(x => x.Nombre).ToListAsync(),
+          "Id", "Nombre", model?.IdTipoParto
+      );
+
+      ViewBag.IdEstadoCria = new SelectList(
+          await _context.EstadoCria.OrderBy(x => x.Nombre).ToListAsync(),
+          "Id", "Nombre", model?.IdEstadoCria
+      );
+    }
+
+    private static int GetMinDiasConfirmacionPrenez(string? metodo)
+    {
+      // RQ: 35 días ecografía / 60 días palpación
+      return (metodo ?? "").Trim().ToUpperInvariant() switch
+      {
+        "ECOGRAFIA" => 35,
+        "PALPACION" => 60,
+        _ => 35 // por defecto alineado al RQ (más conservador)
+      };
+    }
+
+    private async Task<string?> ValidarFechaPartoVsEventosAsync(int idRegistroReproduccion, DateTime fechaHoraParto)
+    {
+      // 1) Inseminación (fecha + hora servicio si existe)
+      var servicio = await _context.Prenezs
+          .AsNoTracking()
+          .Where(p => p.idRegistroReproduccion == idRegistroReproduccion)
+          .Select(p => new { p.fechaInseminacion, p.horaServicio })
+          .FirstOrDefaultAsync();
+
+      if (servicio?.fechaInseminacion != null)
+      {
+        var hora = servicio.horaServicio ?? new TimeOnly(0, 0);
+        var fechaHoraInsem = servicio.fechaInseminacion.Value.ToDateTime(hora);
+
+        if (fechaHoraParto < fechaHoraInsem)
+          return $"La fecha/hora de PARTO ({fechaHoraParto:dd/MM/yyyy HH:mm}) no puede ser anterior a la INSEMINACIÓN ({fechaHoraInsem:dd/MM/yyyy HH:mm}).";
+      }
+
+      // 2) Confirmación POSITIVA (última del ciclo)
+      var fechaConfPos = await _context.ConfirmacionPrenezs
+          .AsNoTracking()
+          .Where(c => c.idRegistroReproduccion == idRegistroReproduccion && c.tipo == "POSITIVA")
+          .OrderByDescending(c => c.fechaRegistro)
+          .Select(c => (DateTime?)c.fechaRegistro)
+          .FirstOrDefaultAsync();
+
+      if (fechaConfPos != null && fechaHoraParto < fechaConfPos.Value)
+        return $"La fecha/hora de PARTO ({fechaHoraParto:dd/MM/yyyy HH:mm}) no puede ser anterior a la CONFIRMACIÓN DE PREÑEZ ({fechaConfPos:dd/MM/yyyy HH:mm}).";
+
+      // 3) Seca (del ciclo)
+      var fechaSeca = await _context.Secas
+          .AsNoTracking()
+          .Where(s => s.idRegistroReproduccion == idRegistroReproduccion)
+          .OrderByDescending(s => s.fechaSeca)
+          .Select(s => (DateTime?)s.fechaSeca)
+          .FirstOrDefaultAsync();
+
+      if (fechaSeca != null && fechaHoraParto < fechaSeca.Value)
+        return $"La fecha/hora de PARTO ({fechaHoraParto:dd/MM/yyyy HH:mm}) no puede ser anterior a la SECA ({fechaSeca:dd/MM/yyyy HH:mm}).";
+
+      return null;
+    }
+    private async Task<int> GetPveDiasPorAnimalAsync(Animal animal)
+    {
+      var establoId = await _context.Hatos
+          .Where(h => h.Id == animal.idHato)
+          .Select(h => h.EstabloId)
+          .FirstOrDefaultAsync();
+
+      var pve = await _context.Establos
+          .Where(e => e.Id == establoId)
+          .Select(e => (int?)e.pveDias)
+          .FirstOrDefaultAsync();
+
+      return pve ?? 60;
+    }
+
+  }
+}

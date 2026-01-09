@@ -1,0 +1,82 @@
+﻿@model List<WebZootecPro.Data.LecturaMedidorLeche>
+@{
+    ViewData["Title"] = "Medidores de leche";
+    var desde = (string?)ViewBag.Desde;
+    var hasta = (string?)ViewBag.Hasta;
+    var procesado = (bool?)ViewBag.Procesado;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Lecturas - Medidores</h3>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" asp-action="Create">Nueva lectura</a>
+
+        <form method="post" asp-action="ProcesarPendientes">
+            @Html.AntiForgeryToken()
+            <button class="btn btn-primary" type="submit">Procesar pendientes</button>
+        </form>
+    </div>
+</div>
+
+@if (TempData["MedidorMsg"] != null)
+{
+    <div class="alert alert-info">@TempData["MedidorMsg"]</div>
+}
+
+<form method="get" class="card card-body mb-3">
+    <div class="row g-2">
+        <div class="col-md-3">
+            <label class="form-label">Desde</label>
+            <input type="date" name="desde" class="form-control" value="@desde" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Hasta</label>
+            <input type="date" name="hasta" class="form-control" value="@hasta" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Procesado</label>
+            <select class="form-select" name="procesado">
+                <option value="" selected="@(procesado == null)">(Todos)</option>
+                <option value="true" selected="@(procesado == true)">Sí</option>
+                <option value="false" selected="@(procesado == false)">No</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button class="btn btn-outline-primary w-100" type="submit">Filtrar</button>
+        </div>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Fecha/Hora</th>
+                <th>Medidor</th>
+                <th>Código Animal</th>
+                <th>IdAnimal</th>
+                <th>Kg</th>
+                <th>Ordeño</th>
+                <th>Procesado</th>
+                <th>IdProd</th>
+                <th>Obs</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var x in Model)
+            {
+                <tr>
+                    <td>@x.FechaHoraLectura.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@x.CodigoMedidor</td>
+                    <td>@x.CodigoAnimal</td>
+                    <td>@x.IdAnimal</td>
+                    <td>@x.PesoLecheKg</td>
+                    <td>@x.NumeroOrdeno</td>
+                    <td>@(x.Procesado ? "Sí" : "No")</td>
+                    <td>@x.IdRegistroProduccionLeche</td>
+                    <td>@x.Observacion</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

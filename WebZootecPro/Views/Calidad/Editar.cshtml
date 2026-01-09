@@ -1,0 +1,50 @@
+﻿@model WebZootecPro.Data.Calidad
+
+@{
+    ViewData["Title"] = "Editar calidad";
+}
+
+<h2>Editar calidad</h2>
+
+<div class="mb-2">
+    <b>Animal:</b> @ViewBag.Animal &nbsp; | &nbsp;
+    <b>Fecha:</b> @ViewBag.Fecha &nbsp; | &nbsp;
+    <b>Turno:</b> @ViewBag.Turno
+</div>
+
+<form asp-action="Editar" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="idRegistro" value="@ViewBag.IdRegistro" />
+    <input asp-for="idRegistroProduccionLeche" type="hidden" value="@ViewBag.IdRegistro" />
+
+    <div class="row">
+        <div class="col-md-2 mb-3">
+            <label asp-for="grasa" class="form-label">% Grasa</label>
+            <input asp-for="grasa" class="form-control" />
+        </div>
+
+        <div class="col-md-2 mb-3">
+            <label asp-for="proteina" class="form-label">% Proteína</label>
+            <input asp-for="proteina" class="form-control" />
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <label asp-for="solidosTotales" class="form-label">% Sólidos Totales</label>
+            <input asp-for="solidosTotales" class="form-control" />
+        </div>
+
+        <div class="col-md-2 mb-3">
+            <label asp-for="urea" class="form-label">Urea</label>
+            <input asp-for="urea" class="form-control" />
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <label asp-for="rcs" class="form-label">RCS</label>
+            <input asp-for="rcs" class="form-control" />
+        </div>
+    </div>
+
+    <button class="btn btn-primary">Guardar</button>
+    <a class="btn btn-secondary" asp-controller="Calidad" asp-action="Index">Volver</a>
+
+</form>

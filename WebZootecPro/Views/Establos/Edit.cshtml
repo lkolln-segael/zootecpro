@@ -1,0 +1,69 @@
+﻿@model WebZootecPro.Data.Establo
+@{
+    ViewData["Title"] = "Editar establo";
+    var empresaSoloLectura = (ViewBag.EmpresaSoloLectura as bool?) ?? false;
+    var empresaNombreActual = ViewBag.EmpresaNombreActual as string;
+}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Editar establo</h5>
+    </div>
+    <div class="card-body">
+        <form asp-action="Edit" method="post" novalidate>
+            <input type="hidden" asp-for="Id" />
+
+            <div class="mb-3">
+                <label asp-for="nombre" class="form-label"></label>
+                <input asp-for="nombre" class="form-control" />
+                <span asp-validation-for="nombre" class="text-danger small"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="capacidadMaxima" class="form-label"></label>
+                    <input asp-for="capacidadMaxima" class="form-control" />
+                    <span asp-validation-for="capacidadMaxima" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="areaTotal" class="form-label"></label>
+                    <input asp-for="areaTotal" class="form-control" />
+                    <span asp-validation-for="areaTotal" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="EmpresaId" class="form-label">Empresa</label>
+
+                    @if (empresaSoloLectura)
+                    {
+                        <input type="hidden" asp-for="EmpresaId" />
+                        <input class="form-control empresa-locked"
+                               value="@(!string.IsNullOrWhiteSpace(empresaNombreActual) ? empresaNombreActual : "-")"
+                               readonly />
+
+                    }
+                    else
+                    {
+                        <select asp-for="EmpresaId" asp-items="ViewBag.IdEmpresa" class="form-select">
+                            <option value="">-- Seleccione empresa --</option>
+                        </select>
+                    }
+
+                    <span asp-validation-for="EmpresaId" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ubicacion" class="form-label"></label>
+                <input asp-for="ubicacion" class="form-control" />
+                <span asp-validation-for="ubicacion" class="text-danger small"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            <a asp-action="Index" class="btn btn-outline-secondary ms-2">Volver</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

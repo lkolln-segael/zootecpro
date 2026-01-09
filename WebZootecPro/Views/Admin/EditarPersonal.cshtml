@@ -1,0 +1,86 @@
+﻿@model WebZootecPro.ViewModels.Admin.EditarPersonalViewModel
+@{
+    ViewData["Title"] = "Editar Personal";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Editar - @Model.Tipo</h5>
+    </div>
+
+    <div class="card-body">
+        <div asp-validation-summary="All" class="alert alert-danger"></div>
+
+        <form asp-action="EditarPersonal" method="post" novalidate>
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="Tipo" />
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Tipo</label>
+                    <input class="form-control" value="@Model.Tipo" readonly />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Usuario</label>
+                    <input class="form-control" value="@Model.UserName" readonly />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Nombre" class="form-label"></label>
+                    <input asp-for="Nombre" class="form-control" />
+                    <span asp-validation-for="Nombre" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Apellido" class="form-label"></label>
+                    <input asp-for="Apellido" class="form-control" />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="DNI" class="form-label"></label>
+                    <input asp-for="DNI" class="form-control" />
+                    <span asp-validation-for="DNI" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Direccion" class="form-label"></label>
+                <input asp-for="Direccion" class="form-control" />
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Provincia" class="form-label"></label>
+                    <input asp-for="Provincia" class="form-control" />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Localidad" class="form-label"></label>
+                    <input asp-for="Localidad" class="form-control" />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="CodigoPostal" class="form-label"></label>
+                    <input asp-for="CodigoPostal" class="form-control" />
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="EstabloId" class="form-label">Establo</label>
+                <select asp-for="EstabloId" asp-items="Model.Establos" class="form-select">
+                    <option value="">-- Seleccione establo --</option>
+                </select>
+                <span asp-validation-for="EstabloId" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Telefono" class="form-label"></label>
+                <input asp-for="Telefono" class="form-control" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a asp-action="Personal" class="btn btn-outline-secondary ms-2">Cancelar</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,28 @@
+@model WebZootecPro.ViewModels.Admin.CrearRolViewModel
+
+@{
+ViewData["Title"] = "Editar Rol";
+}
+
+<div class="card">
+  <div class="card-header">
+    <h5>Editar Rol</h5>
+  </div>
+
+  <div class="card-body">
+    <form asp-action="EditRol" method="post">
+      <div class="mb-3">
+        <label asp-for="Nombre" class="form-label"></label>
+        <input asp-for="Nombre" class="form-control" />
+        <span asp-validation-for="Nombre" class="text-danger"></span>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Guardar</button>
+      <a asp-action="IndexRoles" class="btn btn-secondary">Cancelar</a>
+    </form>
+  </div>
+</div>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+}

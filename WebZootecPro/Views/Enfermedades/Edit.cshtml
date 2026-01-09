@@ -1,0 +1,56 @@
+@model WebZootecPro.ViewModels.Enfermedades.CrearEnfermedadViewModel
+
+@{
+    ViewData["Title"] = "Editar Enfermedad";
+}
+
+<h2>Editar Enfermedad</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" name="id" value="@ViewBag.Id" />
+
+    <div class="form-group">
+        <label asp-for="FechaDiagnostico"></label>
+        <input asp-for="FechaDiagnostico" class="form-control" />
+        <span asp-validation-for="FechaDiagnostico" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mt-3">
+        <label asp-for="FechaRecuperacion"></label>
+        <input asp-for="FechaRecuperacion" class="form-control" />
+        <span asp-validation-for="FechaRecuperacion" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mt-3">
+        <label asp-for="IdAnimal"></label>
+        <select asp-for="IdAnimal" asp-items="Model.Animales" class="form-control">
+            <option value="">-- Seleccione un animal --</option>
+        </select>
+        <span asp-validation-for="IdAnimal" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mt-3">
+        <label asp-for="IdVeterinario"></label>
+        <select asp-for="IdVeterinario" asp-items="Model.Veterinarios" class="form-control">
+            <option value="">-- Seleccione un veterinario --</option>
+        </select>
+        <span asp-validation-for="IdVeterinario" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mt-3">
+        <label asp-for="IdTipoEnfermedad"></label>
+        <select asp-for="IdTipoEnfermedad" asp-items="Model.TipoEnfermedades" class="form-control">
+            <option value="">-- Seleccione tipo de enfermedad --</option>
+        </select>
+        <span asp-validation-for="IdTipoEnfermedad" class="text-danger"></span>
+    </div>
+
+    <br />
+
+    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}
