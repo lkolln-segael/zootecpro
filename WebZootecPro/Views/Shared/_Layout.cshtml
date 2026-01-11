@@ -1,5 +1,7 @@
 ﻿@*
-    _Layout.cshtml (ORDENADO + PERMISOS AJUSTADOS)
+    _Layout.cshtml (MODULOS: Dashboard, Producción, Reproducción, Reportes, Sanidad, Nutrición, Mantenimiento)
+    - Menú lateral con submenú flotante (hover)
+    - Permisos similares a tu layout actual, pero re-ordenado por módulos
 *@
 @using System.Security.Claims
 
@@ -14,9 +16,7 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
-
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
 
     <style>
         .sidebar-menu .nav-item.has-children {
@@ -40,7 +40,7 @@
             margin: 0;
             padding: 0.35rem 0;
             border-radius: 0 0.5rem 0.5rem 0;
-            box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.45);
+            box-shadow: 4px 4px 12px rgba(0,0,0,.45);
             display: none;
             z-index: 1200;
         }
@@ -54,7 +54,7 @@
 
                 .sidebar-submenu .nav-link:hover {
                     background-color: #0b1120;
-                    color: #ffffff;
+                    color: #fff;
                 }
 
         .sidebar-menu .nav-item.has-children:hover > .sidebar-submenu {
@@ -68,6 +68,7 @@
 
     @RenderSection("Styles", required: false)
 </head>
+
 <body class="@ViewBag.BodyClass">
     @{
         var isAuth = User?.Identity?.IsAuthenticated ?? false;
@@ -81,6 +82,14 @@
         var isVet = User.IsInRole("VETERINARIO");
 
         var roleName = isAuth ? User.FindFirst(ClaimTypes.Role)?.Value : null;
+
+        // helpers de permisos por módulo
+        bool CanOperacion() => isSuperAdmin || isAdminEmpresa || isVet || isUsuarioEmpresa;
+        bool CanReportes() => isSuperAdmin || isAdminEmpresa || isInspector || isUsuarioEmpresa || isLaboratorio || isVet;
+        bool CanSanidad() => isSuperAdmin || isAdminEmpresa || isVet || isUsuarioEmpresa;
+        bool CanNutricion() => isSuperAdmin || isAdminEmpresa;
+        bool CanAdmin() => isSuperAdmin || isAdminEmpresa;
+        bool CanLab() => isSuperAdmin || isAdminEmpresa || isLaboratorio;
     }
 
     @if (ViewBag.HideNavbar == true)
@@ -116,8 +125,8 @@
                         </a>
                     </li>
 
-                    <!-- 2) PRODUCCIÓN (operación + reportes) -->
-                    @if (isAuth && (isSuperAdmin || isAdminEmpresa || isInspector || isVet || isLaboratorio || isUsuarioEmpresa))
+                    <!-- 2) PRODUCCIÓN (leche / industria / calidad laboratorio) -->
+                    @if (isAuth && (CanOperacion() || CanReportes() || CanLab()))
                     {
                         <li class="nav-item has-children mt-2">
                             <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
@@ -125,23 +134,8 @@
                             </a>
 
                             <ul class="sidebar-submenu nav flex-column">
-                                <!-- 2.1 Operación diaria -->
-                                @if (isSuperAdmin || isAdminEmpresa || isVet || isUsuarioEmpresa)
-                                {
-                                    <li class="nav-item">
-                                        <a asp-controller="Animales" asp-action="Index" class="nav-link d-flex align-items-center">
-                                            <i class="bi bi-collection me-2"></i><span>Animales</span>
-                                        </a>
-                                    </li>
-
-                                    <li class="nav-item">
-                                        <a asp-controller="Eventos" asp-action="Registrar" class="nav-link d-flex align-items-center">
-                                            <i class="bi bi-activity me-2"></i><span>Registrar eventos</span>
-                                        </a>
-                                    </li>
-                                }
-
-                                @if (isSuperAdmin || isAdminEmpresa || isInspector || isUsuarioEmpresa)
+                                @* Producción leche *@
+                                @if (isAuth && (isSuperAdmin || isAdminEmpresa || isInspector || isUsuarioEmpresa))
                                 {
                                     <li class="nav-item">
                                         <a asp-controller="Produccion" asp-action="Index" class="nav-link d-flex align-items-center">
@@ -150,15 +144,14 @@
                                     </li>
                                 }
 
-                                <!-- 2.2 Industria -->
-                                @if (isSuperAdmin || isAdminEmpresa || isInspector || isUsuarioEmpresa)
+                                @* Industria *@
+                                @if (isAuth && (isSuperAdmin || isAdminEmpresa || isInspector || isUsuarioEmpresa))
                                 {
                                     <li class="nav-item">
                                         <a asp-controller="Produccion" asp-action="ReporteIndustria" class="nav-link d-flex align-items-center">
                                             <i class="bi bi-building me-2"></i><span>Reporte industria</span>
                                         </a>
                                     </li>
-
                                     <li class="nav-item">
                                         <a asp-controller="Produccion" asp-action="ComparativoIndustria" class="nav-link d-flex align-items-center">
                                             <i class="bi bi-arrows-left-right me-2"></i><span>Comparativo industria</span>
@@ -166,7 +159,67 @@
                                     </li>
                                 }
 
-                                <!-- 2.3 Gestión / Seguimiento -->
+                                @* Laboratorio / Calidad *@
+                                @if (isAuth && CanLab())
+                                {
+                                    <li class="nav-item">
+                                        <a asp-controller="Calidad" asp-action="Index" class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-clipboard2-pulse me-2"></i><span>Calidad</span>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </li>
+                    }
+
+                    <!-- 3) REPRODUCCIÓN (animales, machos, eventos, campañas) -->
+                    @if (isAuth && CanOperacion())
+                    {
+                        <li class="nav-item has-children mt-2">
+                            <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
+                                <i class="bi bi-heart-arrow me-2"></i><span>Reproducción</span>
+                            </a>
+
+                            <ul class="sidebar-submenu nav flex-column">
+                                <li class="nav-item">
+                                    <a asp-controller="Animales" asp-action="Index" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-collection me-2"></i><span>Animales (Hembras)</span>
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a asp-controller="Machos" asp-action="Index" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-gender-male me-2"></i><span>Machos</span>
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a asp-controller="Eventos" asp-action="Registrar" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-activity me-2"></i><span>Registrar eventos</span>
+                                    </a>
+                                </li>
+
+                                @if (isSuperAdmin || isAdminEmpresa || isUsuarioEmpresa || isLaboratorio)
+                                {
+                                    <li class="nav-item">
+                                        <a asp-controller="Campanias" asp-action="Index" class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-calendar-range me-2"></i><span>Campañas</span>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </li>
+                    }
+
+                    <!-- 4) REPORTES -->
+                    @if (isAuth && CanReportes())
+                    {
+                        <li class="nav-item has-children mt-2">
+                            <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
+                                <i class="bi bi-graph-up-arrow me-2"></i><span>Reportes</span>
+                            </a>
+
+                            <ul class="sidebar-submenu nav flex-column">
                                 @if (isSuperAdmin || isAdminEmpresa || isUsuarioEmpresa || isLaboratorio)
                                 {
                                     <li class="nav-item">
@@ -176,58 +229,35 @@
                                     </li>
 
                                     <li class="nav-item">
-                                        <a asp-controller="Campanias" asp-action="Index" class="nav-link d-flex align-items-center">
-                                            <i class="bi bi-calendar-range me-2"></i><span>Campañas</span>
+                                        <a asp-controller="Reportes" asp-action="ProduccionDiaria" class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-bar-chart me-2"></i><span>Reporte producción</span>
                                         </a>
                                     </li>
+                                }
 
+                                @if (isSuperAdmin || isAdminEmpresa)
+                                {
+                                    <li class="nav-item">
+                                        <a asp-controller="Reportes" asp-action="CostosResumen" class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-cash-coin me-2"></i><span>Reporte costos</span>
+                                        </a>
+                                    </li>
+                                }
+
+                                @if (isSuperAdmin || isAdminEmpresa || isUsuarioEmpresa || isLaboratorio)
+                                {
                                     <li class="nav-item">
                                         <a asp-controller="CalidadDiariaHato" asp-action="Index" class="nav-link d-flex align-items-center">
                                             <i class="bi bi-clipboard-data me-2"></i><span>Calidad diaria (Hato)</span>
                                         </a>
                                     </li>
-
-                                    <li class="nav-item">
-                                        <a asp-controller="Reportes" asp-action="ProduccionDiaria" class="nav-link d-flex align-items-center">
-                                            <i class="bi bi-bar-chart me-2"></i><span>Reporte Producción</span>
-                                        </a>
-                                    </li>
                                 }
 
-                                <!-- 2.4 Laboratorio -->
-                                @if (isSuperAdmin || isAdminEmpresa || isLaboratorio)
+                                @if (isSuperAdmin || isAdminEmpresa || isVet || isUsuarioEmpresa)
                                 {
                                     <li class="nav-item">
-                                        <a asp-controller="Calidad" asp-action="Index" class="nav-link d-flex align-items-center">
-                                            <i class="bi bi-clipboard2-pulse me-2"></i><span>Calidad</span>
-                                        </a>
-                                    </li>
-                                }
-
-                                <!-- 2.5 Admin / costos / RTM -->
-                                @if (isSuperAdmin || isAdminEmpresa)
-                                {
-                                    <li class="nav-item">
-                                        <a asp-controller="Reportes" asp-action="CostosResumen" class="nav-link d-flex align-items-center">
-                                            <i class="bi bi-cash-coin me-2"></i><span>Reporte Costos</span>
-                                        </a>
-                                    </li>
-
-                                    <li class="nav-item">
-                                        <a asp-controller="Costos" asp-action="Index" class="nav-link d-flex align-items-center">
-                                            <i class="bi bi-cash-coin me-2"></i><span>Costos</span>
-                                        </a>
-                                    </li>
-
-                                    <li class="nav-item">
-                                        <a asp-controller="Medidores" asp-action="Index" class="nav-link d-flex align-items-center">
-                                            <i class="bi bi-cpu me-2"></i><span>Medidores</span>
-                                        </a>
-                                    </li>
-
-                                    <li class="nav-item">
-                                        <a asp-controller="AlimentacionRtm" asp-action="Entregas" class="nav-link d-flex align-items-center">
-                                            <i class="bi bi-basket3 me-2"></i><span>Alimentación (RTM)</span>
+                                        <a asp-controller="Reportes" asp-action="Enfermeria" class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-hospital me-2"></i><span>Enfermería</span>
                                         </a>
                                     </li>
                                 }
@@ -235,8 +265,8 @@
                         </li>
                     }
 
-                    <!-- 3) SANIDAD -->
-                    @if (isAuth && (isSuperAdmin || isAdminEmpresa || isVet || isUsuarioEmpresa))
+                    <!-- 5) SANIDAD -->
+                    @if (isAuth && CanSanidad())
                     {
                         <li class="nav-item has-children mt-2">
                             <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
@@ -249,34 +279,56 @@
                                         <i class="bi bi-bug me-2"></i><span>Enfermedades</span>
                                     </a>
                                 </li>
+
                                 <li class="nav-item">
                                     <a asp-controller="Tratamientos" asp-action="Index" class="nav-link d-flex align-items-center">
                                         <i class="bi bi-capsule-pill me-2"></i><span>Tratamientos</span>
                                     </a>
                                 </li>
+
                                 <li class="nav-item">
                                     <a asp-controller="Tratamientos" asp-action="RetiroLeche" class="nav-link d-flex align-items-center">
                                         <i class="bi bi-droplet-half me-2"></i><span>Retiro de leche</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a asp-controller="Reportes" asp-action="Enfermeria" class="nav-link d-flex align-items-center">
-                                        <i class="bi bi-hospital me-2"></i><span>Enfermería</span>
                                     </a>
                                 </li>
                             </ul>
                         </li>
                     }
 
-                    <!-- 4) ADMINISTRACIÓN -->
-                    @if (isAuth && (isSuperAdmin || isAdminEmpresa))
+                    <!-- 6) NUTRICIÓN -->
+                    @if (isAuth && CanNutricion())
                     {
                         <li class="nav-item has-children mt-2">
                             <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
-                                <i class="bi bi-building-gear me-2"></i><span>Administración</span>
+                                <i class="bi bi-basket3 me-2"></i><span>Nutrición</span>
                             </a>
 
                             <ul class="sidebar-submenu nav flex-column">
+                                <li class="nav-item">
+                                    <a asp-controller="AlimentacionRtm" asp-action="Entregas" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-basket3 me-2"></i><span>Alimentación (RTM)</span>
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a asp-controller="Medidores" asp-action="Index" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-cpu me-2"></i><span>Medidores</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+
+                    <!-- 7) MANTENIMIENTO -->
+                    @if (isAuth && CanAdmin())
+                    {
+                        <li class="nav-item has-children mt-2">
+                            <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
+                                <i class="bi bi-tools me-2"></i><span>Mantenimiento</span>
+                            </a>
+
+                            <ul class="sidebar-submenu nav flex-column">
+                                @* Administración base *@
                                 @if (isSuperAdmin)
                                 {
                                     <li class="nav-item">
@@ -285,63 +337,65 @@
                                         </a>
                                     </li>
                                 }
+
                                 <li class="nav-item">
                                     <a asp-controller="Admin" asp-action="Personal" class="nav-link d-flex align-items-center">
                                         <i class="bi bi-people me-2"></i><span>Personal</span>
                                     </a>
                                 </li>
+
                                 <li class="nav-item">
                                     <a asp-controller="Establos" asp-action="Index" class="nav-link d-flex align-items-center">
                                         <i class="bi bi-buildings me-2"></i><span>Establos</span>
                                     </a>
                                 </li>
+
                                 <li class="nav-item">
                                     <a asp-controller="Hatos" asp-action="Index" class="nav-link d-flex align-items-center">
                                         <i class="bi bi-diagram-3 me-2"></i><span>Hatos</span>
                                     </a>
                                 </li>
-                            </ul>
-                        </li>
-                    }
 
-                    <!-- 5) MANTENIMIENTO -->
-                    @if (isAuth && (isSuperAdmin || isAdminEmpresa))
-                    {
-                        <li class="nav-item has-children mt-2">
-                            <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
-                                <i class="bi bi-tools me-2"></i><span>Mantenimiento</span>
-                            </a>
-
-                            <ul class="sidebar-submenu nav flex-column">
+                                @* Catálogos *@
                                 <li class="nav-item">
                                     <a asp-controller="Admin" asp-action="IndexEspecialidades" class="nav-link d-flex align-items-center">
-                                        <i class="bi bi-people me-2"></i><span>Especialidades</span>
+                                        <i class="bi bi-person-workspace me-2"></i><span>Especialidades</span>
                                     </a>
                                 </li>
+
                                 <li class="nav-item">
                                     <a asp-controller="Admin" asp-action="IndexRoles" class="nav-link d-flex align-items-center">
                                         <i class="bi bi-person-badge me-2"></i><span>Roles</span>
                                     </a>
                                 </li>
+
                                 <li class="nav-item">
                                     <a asp-controller="Admin" asp-action="IndexTipoEnfermedad" class="nav-link d-flex align-items-center">
-                                        <i class="bi bi-lungs me-2"></i><span>Tipo de enfermedades</span>
+                                        <i class="bi bi-lungs me-2"></i><span>Tipos de enfermedades</span>
                                     </a>
                                 </li>
+
                                 <li class="nav-item">
                                     <a asp-controller="Admin" asp-action="IndexSintoma" class="nav-link d-flex align-items-center">
                                         <i class="bi bi-virus me-2"></i><span>Síntomas</span>
                                     </a>
                                 </li>
+
                                 <li class="nav-item">
                                     <a asp-controller="Admin" asp-action="IndexTipoTratamiento" class="nav-link d-flex align-items-center">
-                                        <i class="bi bi-hospital me-2"></i><span>Tipo de tratamientos</span>
+                                        <i class="bi bi-hospital me-2"></i><span>Tipos de tratamientos</span>
+                                    </a>
+                                </li>
+
+                                @* Costos *@
+                                <li class="nav-item">
+                                    <a asp-controller="Costos" asp-action="Index" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-cash-coin me-2"></i><span>Costos</span>
                                     </a>
                                 </li>
                             </ul>
                         </li>
                     }
-
                 </ul>
 
                 <hr class="border-secondary opacity-25 my-2" />
@@ -352,6 +406,7 @@
                         <div class="rounded-circle bg-secondary d-flex justify-content-center align-items-center me-2" style="width:32px;height:32px;">
                             <i class="bi bi-person"></i>
                         </div>
+
                         <div class="flex-grow-1">
                             <div class="small">@User.Identity!.Name</div>
                             @if (!string.IsNullOrWhiteSpace(roleName))

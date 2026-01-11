@@ -24,6 +24,7 @@
                         <th class="text-center">Cap. máx.</th>
                         <th class="text-center">Área total (ha)</th>
                         <th>Empresa</th>
+                        <th>PVE</th>
                         <th class="text-end">Acciones</th>
                     </tr>
                 </thead>
@@ -48,6 +49,9 @@
                             </td>
                             <td>
                                 @nombreEmpresa
+                            </td>
+                            <td>
+                                @item.pveDias
                             </td>
                             <td class="text-end">
                                 <a asp-action="Edit" asp-route-id="@item.Id"

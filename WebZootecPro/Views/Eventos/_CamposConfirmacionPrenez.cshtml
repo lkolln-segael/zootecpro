@@ -1,26 +1,42 @@
 ﻿@model WebZootecPro.ViewModels.Eventos.RegistrarEventoViewModel
 
 <div class="row g-3">
-
-    <div class="col-lg-3 col-md-6">
-        <label asp-for="ConfirmacionTipo" class="form-label"></label>
+    <div class="col-md-4">
+        <label class="form-label">Resultado</label>
         <select asp-for="ConfirmacionTipo" class="form-select">
             <option value="">-- Seleccione --</option>
-            <option value="POSITIVA">POSITIVA</option>
-            <option value="NEGATIVA">NEGATIVA</option>
+            <option value="POSITIVA">Positiva</option>
+            <option value="NEGATIVA">Negativa</option>
         </select>
         <span asp-validation-for="ConfirmacionTipo" class="text-danger small"></span>
     </div>
 
-    <div class="col-lg-4 col-md-6">
-        <label asp-for="ConfirmacionMetodo" class="form-label"></label>
+    <div class="col-md-4">
+        <label class="form-label">Método</label>
         <select asp-for="ConfirmacionMetodo" class="form-select">
-            <option value="">-- Seleccione método --</option>
-            <option value="ECOGRAFIA">ECOGRAFIA</option>
-            <option value="PALPACION">PALPACION</option>
-            <option value="PRUEBA_LECHE_SANGRE">PRUEBA_LECHE_SANGRE</option>
+            <option value="">-- Seleccione --</option>
+            <option value="ECOGRAFIA">Ecografía</option>
+            <option value="PALPACION">Palpación</option>
         </select>
         <span asp-validation-for="ConfirmacionMetodo" class="text-danger small"></span>
     </div>
 
+    <div class="col-md-4">
+        <label class="form-label">Fecha inseminación</label>
+        <input class="form-control" value="@ViewBag.FechaInseminacion" readonly style="background-color: rgba(15, 23, 42, 0.96)" />
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Fecha probable de parto</label>
+        <input class="form-control" value="@ViewBag.FechaProbParto" readonly style="background-color: rgba(15, 23, 42, 0.96)" />
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Fecha de seca calculada (Parto - 60)</label>
+        <input class="form-control" value="@ViewBag.FechaSecaCalc" readonly style="background-color: rgba(15, 23, 42, 0.96)" />
+    </div>
+
+    <div class="col-12">
+        <div class="form-text">Validación: mínimo 35 días desde la inseminación.</div>
+    </div>
 </div>

@@ -1,0 +1,33 @@
+﻿@model WebZootecPro.Data.Animal
+
+@{
+    ViewData["Title"] = "Eliminar macho";
+}
+
+<h2>Eliminar macho</h2>
+
+<div class="alert alert-warning">
+    <strong>Atención:</strong> Vas a eliminar este macho. Esta acción no se puede deshacer.
+</div>
+
+<div class="card p-3 mb-3">
+    <dl class="row mb-0">
+        <dt class="col-sm-3">Nombre</dt>
+        <dd class="col-sm-9">@Model.nombre</dd>
+
+        <dt class="col-sm-3">Arete</dt>
+        <dd class="col-sm-9">@Model.arete</dd>
+
+        <dt class="col-sm-3">NAAB</dt>
+        <dd class="col-sm-9">@Model.naab</dd>
+
+    </dl>
+</div>
+
+<form asp-action="Delete" method="post" class="d-flex gap-2">
+    <input type="hidden" asp-for="Id" />
+    <button class="btn btn-danger">
+        <i class="bi bi-trash3"></i> Eliminar
+    </button>
+    <a class="btn btn-outline-secondary" asp-action="Index">Cancelar</a>
+</form>

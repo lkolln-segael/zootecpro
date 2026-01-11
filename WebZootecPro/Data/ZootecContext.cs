@@ -125,6 +125,7 @@ public partial class ZootecContext : DbContext
 
     public virtual DbSet<vw_TratamientosEnfermerium> vw_TratamientosEnfermeria { get; set; }
 
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Aborto>(entity =>
@@ -151,6 +152,16 @@ public partial class ZootecContext : DbContext
 
         modelBuilder.Entity<Animal>(entity =>
         {
+            entity.HasIndex(e => e.naab, "UX_Animal_NAAB")
+                .IsUnique()
+                .HasFilter("([naab] IS NOT NULL)");
+
+            entity.HasIndex(e => e.arete, "UX_Animal_arete")
+                .IsUnique()
+                .HasFilter("([arete] IS NOT NULL)");
+
+            entity.HasOne(d => d.IdCategoriaAnimalNavigation).WithMany(p => p.Animals).HasConstraintName("FK_Animal_CategoriaAnimal");
+
             entity.HasOne(d => d.estado).WithMany(p => p.Animals).HasConstraintName("FK_Animal_EstadoAnimal");
 
             entity.HasOne(d => d.estadoProductivo).WithMany(p => p.Animals).HasConstraintName("FK_Animal_EstadoProductivo");

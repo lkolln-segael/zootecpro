@@ -24,13 +24,9 @@
                 </div>
 
                 <div class="col-12 col-md-6 col-lg-3">
-                    <label asp-for="sexo" class="form-label">Sexo</label>
-                    <select asp-for="sexo" class="form-select">
-                        <option value="">-- Seleccione --</option>
-                        <option value="HEMBRA">HEMBRA</option>
-                        <option value="MACHO">MACHO</option>
-                    </select>
-                    <span asp-validation-for="sexo" class="text-danger small"></span>
+                    <label class="form-label">Sexo</label>
+                    <input class="form-control" value="HEMBRA" readonly style="background-color: rgba(15, 23, 42, 0.96)" />
+                    <input asp-for="sexo" type="hidden" value="HEMBRA" />
                 </div>
 
                 <div class="col-12 col-md-6 col-lg-3">
@@ -38,6 +34,13 @@
                     <input asp-for="codigo" class="form-control" />
                     <span asp-validation-for="codigo" class="text-danger small"></span>
                 </div>
+
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label asp-for="arete" class="form-label">Arete</label>
+                    <input asp-for="arete" class="form-control"  required/>
+                    <span asp-validation-for="arete" class="text-danger small"></span>
+                </div>
+
 
                 <!-- 2da fila (4 columnas) -->
                 <div class="col-12 col-md-6 col-lg-3">
@@ -112,6 +115,13 @@
                         <option value="">-- Seleccione --</option>
                     </select>
                 </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label class="form-label">Categoría</label>
+                    <select asp-for="IdCategoriaAnimal" asp-items="ViewBag.IdCategoriaAnimal" class="form-select">
+                        <option value="">-- Seleccione --</option>
+                    </select>
+                </div>
+
 
                 <!-- (opcional) hueco para que no se “descuadre” en 4 columnas -->
                 <div class="col-12 col-md-6 col-lg-3"></div>

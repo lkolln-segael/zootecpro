@@ -141,7 +141,7 @@ namespace WebZootecPro.Controllers
 
             ViewBag.IdEmpresa = new SelectList(empresas, "Id", "NombreEmpresa");
 
-            var model = new Establo();
+            var model = new Establo { pveDias = 60 };
 
             // Si es ADMIN_EMPRESA y solo tiene 1 empresa, la fijamos automático (sin dropdown)
             if (!IsSuperAdmin && empresas.Count == 1)
@@ -169,15 +169,14 @@ namespace WebZootecPro.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Establo establo)
         {
+
             ModelState.Remove(nameof(Establo.Empresa));
             ModelState.Remove(nameof(Establo.Usuarios));
             ModelState.Remove(nameof(Establo.Hatos));
 
-            // Default y validación simple
             establo.pveDias ??= 60;
-            if (establo.pveDias < 0 || establo.pveDias > 365)
-                ModelState.AddModelError(nameof(establo.pveDias), "P.V.E debe estar entre 0 y 365 días.");
-
+            if (establo.pveDias < 50 || establo.pveDias > 70)
+                ModelState.AddModelError(nameof(establo.pveDias), "P.V.E debe estar entre 50 y 70 días.");
 
             if (establo.EmpresaId <= 0)
                 ModelState.AddModelError(nameof(establo.EmpresaId), "Debe seleccionar una empresa.");
@@ -262,8 +261,12 @@ namespace WebZootecPro.Controllers
         {
             if (id == null) return NotFound();
 
+
             var establo = await QueryEstablosVisibles()
                 .FirstOrDefaultAsync(e => e.Id == id.Value);
+
+            if (establo.pveDias == null) establo.pveDias = 60;
+
 
             if (establo == null) return NotFound();
 
@@ -308,6 +311,13 @@ namespace WebZootecPro.Controllers
                     ModelState.AddModelError(nameof(establo.EmpresaId), "Empresa inválida.");
             }
 
+            // ✅ Default + validación PVE (50–70)
+            establo.pveDias ??= 60;
+            if (establo.pveDias < 50 || establo.pveDias > 70)
+                ModelState.AddModelError(nameof(establo.pveDias), "P.V.E debe estar entre 50 y 70 días.");
+
+
+
             if (!ModelState.IsValid)
             {
                 var empresas = await QueryEmpresasVisibles()
@@ -323,11 +333,7 @@ namespace WebZootecPro.Controllers
                 return View(establo);
             }
 
-            establo.pveDias ??= 60;
-            if (establo.pveDias < 0 || establo.pveDias > 365)
-            {
-                ModelState.AddModelError(nameof(establo.pveDias), "P.V.E debe estar entre 0 y 365 días.");
-            }
+            
 
             _context.Update(establo);
             await _context.SaveChangesAsync();

@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace WebZootecPro.Data;
 
 [Table("Animal")]
+[Index("IdCategoriaAnimal", Name = "IX_Animal_IdCategoriaAnimal")]
 [Index("codigo", Name = "IX_Animal_codigo")]
 [Index("idHato", Name = "IX_Animal_idHato")]
 [Index("idMadre", Name = "IX_Animal_idMadre")]
@@ -59,6 +60,14 @@ public partial class Animal
 
     public int? estadoProductivoId { get; set; }
 
+    public int? IdCategoriaAnimal { get; set; }
+
+    [StringLength(30)]
+    public string? arete { get; set; }
+
+    [StringLength(20)]
+    public string? naab { get; set; }
+
     [InverseProperty("idAnimalNavigation")]
     public virtual ICollection<Alimentacion> Alimentacions { get; set; } = new List<Alimentacion>();
 
@@ -70,6 +79,10 @@ public partial class Animal
 
     [InverseProperty("idAnimalNavigation")]
     public virtual ICollection<EventoGeneral> EventoGenerals { get; set; } = new List<EventoGeneral>();
+
+    [ForeignKey("IdCategoriaAnimal")]
+    [InverseProperty("Animals")]
+    public virtual CategoriaAnimal? IdCategoriaAnimalNavigation { get; set; }
 
     [InverseProperty("idMadreNavigation")]
     public virtual ICollection<Animal> InverseidMadreNavigation { get; set; } = new List<Animal>();

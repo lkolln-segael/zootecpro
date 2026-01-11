@@ -2,7 +2,7 @@
 
   <h2>Animales</h2>
 
-  @if (User.IsInRole("SUPERADMIN") || User.IsInRole("ADMIN_EMPRESA"))
+@if (User.IsInRole("SUPERADMIN") || User.IsInRole("ADMIN_EMPRESA") || User.IsInRole("USUARIO_EMPRESA"))
   {
   <a asp-action="Create" class="btn btn-success mb-3">+ Nuevo</a>
   }
@@ -13,7 +13,6 @@
         <th>Código</th>
         <th>Nombre</th>
         <th>Sexo</th>
-        <th>Hato</th>
         <th>Edad</th>
         <th>N° Partos</th>
         <th>Padre</th>
@@ -30,7 +29,6 @@
         <td>@(a.Codigo ?? "-")</td>
         <td>@(a.Nombre ?? "-")</td>
         <td>@(a.Sexo ?? "-")</td>
-        <td>@a.Hato</td>
         <td>@a.EdadTexto</td>
         <td>@a.NumeroPartos</td>
         <td>@a.Padre</td>
@@ -40,7 +38,7 @@
         <td>
           <a asp-action="Details" asp-route-id="@a.Id" class="btn btn-info btn-sm">Ver</a>
 
-          @if (User.IsInRole("SUPERADMIN") || User.IsInRole("ADMIN_EMPRESA"))
+                    @if (User.IsInRole("SUPERADMIN") || User.IsInRole("ADMIN_EMPRESA") || User.IsInRole("USUARIO_EMPRESA"))
           {
           <a asp-action="Edit" asp-route-id="@a.Id" class="btn btn-warning btn-sm">Editar</a>
           <a asp-action="Delete" asp-route-id="@a.Id" class="btn btn-danger btn-sm">Eliminar</a>

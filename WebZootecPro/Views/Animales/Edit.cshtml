@@ -22,12 +22,9 @@
                 </div>
 
                 <div class="col-md-3 mb-3">
-                    <label asp-for="sexo" class="form-label">Sexo</label>
-                    <select asp-for="sexo" class="form-select">
-                        <option value="">-- Seleccione --</option>
-                        <option value="HEMBRA">HEMBRA</option>
-                        <option value="MACHO">MACHO</option>
-                    </select>
+                    <label class="form-label">Sexo</label>
+                    <input class="form-control" value="HEMBRA" readonly style="background-color: rgba(15, 23, 42, 0.96)" />
+                    <input asp-for="sexo" type="hidden" value="HEMBRA" />
                 </div>
 
                 <div class="col-md-3 mb-3">
@@ -35,6 +32,13 @@
                     <input asp-for="codigo" class="form-control" />
                 </div>
             </div>
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label asp-for="arete" class="form-label">Arete</label>
+                    <input asp-for="arete" class="form-control" required/>
+                </div>
+            </div>
+
 
             <div class="row">
                 <div class="col-md-4 mb-3">
@@ -67,9 +71,7 @@
 
                 <div class="col-md-4 mb-3">
                     <label asp-for="idHato" class="form-label">Hato</label>
-                    <select asp-for="idHato" asp-items="ViewBag.IdHato" class="form-select">
-                        <option value="">-- Seleccione --</option>
-                    </select>
+                    <select asp-for="idHato" asp-items="ViewBag.idHato" class="form-select"></select>
                 </div>
             </div>
 
@@ -111,6 +113,15 @@
                     </select>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Categoría</label>
+                    <select asp-for="IdCategoriaAnimal" asp-items="ViewBag.IdCategoriaAnimal" class="form-select">
+                        <option value="">-- Seleccione --</option>
+                    </select>
+                </div>
+            </div>
+
 
             <hr class="my-3" />
 

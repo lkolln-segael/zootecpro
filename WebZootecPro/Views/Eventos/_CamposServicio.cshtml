@@ -1,38 +1,100 @@
 ﻿@model WebZootecPro.ViewModels.Eventos.RegistrarEventoViewModel
+@{
+    var toros = ViewBag.Toros as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+}
 
 <div class="row g-3">
+    <div class="col-12">
+        <label class="form-label">Tipo de servicio</label>
+        <div class="d-flex gap-3">
+            <label class="form-check">
+                <input class="form-check-input" type="radio" name="TipoServicio" value="IA" @(Model.TipoServicio != "MONTA" ? "checked" : "") />
+                <span class="form-check-label">Inseminación Artificial (IA)</span>
+            </label>
+            <label class="form-check">
+                <input class="form-check-input" type="radio" name="TipoServicio" value="MONTA" @(Model.TipoServicio == "MONTA" ? "checked" : "") />
+                <span class="form-check-label">Monta Natural</span>
+            </label>
+        </div>
+    </div>
 
-  <div class="col-lg-3 col-md-6">
-    <label asp-for="HoraServicio" class="form-label"></label>
-    <input asp-for="HoraServicio" type="time" class="form-control" />
-    <span asp-validation-for="HoraServicio" class="text-danger small"></span>
-  </div>
+    <div class="col-md-6">
+        <label class="form-label">Toro (lista de machos)</label>
 
-  <div class="col-lg-6 col-md-12">
-    <label asp-for="IdPadreAnimal" class="form-label">Toro (si está registrado)</label>
-    <select id="idPadreAnimal" asp-for="IdPadreAnimal" asp-items="ViewBag.IdPadreAnimal" class="form-select">
-      <option value="">-- Seleccione toro (opcional) --</option>
-    </select>
-    <span asp-validation-for="IdPadreAnimal" class="text-danger small"></span>
-  </div>
+        <select asp-for="IdPadreAnimal" class="form-select" id="IdPadreAnimal">
+            <option value="">-- Seleccione toro --</option>
+            @foreach (var t in toros)
+            {
+                var selected = (Model.IdPadreAnimal != null && (int)Model.IdPadreAnimal == (int)t.Id) ? "selected" : null;
+                <option value="@t.Id" data-naab="@t.naab" data-nombre="@t.nombre" selected="@selected">
+                    @((t.arete ?? "-") + " - " + t.nombre)
+                </option>
+            }
+        </select>
 
-  <div class="col-lg-6 col-md-12">
-    <label asp-for="NombreToro" class="form-label"></label>
-    <input id="nombreToro" asp-for="NombreToro" class="form-control"
-      placeholder="Ej: TORO X (si no está en el sistema)" />
-    <span asp-validation-for="NombreToro" class="text-danger small"></span>
-  </div>
+        <span asp-validation-for="IdPadreAnimal" class="text-danger small"></span>
+    </div>
 
-  <div class="col-lg-3 col-md-6">
-    <label asp-for="CodigoNaab" class="form-label"></label>
-    <input asp-for="CodigoNaab" class="form-control" placeholder="Ej: 7HO12345" />
-    <span asp-validation-for="CodigoNaab" class="text-danger small"></span>
-  </div>
+    <div class="col-md-6" id="bloqueIA">
+        <label class="form-label">NAAB</label>
+        <input asp-for="CodigoNaab" class="form-control" id="CodigoNaab" />
+        <span asp-validation-for="CodigoNaab" class="text-danger small"></span>
+    </div>
 
-  <div class="col-lg-6 col-md-12">
-    <label asp-for="Protocolo" class="form-label"></label>
-    <input asp-for="Protocolo" class="form-control" placeholder="Ej: Ovsynch / Presynch / etc" />
-    <span asp-validation-for="Protocolo" class="text-danger small"></span>
-  </div>
+    <div class="col-md-6" id="bloqueNombreToro">
+        <label class="form-label">Nombre del toro</label>
+        <input asp-for="NombreToro" class="form-control" id="NombreToro" style="background-color: rgba(15, 23, 42, 0.96)" />
+        <span asp-validation-for="NombreToro" class="text-danger small"></span>
+    </div>
 
+    <div class="col-md-6" id="bloqueProtocolo">
+        <label class="form-label">Protocolo reproductivo</label>
+        <select asp-for="Protocolo" asp-items="ViewBag.Protocolos" class="form-select" id="Protocolo">
+            <option value="">-- Seleccione --</option>
+        </select>
+        <span asp-validation-for="Protocolo" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Fecha probable de parto (Fecha + 279)</label>
+        <input class="form-control" id="FechaProbPartoCalc" readonly style="background-color: rgba(15, 23, 42, 0.96)" />
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Fecha probable de seca (Parto - 60)</label>
+        <input class="form-control" id="FechaProbSecaCalc" readonly style="background-color: rgba(15, 23, 42, 0.96)" />
+    </div>
+    <div class="col-md-3" id="bloqueHoraServicio">
+        <label asp-for="HoraServicio" class="form-label"></label>
+        <input asp-for="HoraServicio" type="time" class="form-control" />
+        <span asp-validation-for="HoraServicio" class="text-danger small"></span>
+    </div>
+
+
+    <div class="col-12">
+        <div class="form-text">Monta Natural: solo fecha del evento + toro. IA: NAAB + protocolo.</div>
+    </div>
 </div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.addEventListener("change", (e) => {
+          if (e.target && e.target.id === "IdPadreAnimal") {
+            const opt = e.target.selectedOptions?.[0];
+            const naab = opt?.dataset?.naab || "";
+            const nombre = opt?.dataset?.nombre || "";
+
+            const naabInput = document.getElementById("CodigoNaab");
+            const nombreInput = document.getElementById("NombreToro");
+
+            if (naabInput) naabInput.value = naab;
+            if (nombreInput) nombreInput.value = nombre;
+
+            // Si eligió toro, deshabilita nombre manual
+            if (nombreInput) nombreInput.disabled = (e.target.value !== "");
+          }
+        });
+    </script>
+
+}

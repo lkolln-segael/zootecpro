@@ -1,345 +1,353 @@
 ﻿@model WebZootecPro.ViewModels.Produccion.RegistrarProduccionViewModel
 
 @{
-ViewData["Title"] = "Registrar producción de leche";
+    ViewData["Title"] = "Registrar producción de leche";
 }
 
 <h2>@ViewData["Title"]</h2>
 
 <form asp-action="Registrar" method="post">
 
-  <div class="mb-3">
-    <label asp-for="IdAnimal" class="form-label"></label>
-    <select asp-for="IdAnimal" class="form-select" asp-items="ViewBag.IdAnimal"></select>
-    <span asp-validation-for="IdAnimal" class="text-danger"></span>
-  </div>
-
-  <div class="row">
-    <div class="col-md-4 mb-3">
-      <label asp-for="FechaOrdeno" class="form-label"></label>
-      <input asp-for="FechaOrdeno" class="form-control" type="date" />
-      <span asp-validation-for="FechaOrdeno" class="text-danger"></span>
+    <div class="mb-3">
+        <label asp-for="IdAnimal" class="form-label"></label>
+        <select asp-for="IdAnimal" class="form-select" asp-items="ViewBag.IdAnimal"></select>
+        <span asp-validation-for="IdAnimal" class="text-danger"></span>
     </div>
 
-    <div class="col-md-4 mb-3">
-      <label asp-for="Turno" class="form-label"></label>
-      <select id="turno" asp-for="Turno" class="form-select">
-        <option value="MAÑANA">Mañana</option>
-        <option value="TARDE">Tarde</option>
-        <option value="NOCHE">Noche</option>
-      </select>
-      <span asp-validation-for="Turno" class="text-danger"></span>
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="FechaOrdeno" class="form-label"></label>
+            <input asp-for="FechaOrdeno" class="form-control" type="date" />
+            <span asp-validation-for="FechaOrdeno" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="Turno" class="form-label"></label>
+            <select id="turno" asp-for="Turno" class="form-select">
+                <option value="MAÑANA">Mañana</option>
+                <option value="TARDE">Tarde</option>
+                <option value="NOCHE">Noche</option>
+            </select>
+            <span asp-validation-for="Turno" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Fuente" class="form-label"></label>
+            <select asp-for="Fuente" class="form-select" asp-items="ViewBag.Fuentes">
+                <option value="">-- Seleccione --</option>
+            </select>
+            <span asp-validation-for="Fuente" class="text-danger"></span>
+        </div>
+
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="DiasEnLeche" class="form-label"></label>
+            <input asp-for="DiasEnLeche" class="form-control" readonly />
+        </div>
     </div>
 
-    <div class="col-md-4 mb-3">
-      <label asp-for="DiasEnLeche" class="form-label"></label>
-      <input asp-for="DiasEnLeche" class="form-control" readonly />
-    </div>
-  </div>
+    <hr />
 
-  <hr />
+    <h5>Fases del ordeño (horas)</h5>
+    <div class="row">
+        <div class="col-md-2 mb-3">
+            <label asp-for="HoraPreparacion" class="form-label"></label>
+            <input id="horaPreparacion" asp-for="HoraPreparacion" class="form-control" type="time" />
+            <span asp-validation-for="HoraPreparacion" class="text-danger"></span>
+        </div>
 
-  <h5>Fases del ordeño (horas)</h5>
-  <div class="row">
-    <div class="col-md-2 mb-3">
-      <label asp-for="HoraPreparacion" class="form-label"></label>
-      <input id="horaPreparacion" asp-for="HoraPreparacion" class="form-control" type="time" />
-      <span asp-validation-for="HoraPreparacion" class="text-danger"></span>
-    </div>
+        <div class="col-md-2 mb-3">
+            <label asp-for="HoraLimpieza" class="form-label"></label>
+            <input id="horaLimpieza" asp-for="HoraLimpieza" class="form-control" type="time" />
+            <span asp-validation-for="HoraLimpieza" class="text-danger"></span>
+        </div>
 
-    <div class="col-md-2 mb-3">
-      <label asp-for="HoraLimpieza" class="form-label"></label>
-      <input id="horaLimpieza" asp-for="HoraLimpieza" class="form-control" type="time" />
-      <span asp-validation-for="HoraLimpieza" class="text-danger"></span>
-    </div>
+        <div class="col-md-2 mb-3">
+            <label asp-for="HoraDespunte" class="form-label"></label>
+            <input id="horaDespunte" asp-for="HoraDespunte" class="form-control" type="time" />
+            <span asp-validation-for="HoraDespunte" class="text-danger"></span>
+        </div>
 
-    <div class="col-md-2 mb-3">
-      <label asp-for="HoraDespunte" class="form-label"></label>
-      <input id="horaDespunte" asp-for="HoraDespunte" class="form-control" type="time" />
-      <span asp-validation-for="HoraDespunte" class="text-danger"></span>
-    </div>
+        <div class="col-md-2 mb-3">
+            <label asp-for="HoraColocacionPezoneras" class="form-label"></label>
+            <input id="horaColocacion" asp-for="HoraColocacionPezoneras" class="form-control" type="time" />
+            <span asp-validation-for="HoraColocacionPezoneras" class="text-danger"></span>
+        </div>
 
-    <div class="col-md-2 mb-3">
-      <label asp-for="HoraColocacionPezoneras" class="form-label"></label>
-      <input id="horaColocacion" asp-for="HoraColocacionPezoneras" class="form-control" type="time" />
-      <span asp-validation-for="HoraColocacionPezoneras" class="text-danger"></span>
-    </div>
+        <div class="col-md-2 mb-3">
+            <label asp-for="HoraInicio" class="form-label"></label>
+            <input id="horaInicio" asp-for="HoraInicio" class="form-control" type="time" />
+            <span asp-validation-for="HoraInicio" class="text-danger"></span>
+        </div>
 
-    <div class="col-md-2 mb-3">
-      <label asp-for="HoraInicio" class="form-label"></label>
-      <input id="horaInicio" asp-for="HoraInicio" class="form-control" type="time" />
-      <span asp-validation-for="HoraInicio" class="text-danger"></span>
-    </div>
-
-    <div class="col-md-2 mb-3">
-      <label asp-for="HoraFin" class="form-label"></label>
-      <input id="horaFin" asp-for="HoraFin" class="form-control" type="time" />
-      <span asp-validation-for="HoraFin" class="text-danger"></span>
-    </div>
-  </div>
-
-  <hr />
-
-  <div class="row">
-    <div class="col-md-3 mb-3">
-      <label asp-for="CantidadTotal" class="form-label"></label>
-      <input id="cantidadTotal" asp-for="CantidadTotal" class="form-control text-dark" disabled />
-      <span asp-validation-for="CantidadTotal" class="text-danger"></span>
+        <div class="col-md-2 mb-3">
+            <label asp-for="HoraFin" class="form-label"></label>
+            <input id="horaFin" asp-for="HoraFin" class="form-control" type="time" />
+            <span asp-validation-for="HoraFin" class="text-danger"></span>
+        </div>
     </div>
 
-    <div class="col-md-3 mb-3">
-      <label asp-for="CantidadIndustria" class="form-label"></label>
-      <input id="cantidadIndustria" asp-for="CantidadIndustria" class="form-control" />
+    <hr />
+
+    <div class="row">
+        <div class="col-md-3 mb-3">
+            <label asp-for="CantidadTotal" class="form-label"></label>
+            <input id="cantidadTotal" asp-for="CantidadTotal" class="form-control text-dark" disabled />
+            <span asp-validation-for="CantidadTotal" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <label asp-for="CantidadIndustria" class="form-label"></label>
+            <input id="cantidadIndustria" asp-for="CantidadIndustria" class="form-control" />
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <label asp-for="CantidadTerneros" class="form-label"></label>
+            <input id="cantidadTerneros" asp-for="CantidadTerneros" class="form-control" />
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <label asp-for="CantidadDescartada" class="form-label"></label>
+            <input id="cantidadDescartada" asp-for="CantidadDescartada" class="form-control" />
+        </div>
     </div>
 
-    <div class="col-md-3 mb-3">
-      <label asp-for="CantidadTerneros" class="form-label"></label>
-      <input id="cantidadTerneros" asp-for="CantidadTerneros" class="form-control" />
+    <div class="mb-3">
+        <label asp-for="CantidadVentaDirecta" class="form-label"></label>
+        <input id="cantidadVentaDirecta" asp-for="CantidadVentaDirecta" class="form-control" />
     </div>
 
-    <div class="col-md-3 mb-3">
-      <label asp-for="CantidadDescartada" class="form-label"></label>
-      <input id="cantidadDescartada" asp-for="CantidadDescartada" class="form-control" />
-    </div>
-  </div>
-
-  <div class="mb-3">
-    <label asp-for="CantidadVentaDirecta" class="form-label"></label>
-    <input id="cantidadVentaDirecta" asp-for="CantidadVentaDirecta" class="form-control" />
-  </div>
-
-  <div class="form-check mb-3">
-    <input asp-for="TieneAntibiotico" class="form-check-input" />
-    <label asp-for="TieneAntibiotico" class="form-check-label"></label>
-  </div>
-
-  <div class="mb-3">
-    <label asp-for="MotivoDescarte" class="form-label"></label>
-    <input asp-for="MotivoDescarte" class="form-control" />
-  </div>
-
-  <!--calidad-->
-  @if (User.IsInRole("SUPERADMIN") || User.IsInRole("ADMIN_EMPRESA") || User.IsInRole("LABORATORIO_EMPRESA"))
-  {
-  <hr />
-  <h5>Calidad de leche (opcional)</h5>
-
-  <div class="row">
-    <div class="col-md-2 mb-3">
-      <label asp-for="Grasa" class="form-label"></label>
-      <input type="number" min="0" max="100" asp-for="Grasa" class="form-control" />
+    <div class="form-check mb-3">
+        <input asp-for="TieneAntibiotico" class="form-check-input" />
+        <label asp-for="TieneAntibiotico" class="form-check-label"></label>
     </div>
 
-    <div class="col-md-2 mb-3">
-      <label asp-for="Proteina" class="form-label"></label>
-      <input type="number" min="0" max="100" asp-for="Proteina" class="form-control" />
+    <div class="mb-3">
+        <label asp-for="MotivoDescarte" class="form-label"></label>
+        <input asp-for="MotivoDescarte" class="form-control" />
     </div>
 
-    <div class="col-md-3 mb-3">
-      <label asp-for="SolidosTotales" class="form-label"></label>
-      <input type="number" min="0" max="100" asp-for="SolidosTotales" class="form-control" />
-    </div>
+    <!--calidad-->
+    @if (User.IsInRole("SUPERADMIN") || User.IsInRole("ADMIN_EMPRESA") || User.IsInRole("LABORATORIO_EMPRESA"))
+    {
+        <hr />
+        <h5>Calidad de leche (opcional)</h5>
 
-    <div class="col-md-2 mb-3">
-      <label asp-for="Urea" class="form-label"></label>
-      <input asp-for="Urea" class="form-control" />
-    </div>
+        <div class="row">
+            <div class="col-md-2 mb-3">
+                <label asp-for="Grasa" class="form-label"></label>
+                <input type="number" min="0" max="100" asp-for="Grasa" class="form-control" />
+            </div>
 
-    <div class="col-md-3 mb-3">
-      <label asp-for="Rcs" class="form-label"></label>
-      <input asp-for="Rcs" class="form-control" />
+            <div class="col-md-2 mb-3">
+                <label asp-for="Proteina" class="form-label"></label>
+                <input type="number" min="0" max="100" asp-for="Proteina" class="form-control" />
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label asp-for="SolidosTotales" class="form-label"></label>
+                <input type="number" min="0" max="100" asp-for="SolidosTotales" class="form-control" />
+            </div>
+
+            <div class="col-md-2 mb-3">
+                <label asp-for="Urea" class="form-label"></label>
+                <input asp-for="Urea" class="form-control" />
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label asp-for="Rcs" class="form-label"></label>
+                <input asp-for="Rcs" class="form-control" />
+            </div>
+        </div>
+    }
+    <div id="retiroAlert" class="alert alert-danger d-none">
     </div>
-  </div>
-  }
-  <div id="retiroAlert" class="alert alert-danger d-none">
-  </div>
-  <button type="submit" class="btn btn-primary mt-2">Guardar</button>
+    <button type="submit" class="btn btn-primary mt-2">Guardar</button>
 </form>
 
 
 
 @section Scripts {
-<partial name="_ValidationScriptsPartial" />
+    <partial name="_ValidationScriptsPartial" />
 
-<script>
+    <script>
 
-  const turno = document.querySelector("#turno")
-  const horaPreparacion = document.querySelector("#horaPreparacion")
-  const horaLimpieza = document.querySelector("#horaLimpieza")
-  const horaDespunte = document.querySelector("#horaDespunte")
-  const horaColocacion = document.querySelector("#horaColocacion")
-  const horaInicio = document.querySelector("#horaInicio")
+        const turno = document.querySelector("#turno")
+        const horaPreparacion = document.querySelector("#horaPreparacion")
+        const horaLimpieza = document.querySelector("#horaLimpieza")
+        const horaDespunte = document.querySelector("#horaDespunte")
+        const horaColocacion = document.querySelector("#horaColocacion")
+        const horaInicio = document.querySelector("#horaInicio")
 
-  changeValidation(1)
-
-  turno.addEventListener("change", (ev) => {
-    switch (ev.target.value) {
-      case "MAÑANA":
         changeValidation(1)
-        break
-      case "TARDE":
-        changeValidation(2)
-        break
-      case "NOCHE":
-        changeValidation(3)
-        break
-    }
-  })
 
-  function changeValidation(turno) {
-    let limiteInf = (6 * turno).toString()
-    if (limiteInf.length < 1) {
-      limiteInf = "0" + limiteInf
-    }
-    let limiteSup = (6 * (turno + 1)).toString()
-    if (limiteInf.length < 1) {
-      limiteSup = "0" + limiteSup
-    }
+        turno.addEventListener("change", (ev) => {
+          switch (ev.target.value) {
+            case "MAÑANA":
+              changeValidation(1)
+              break
+            case "TARDE":
+              changeValidation(2)
+              break
+            case "NOCHE":
+              changeValidation(3)
+              break
+          }
+        })
 
-    horaPreparacion.setAttribute("min", limiteInf + ":00")
-    horaPreparacion.setAttribute("max", limiteSup + ":00")
+        function changeValidation(turno) {
+          let limiteInf = (6 * turno).toString()
+          if (limiteInf.length < 1) {
+            limiteInf = "0" + limiteInf
+          }
+          let limiteSup = (6 * (turno + 1)).toString()
+          if (limiteInf.length < 1) {
+            limiteSup = "0" + limiteSup
+          }
 
-    horaLimpieza.setAttribute("min", limiteInf + ":00")
-    horaLimpieza.setAttribute("max", limiteSup + ":00")
+          horaPreparacion.setAttribute("min", limiteInf + ":00")
+          horaPreparacion.setAttribute("max", limiteSup + ":00")
 
-    horaDespunte.setAttribute("min", limiteInf + ":00")
-    horaDespunte.setAttribute("max", limiteSup + ":00")
+          horaLimpieza.setAttribute("min", limiteInf + ":00")
+          horaLimpieza.setAttribute("max", limiteSup + ":00")
 
-    horaColocacion.setAttribute("min", limiteInf + ":00")
-    horaColocacion.setAttribute("max", limiteSup + ":00")
+          horaDespunte.setAttribute("min", limiteInf + ":00")
+          horaDespunte.setAttribute("max", limiteSup + ":00")
 
-    horaInicio.setAttribute("min", limiteInf + ":00")
-    horaInicio.setAttribute("max", limiteSup + ":00")
+          horaColocacion.setAttribute("min", limiteInf + ":00")
+          horaColocacion.setAttribute("max", limiteSup + ":00")
 
-  }
+          horaInicio.setAttribute("min", limiteInf + ":00")
+          horaInicio.setAttribute("max", limiteSup + ":00")
 
-
-
-  const inputCantidadIndustrial = document.querySelector("#cantidadIndustria");
-  const inputCantidadTerneros = document.querySelector("#cantidadTerneros");
-  const inputCantidadDescartada = document.querySelector("#cantidadDescartada");
-  const inputCantidadVentaDirecta = document.querySelector("#cantidadVentaDirecta");
-  const inputCantidadTotal = document.querySelector("#cantidadTotal");
-
-
-  let prevIndustria = 0
-  let prevTerneros = 0
-  let prevDescartada = 0
-  let prevVentaDirecta = 0
-
-  function updateCantidadTotal(prev, cantidad) {
-    inputCantidadTotal.value = parseInt(inputCantidadTotal.value) + (cantidad - prev)
-    return cantidad
-  }
-
-  inputCantidadIndustrial.addEventListener("change", (ev) => {
-    prevIndustria = updateCantidadTotal(prevIndustria, parseInt(ev.target.value))
-  })
-
-  inputCantidadTerneros.addEventListener("change", (ev) => {
-    prevTerneros = updateCantidadTotal(prevTerneros, parseInt(ev.target.value))
-  })
-
-  inputCantidadDescartada.addEventListener("change", (ev) => {
-    prevDescartada = updateCantidadTotal(prevDescartada, parseInt(ev.target.value))
-  })
-
-  inputCantidadVentaDirecta.addEventListener("change", (ev) => {
-    prevVentaDirecta = updateCantidadTotal(prevVentaDirecta, parseInt(ev.target.value))
-  })
-
-</script>
-
-<script>
-    (function () {
-      const selAnimal = document.getElementById("IdAnimal");
-      const inpFecha = document.getElementById("FechaOrdeno");
-      const inpDel = document.getElementById("DiasEnLeche");
-
-      const inpIndustria = document.getElementById("CantidadIndustria");
-      const inpVenta = document.getElementById("CantidadVentaDirecta");
-      const inpDesc = document.getElementById("CantidadDescartada");
-      const chkAnti = document.getElementById("TieneAntibiotico");
-      const inpMotivo = document.getElementById("MotivoDescarte");
-
-      const retiroAlert = document.getElementById("retiroAlert");
-
-      function n(v) {const x = parseFloat(v); return isNaN(x) ? 0 : x;}
-
-      async function refreshDEL() {
-        const id = selAnimal?.value || "";
-        const fecha = inpFecha?.value || "";
-        if (!id || !fecha) {if (inpDel) inpDel.value = ""; return;}
-
-        const url = '@Url.Action("CalcularDel", "Produccion")'
-          + '?idAnimal=' + encodeURIComponent(id)
-          + '&fechaOrdeno=' + encodeURIComponent(fecha);
-
-        try {
-          const res = await fetch(url, {headers: {"X-Requested-With": "XMLHttpRequest"}});
-          if (!res.ok) return;
-          const data = await res.json();
-          if (inpDel) inpDel.value = (data.diasEnLeche ?? "");
-        } catch { }
-      }
-
-      async function refreshRetiro() {
-        const id = selAnimal?.value || "";
-        const fecha = inpFecha?.value || "";
-        if (!id || !fecha) {
-          if (retiroAlert) retiroAlert.classList.add("d-none");
-          if (inpIndustria) inpIndustria.disabled = false;
-          if (inpVenta) inpVenta.disabled = false;
-          return;
         }
 
-        const url = '@Url.Action("GetRetiroLeche", "Produccion")'
-          + '?idAnimal=' + encodeURIComponent(id)
-          + '&fechaOrdeno=' + encodeURIComponent(fecha);
 
-        try {
-          const res = await fetch(url, {headers: {"X-Requested-With": "XMLHttpRequest"}});
-          if (!res.ok) return;
-          const data = await res.json();
 
-          const enRetiro = !!data.enRetiro;
-          const retiroHasta = data.retiroHasta;
+        const inputCantidadIndustrial = document.querySelector("#cantidadIndustria");
+        const inputCantidadTerneros = document.querySelector("#cantidadTerneros");
+        const inputCantidadDescartada = document.querySelector("#cantidadDescartada");
+        const inputCantidadVentaDirecta = document.querySelector("#cantidadVentaDirecta");
+        const inputCantidadTotal = document.querySelector("#cantidadTotal");
 
-          if (!enRetiro) {
-            if (retiroAlert) retiroAlert.classList.add("d-none");
-            if (inpIndustria) inpIndustria.disabled = false;
-            if (inpVenta) inpVenta.disabled = false;
-            return;
+
+        let prevIndustria = 0
+        let prevTerneros = 0
+        let prevDescartada = 0
+        let prevVentaDirecta = 0
+
+        function updateCantidadTotal(prev, cantidad) {
+          inputCantidadTotal.value = parseInt(inputCantidadTotal.value) + (cantidad - prev)
+          return cantidad
+        }
+
+        inputCantidadIndustrial.addEventListener("change", (ev) => {
+          prevIndustria = updateCantidadTotal(prevIndustria, parseInt(ev.target.value))
+        })
+
+        inputCantidadTerneros.addEventListener("change", (ev) => {
+          prevTerneros = updateCantidadTotal(prevTerneros, parseInt(ev.target.value))
+        })
+
+        inputCantidadDescartada.addEventListener("change", (ev) => {
+          prevDescartada = updateCantidadTotal(prevDescartada, parseInt(ev.target.value))
+        })
+
+        inputCantidadVentaDirecta.addEventListener("change", (ev) => {
+          prevVentaDirecta = updateCantidadTotal(prevVentaDirecta, parseInt(ev.target.value))
+        })
+
+    </script>
+
+    <script>
+        (function () {
+          const selAnimal = document.getElementById("IdAnimal");
+          const inpFecha = document.getElementById("FechaOrdeno");
+          const inpDel = document.getElementById("DiasEnLeche");
+
+          const inpIndustria = document.getElementById("CantidadIndustria");
+          const inpVenta = document.getElementById("CantidadVentaDirecta");
+          const inpDesc = document.getElementById("CantidadDescartada");
+          const chkAnti = document.getElementById("TieneAntibiotico");
+          const inpMotivo = document.getElementById("MotivoDescarte");
+
+          const retiroAlert = document.getElementById("retiroAlert");
+
+          function n(v) {const x = parseFloat(v); return isNaN(x) ? 0 : x;}
+
+          async function refreshDEL() {
+            const id = selAnimal?.value || "";
+            const fecha = inpFecha?.value || "";
+            if (!id || !fecha) {if (inpDel) inpDel.value = ""; return;}
+
+            const url = '@Url.Action("CalcularDel", "Produccion")'
+              + '?idAnimal=' + encodeURIComponent(id)
+              + '&fechaOrdeno=' + encodeURIComponent(fecha);
+
+            try {
+              const res = await fetch(url, {headers: {"X-Requested-With": "XMLHttpRequest"}});
+              if (!res.ok) return;
+              const data = await res.json();
+              if (inpDel) inpDel.value = (data.diasEnLeche ?? "");
+            } catch { }
           }
 
-          // UI: bloquear Industria/Venta y “mover” a descarte visualmente
-          if (retiroAlert) {
-            retiroAlert.textContent = `⚠️ Animal en RETIRO DE LECHE hasta ${retiroHasta}. El sistema no permite Industria/Venta y enviará a Descarte.`;
-            retiroAlert.classList.remove("d-none");
+          async function refreshRetiro() {
+            const id = selAnimal?.value || "";
+            const fecha = inpFecha?.value || "";
+            if (!id || !fecha) {
+              if (retiroAlert) retiroAlert.classList.add("d-none");
+              if (inpIndustria) inpIndustria.disabled = false;
+              if (inpVenta) inpVenta.disabled = false;
+              return;
+            }
+
+            const url = '@Url.Action("GetRetiroLeche", "Produccion")'
+              + '?idAnimal=' + encodeURIComponent(id)
+              + '&fechaOrdeno=' + encodeURIComponent(fecha);
+
+            try {
+              const res = await fetch(url, {headers: {"X-Requested-With": "XMLHttpRequest"}});
+              if (!res.ok) return;
+              const data = await res.json();
+
+              const enRetiro = !!data.enRetiro;
+              const retiroHasta = data.retiroHasta;
+
+              if (!enRetiro) {
+                if (retiroAlert) retiroAlert.classList.add("d-none");
+                if (inpIndustria) inpIndustria.disabled = false;
+                if (inpVenta) inpVenta.disabled = false;
+                return;
+              }
+
+              // UI: bloquear Industria/Venta y “mover” a descarte visualmente
+              if (retiroAlert) {
+                retiroAlert.textContent = `⚠️ Animal en RETIRO DE LECHE hasta ${retiroHasta}. El sistema no permite Industria/Venta y enviará a Descarte.`;
+                retiroAlert.classList.remove("d-none");
+              }
+
+              // mover valores si el usuario ya digitó
+              const ind = inpIndustria ? n(inpIndustria.value) : 0;
+              const ven = inpVenta ? n(inpVenta.value) : 0;
+              const mov = ind + ven;
+
+              if (inpIndustria) {inpIndustria.value = "0"; inpIndustria.disabled = true;}
+              if (inpVenta) {inpVenta.value = "0"; inpVenta.disabled = true;}
+              if (inpDesc && mov > 0) inpDesc.value = (n(inpDesc.value) + mov).toString();
+
+              if (chkAnti) chkAnti.checked = true;
+              if (inpMotivo && (!inpMotivo.value || inpMotivo.value.trim() === "")) {
+                inpMotivo.value = `RETIRO DE LECHE por tratamiento (hasta ${retiroHasta})`;
+              }
+            } catch { }
           }
 
-          // mover valores si el usuario ya digitó
-          const ind = inpIndustria ? n(inpIndustria.value) : 0;
-          const ven = inpVenta ? n(inpVenta.value) : 0;
-          const mov = ind + ven;
+          if (selAnimal) selAnimal.addEventListener("change", () => {refreshDEL(); refreshRetiro();});
+          if (inpFecha) inpFecha.addEventListener("change", () => {refreshDEL(); refreshRetiro();});
 
-          if (inpIndustria) {inpIndustria.value = "0"; inpIndustria.disabled = true;}
-          if (inpVenta) {inpVenta.value = "0"; inpVenta.disabled = true;}
-          if (inpDesc && mov > 0) inpDesc.value = (n(inpDesc.value) + mov).toString();
-
-          if (chkAnti) chkAnti.checked = true;
-          if (inpMotivo && (!inpMotivo.value || inpMotivo.value.trim() === "")) {
-            inpMotivo.value = `RETIRO DE LECHE por tratamiento (hasta ${retiroHasta})`;
-          }
-        } catch { }
-      }
-
-      if (selAnimal) selAnimal.addEventListener("change", () => {refreshDEL(); refreshRetiro();});
-      if (inpFecha) inpFecha.addEventListener("change", () => {refreshDEL(); refreshRetiro();});
-
-      refreshDEL();
-      refreshRetiro();
-    })();
-</script>
+          refreshDEL();
+          refreshRetiro();
+        })();
+    </script>
 
 }

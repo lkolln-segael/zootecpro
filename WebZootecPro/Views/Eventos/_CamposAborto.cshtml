@@ -1,12 +1,18 @@
 ﻿@model WebZootecPro.ViewModels.Eventos.RegistrarEventoViewModel
 
+<input type="hidden" id="FechaInseminacionAborto" value="@ViewBag.FechaInseminacionISO" />
+
 <div class="row g-3">
-    <div class="col-lg-6 col-md-12">
-        <label asp-for="IdCausaAborto" class="form-label">Causa</label>
+    <div class="col-md-6">
+        <label class="form-label">Causa</label>
         <select asp-for="IdCausaAborto" asp-items="ViewBag.IdCausaAborto" class="form-select">
-            <option value="">-- Seleccione causa --</option>
+            <option value="">-- Seleccione --</option>
         </select>
         <span asp-validation-for="IdCausaAborto" class="text-danger small"></span>
     </div>
-</div>
 
+    <div class="col-md-6">
+        <label class="form-label">Días al aborto (Fecha aborto - Fecha inseminación)</label>
+        <input class="form-control" id="DiasAlAbortoCalc" readonly style="background-color: rgba(15, 23, 42, 0.96)" />
+    </div>
+</div>

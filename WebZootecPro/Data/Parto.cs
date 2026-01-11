@@ -27,12 +27,6 @@ public partial class Parto
 
     public int? idEstadoCria { get; set; }
 
-    [StringLength(60)]
-    public string? rpCria1 { get; set; }
-
-    [StringLength(60)]
-    public string? rpCria2 { get; set; }
-
     [StringLength(150)]
     public string? nombreCria1 { get; set; }
 
@@ -41,6 +35,16 @@ public partial class Parto
 
     [Precision(0)]
     public TimeOnly? horaParto { get; set; }
+
+    public int? pveDias { get; set; }
+
+    public DateOnly? fechaFinPve { get; set; }
+
+    [StringLength(50)]
+    public string? areteCria1 { get; set; }
+
+    [StringLength(50)]
+    public string? areteCria2 { get; set; }
 
     [ForeignKey("idEstadoCria")]
     [InverseProperty("Partos")]

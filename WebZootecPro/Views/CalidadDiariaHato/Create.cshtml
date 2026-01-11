@@ -21,10 +21,14 @@ var hatos = ViewBag.Hatos as List<SelectListItem> ?? new();
         <select asp-for="idHato" class="form-select" asp-items="hatos"></select>
       </div>
 
-      <div class="col-md-4">
-        <label class="form-label">Fuente</label>
-        <input asp-for="fuente" class="form-control" placeholder="GLORIA" />
-      </div>
+        <div class="col-md-4">
+            <label class="form-label">Fuente</label>
+            <select asp-for="fuente" class="form-select" asp-items="ViewBag.Fuentes">
+                <option value="">-- Seleccione --</option>
+            </select>
+            <span asp-validation-for="fuente" class="text-danger"></span>
+        </div>
+
 
       <div class="col-md-2">
         <label class="form-label">Grasa</label>

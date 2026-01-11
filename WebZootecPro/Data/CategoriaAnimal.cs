@@ -16,5 +16,8 @@ public partial class CategoriaAnimal
     public string Nombre { get; set; } = null!;
 
     [InverseProperty("IdCategoriaAnimalNavigation")]
+    public virtual ICollection<Animal> Animals { get; set; } = new List<Animal>();
+
+    [InverseProperty("IdCategoriaAnimalNavigation")]
     public virtual ICollection<RequerimientoNutricional> RequerimientoNutricionals { get; set; } = new List<RequerimientoNutricional>();
 }

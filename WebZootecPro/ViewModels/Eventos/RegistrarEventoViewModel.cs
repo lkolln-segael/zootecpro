@@ -8,6 +8,9 @@ namespace WebZootecPro.ViewModels.Eventos
         [Display(Name = "Animal")]
         public int? IdAnimal { get; set; }
 
+        public string? Arete { get; set; }
+
+
         [Display(Name = "Hato")]
         public int? IdHato { get; set; }
 
@@ -41,13 +44,8 @@ namespace WebZootecPro.ViewModels.Eventos
         [Display(Name = "Estado de la cría")]
         public int? IdEstadoCria { get; set; }
 
-        [Display(Name = "RP cría 1")]
-        [StringLength(60)]
-        public string? RpCria1 { get; set; }
-
-        [Display(Name = "RP cría 2 (si mellizo)")]
-        [StringLength(60)]
-        public string? RpCria2 { get; set; }
+        public string? AreteCria1 { get; set; } 
+        public string? AreteCria2 { get; set; }  
 
         [Display(Name = "Nombre cría 1")]
         [StringLength(60)]
@@ -102,6 +100,8 @@ namespace WebZootecPro.ViewModels.Eventos
         public string? Resultado { get; set; }
 
         // ====== SERVICIO / INSEMINACIÓN ======
+        public string? TipoServicio { get; set; } = "IA"; // IA | MONTA
+
         [Display(Name = "Hora de servicio")]
         [DataType(DataType.Time)]
         public TimeOnly? HoraServicio { get; set; }

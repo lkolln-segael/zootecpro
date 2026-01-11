@@ -14,6 +14,11 @@ namespace WebZootecPro.ViewModels.Produccion
         public DateTime FechaOrdeno { get; set; }
 
         [Required]
+        [Display(Name = "Fuente")]
+        public string Fuente { get; set; } = "GLORIA";
+
+
+        [Required]
         [Display(Name = "Turno")]
         public string Turno { get; set; } = "MAÑANA";
 

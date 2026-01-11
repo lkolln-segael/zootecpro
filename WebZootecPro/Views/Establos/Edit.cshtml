@@ -31,6 +31,13 @@
                     <span asp-validation-for="areaTotal" class="text-danger small"></span>
                 </div>
                 <div class="col-md-4 mb-3">
+                    <label class="form-label">P.V.E (días)</label>
+                    <input asp-for="pveDias" class="form-control" type="number" min="50" max="70" />
+                    <small class="text-muted">Rango permitido: 50–70</small>
+                    <span asp-validation-for="pveDias" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-4 mb-3">
                     <label asp-for="EmpresaId" class="form-label">Empresa</label>
 
                     @if (empresaSoloLectura)

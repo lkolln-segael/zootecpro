@@ -62,6 +62,9 @@ public partial class RegistroProduccionLeche
 
     public int? diasEnLeche { get; set; }
 
+    [StringLength(50)]
+    public string? fuente { get; set; }
+
     [InverseProperty("idRegistroProduccionLecheNavigation")]
     public virtual ICollection<Calidad> Calidads { get; set; } = new List<Calidad>();
 

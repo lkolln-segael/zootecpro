@@ -1,0 +1,52 @@
+﻿@model WebZootecPro.Data.Animal
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Editar macho";
+    var hatos = ViewBag.Hatos as List<SelectListItem> ?? new();
+}
+
+<h2>Editar macho</h2>
+
+<form asp-action="Edit" method="post" class="card p-3">
+    <input type="hidden" asp-for="Id" />
+    <div class="row g-3">
+
+        <div class="col-md-6">
+            <label class="form-label">Nombre</label>
+            <input asp-for="nombre" class="form-control" />
+            <span asp-validation-for="nombre" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">NAAB</label>
+            <input asp-for="naab" class="form-control" />
+            <span asp-validation-for="naab" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Hato</label>
+            <select asp-for="idHato" class="form-select" asp-items="hatos">
+                <option value="">-- Seleccione --</option>
+            </select>
+            <span asp-validation-for="idHato" class="text-danger"></span>
+        </div>
+
+        @* Aseguramos que siga siendo macho *@
+        <input type="hidden" asp-for="sexo" value="MACHO" />
+
+        <div class="col-12 d-flex gap-2">
+            <button class="btn btn-primary">
+                <i class="bi bi-save2"></i> Guardar cambios
+            </button>
+            <a class="btn btn-outline-secondary" asp-action="Index">
+                Cancelar
+            </a>
+        </div>
+
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
