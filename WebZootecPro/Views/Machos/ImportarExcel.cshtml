@@ -1,0 +1,49 @@
+﻿@model WebZootecPro.ViewModels.Machos.ImportarMachosExcelViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Importar toros (Excel)";
+    var hatos = ViewBag.Hatos as List<SelectListItem> ?? new();
+}
+
+<h2>Importar toros desde Excel</h2>
+
+<div class="alert alert-info">
+    Formato esperado (primera hoja):
+    <ul class="mb-0">
+        <li><b>NOMBRE</b></li>
+        <li><b>NAAB</b></li>
+    </ul>
+    Se importan <b>solo NAAB nuevos</b> (los existentes se omiten).
+</div>
+
+<form asp-action="ImportarExcel" method="post" enctype="multipart/form-data" class="card p-3">
+    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="IdHato" class="form-label"></label>
+            <select asp-for="IdHato" class="form-select" asp-items="hatos">
+                <option value="">-- Seleccione --</option>
+            </select>
+            <span asp-validation-for="IdHato" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Archivo" class="form-label"></label>
+            <input asp-for="Archivo" type="file" class="form-control" accept=".xlsx" />
+            <span asp-validation-for="Archivo" class="text-danger small"></span>
+        </div>
+
+        <div class="col-12">
+            <button class="btn btn-primary">
+                Importar
+            </button>
+            <a class="btn btn-outline-secondary" asp-action="Index">Cancelar</a>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

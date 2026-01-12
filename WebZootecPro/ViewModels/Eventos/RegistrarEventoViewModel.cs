@@ -35,6 +35,9 @@ namespace WebZootecPro.ViewModels.Eventos
         [DataType(DataType.Time)]
         public TimeOnly? HoraParto { get; set; }
 
+        [Display(Name = "PVE (días)")]
+        public int? PveDias { get; set; }
+
         [Display(Name = "Sexo de la cría")]
         public int? IdSexoCria { get; set; }
 

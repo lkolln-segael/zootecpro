@@ -460,6 +460,12 @@ namespace WebZootecPro.Controllers
                 .Select(x => (int?)x.Id)
                 .FirstOrDefaultAsync();
 
+            animal.estadoProductivoId = await _context.EstadoProductivos
+    .Where(x => x.nombre == "DESCONOCIDA")
+    .Select(x => (int?)x.Id)
+    .FirstOrDefaultAsync();
+
+
             await CargarCombosAsync(animal);
             return View(animal);
         }
@@ -484,6 +490,12 @@ namespace WebZootecPro.Controllers
                 .Where(x => x.nombre == "DESCONOCIDA")
                 .Select(x => (int?)x.Id)
                 .FirstOrDefaultAsync();
+
+            animal.estadoProductivoId = await _context.EstadoProductivos
+    .Where(x => x.nombre == "DESCONOCIDA")
+    .Select(x => (int?)x.Id)
+    .FirstOrDefaultAsync();
+
 
             // Limpia required (porque ya setea defaults)
             ModelState.Remove(nameof(Animal.estadoId));
@@ -601,7 +613,7 @@ namespace WebZootecPro.Controllers
         }
 
 
-        
+
         [Authorize(Roles = "SUPERADMIN,ADMIN_EMPRESA,USUARIO_EMPRESA")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -680,7 +692,7 @@ namespace WebZootecPro.Controllers
             animalDb.idRaza = model.idRaza;
             animalDb.procedenciaId = model.procedenciaId;
             animalDb.nacimientoEstimado = model.nacimientoEstimado;
-            animalDb.estadoProductivoId = model.estadoProductivoId;
+            //animalDb.estadoProductivoId = model.estadoProductivoId;
             animalDb.IdCategoriaAnimal = model.IdCategoriaAnimal;
 
             try

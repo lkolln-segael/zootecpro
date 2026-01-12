@@ -54,4 +54,43 @@
     <input id="nombreCria2" asp-for="NombreCria2" class="form-control" />
     <span asp-validation-for="NombreCria2" class="text-danger small"></span>
   </div>
+
+    <div class="col-lg-3 col-md-6">
+        <label asp-for="PveDias" class="form-label"></label>
+        <select asp-for="PveDias" asp-items="ViewBag.PveDias" class="form-select">
+            <option value="">-- Seleccione --</option>
+        </select>
+        <span asp-validation-for="PveDias" class="text-danger small"></span>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha probable de parto</label>
+        <input id="FechaProbableParto" class="form-control" type="date" readonly />
+    </div>
+
 </div>
+<script>
+    function sumarDias(fechaStr, dias) {
+      if (!fechaStr) return "";
+      const d = new Date(fechaStr + "T00:00:00");
+      d.setDate(d.getDate() + dias);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function recalcularProbableParto() {
+      const fechaEvento = document.getElementById("FechaEvento")?.value; // asegúrate que este sea el id real
+      const out = document.getElementById("FechaProbableParto");
+      if (out) out.value = sumarDias(fechaEvento, 279);
+    }
+
+    document.addEventListener("change", function (e) {
+      if (e.target && e.target.id === "FechaEvento") {
+        recalcularProbableParto();
+      }
+    });
+
+    // si quieres que se calcule al cargar cuando ya hay fecha
+    document.addEventListener("DOMContentLoaded", recalcularProbableParto);
+</script>

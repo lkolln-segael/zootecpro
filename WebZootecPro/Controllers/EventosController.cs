@@ -273,7 +273,20 @@ namespace WebZootecPro.Controllers
             await CargarCombosAsync(vm);
 
             if (tipoEvento == "PARTO")
+            {
+                // default: 50 (o usa establo si está en 70)
+                if (idAnimal.HasValue && idAnimal.Value > 0)
+                {
+                    var animal = await _context.Animals.AsNoTracking().FirstOrDefaultAsync(a => a.Id == idAnimal.Value);
+                    if (animal != null)
+                    {
+                        var def = await GetPveDiasPorAnimalAsync(animal); // puede ser 60 si no configuraron
+                        vm.PveDias = (def >= 70) ? 70 : 50;
+                    }
+                }
                 await CargarCombosPartoAsync(vm);
+            }
+
 
             if (tipoEvento == "SERVICIO")
             {
@@ -517,6 +530,11 @@ namespace WebZootecPro.Controllers
                 case "PARTO":
                     {
                         // ===== Validaciones básicas =====
+                        if (model.PveDias == null)
+                            ModelState.AddModelError(nameof(model.PveDias), "Seleccione PVE (50 o 70).");
+                        else if (model.PveDias != 50 && model.PveDias != 70)
+                            ModelState.AddModelError(nameof(model.PveDias), "PVE inválido.");
+
                         if (model.IdSexoCria == null)
                             ModelState.AddModelError(nameof(model.IdSexoCria), "Seleccione el sexo de la cría.");
 
@@ -651,11 +669,7 @@ namespace WebZootecPro.Controllers
                         }
 
                         // ===== PVE =====
-                        var pveDias = await GetPveDiasPorAnimalAsync(animal);
-
-                        // Si tu columna fechaFinPve es COMPUTED en SQL => NO la asignes.
-                        // Si NO es computed, sí asígnala:
-                        //var fechaFinPve = DateOnly.FromDateTime(fechaHoraParto).AddDays(pveDias).ToDateTime(TimeOnly.MinValue);
+                        var pveDias = model.PveDias ?? 50; // ya validado, esto es fallback
                         var fechaFinPve = DateOnly.FromDateTime(fechaHoraParto).AddDays(pveDias);
 
                         // ===== Guardar Parto =====
@@ -1385,6 +1399,15 @@ namespace WebZootecPro.Controllers
                 "Id", "Nombre", model?.IdSexoCria
             );
 
+            ViewBag.PveDias = new SelectList(
+                new[] {
+                    new SelectListItem { Value = "50", Text = "50 días" },
+                    new SelectListItem { Value = "70", Text = "70 días" }
+                },
+                "Value", "Text", (model?.PveDias?.ToString() ?? "50")
+            );
+
+
             ViewBag.IdTipoParto = new SelectList(
                 await _context.TipoPartos.OrderBy(x => x.Nombre).ToListAsync(),
                 "Id", "Nombre", model?.IdTipoParto
@@ -1451,18 +1474,33 @@ namespace WebZootecPro.Controllers
         }
         private async Task<int> GetPveDiasPorAnimalAsync(Animal animal)
         {
+            // 1) Priorizar el PVE del ÚLTIMO PARTO del animal (50/70)
+            var pveUltimoParto = await (
+                from p in _context.Partos.AsNoTracking()
+                join rr in _context.RegistroReproduccions.AsNoTracking()
+                    on p.idRegistroReproduccion equals rr.Id
+                where rr.idAnimal == animal.Id
+                orderby p.fechaRegistro descending
+                select (int?)p.pveDias
+            ).FirstOrDefaultAsync();
+
+            if (pveUltimoParto.HasValue && pveUltimoParto.Value > 0)
+                return pveUltimoParto.Value;
+
+            // 2) Si no hay PARTO (o no guardó pveDias), fallback al establo
             var establoId = await _context.Hatos
                 .Where(h => h.Id == animal.idHato)
                 .Select(h => h.EstabloId)
                 .FirstOrDefaultAsync();
 
-            var pve = await _context.Establos
+            var pveEstablo = await _context.Establos
                 .Where(e => e.Id == establoId)
                 .Select(e => (int?)e.pveDias)
                 .FirstOrDefaultAsync();
 
-            return pve ?? 60;
+            return pveEstablo ?? 60;
         }
+
 
         [HttpGet]
         public async Task<IActionResult> AnimalesPorEvento(string tipoEvento, string? fechaEvento)

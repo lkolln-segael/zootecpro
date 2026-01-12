@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using WebZootecPro.Data;
+using ClosedXML.Excel;
+using WebZootecPro.ViewModels.Machos;
 
 namespace WebZootecPro.Controllers
 {
@@ -162,6 +164,14 @@ namespace WebZootecPro.Controllers
             if (string.IsNullOrWhiteSpace(animal.nombre))
                 ModelState.AddModelError(nameof(animal.nombre), "Ingrese nombre.");
 
+            animal.naab = (animal.naab ?? "").Trim();
+
+            if (!string.IsNullOrWhiteSpace(animal.naab))
+            {
+                if (await NaabExisteEnEmpresaAsync(animal.naab))
+                    ModelState.AddModelError(nameof(animal.naab), "Ese NAAB ya existe.");
+            }
+
             if (!ModelState.IsValid)
             {
                 await CargarCombosAsync(animal);
@@ -205,6 +215,14 @@ namespace WebZootecPro.Controllers
 
             if (string.IsNullOrWhiteSpace(animal.nombre))
                 ModelState.AddModelError(nameof(animal.nombre), "Ingrese nombre.");
+
+            animal.naab = (animal.naab ?? "").Trim();
+
+            if (!string.IsNullOrWhiteSpace(animal.naab))
+            {
+                if (await NaabExisteEnEmpresaAsync(animal.naab, excludeAnimalId: animal.Id))
+                    ModelState.AddModelError(nameof(animal.naab), "Ese NAAB ya existe.");
+            }
 
             if (!ModelState.IsValid)
             {
@@ -259,5 +277,186 @@ namespace WebZootecPro.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
+
+        public async Task<IActionResult> ImportarExcel()
+        {
+            var hatosQ = await QueryHatosVisiblesAsync();
+            ViewBag.Hatos = (await hatosQ.OrderBy(h => h.nombre).ToListAsync())
+                .Select(h => new SelectListItem { Value = h.Id.ToString(), Text = h.nombre })
+                .ToList();
+
+            return View(new ImportarMachosExcelViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ImportarExcel(ImportarMachosExcelViewModel vm)
+        {
+            var hatosQ = await QueryHatosVisiblesAsync();
+            ViewBag.Hatos = (await hatosQ.OrderBy(h => h.nombre).ToListAsync())
+                .Select(h => new SelectListItem { Value = h.Id.ToString(), Text = h.nombre })
+                .ToList();
+
+            // Validaciones base
+            if (vm.IdHato == null || !await hatosQ.AnyAsync(h => h.Id == vm.IdHato.Value))
+                ModelState.AddModelError(nameof(vm.IdHato), "Hato inválido.");
+
+            if (vm.Archivo == null || vm.Archivo.Length == 0)
+                ModelState.AddModelError(nameof(vm.Archivo), "Seleccione un archivo .xlsx.");
+
+            if (!ModelState.IsValid) return View(vm);
+
+            var ext = Path.GetExtension(vm.Archivo!.FileName);
+            if (!string.Equals(ext, ".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError(nameof(vm.Archivo), "Formato inválido. Debe ser .xlsx.");
+                return View(vm);
+            }
+
+            // Scope empresa (para superadmin no filtra)
+            int? empresaId = null;
+            if (!IsSuperAdmin)
+            {
+                var empresa = await GetEmpresaAsync();
+                if (empresa == null)
+                {
+                    ModelState.AddModelError("", "No se pudo determinar la empresa del usuario.");
+                    return View(vm);
+                }
+                empresaId = empresa.Id;
+            }
+
+            // NAAB existentes en el scope
+            var existentes = await _context.Animals.AsNoTracking()
+                .Where(a => a.sexo != null && a.sexo.ToUpper() == "MACHO")
+                .Where(a => a.naab != null && a.naab.Trim() != "")
+                .Where(a => IsSuperAdmin || a.idHatoNavigation.Establo.EmpresaId == empresaId!.Value)
+                .Select(a => a.naab!.Trim().ToUpper())
+                .ToListAsync();
+
+            var setExistentes = new HashSet<string>(existentes);
+            var setArchivo = new HashSet<string>();
+
+            int omitidosExistentes = 0, repetidosArchivo = 0, filasError = 0;
+
+            var nuevos = new List<Animal>();
+            var errores = new List<string>();
+
+            static string Norm(string s) => (s ?? "").Trim();
+
+            static string NormHeader(string s)
+            {
+                var t = (s ?? "").Trim().ToUpperInvariant();
+                t = t.Replace(" ", "").Replace("_", "").Replace("-", "");
+                return t;
+            }
+
+            using var stream = vm.Archivo.OpenReadStream();
+            using var wb = new XLWorkbook(stream);
+            var ws = wb.Worksheets.FirstOrDefault();
+            if (ws == null || ws.RangeUsed() == null)
+            {
+                ModelState.AddModelError("", "El Excel está vacío o no tiene datos.");
+                return View(vm);
+            }
+
+            var range = ws.RangeUsed();
+            var headerRow = range.FirstRowUsed();
+
+            var headerMap = headerRow.CellsUsed()
+                .ToDictionary(c => NormHeader(c.GetString()), c => c.Address.ColumnNumber);
+
+            // columnas obligatorias
+            if (!headerMap.TryGetValue("NOMBRE", out var colNombre))
+            {
+                ModelState.AddModelError("", "Falta la columna NOMBRE.");
+                return View(vm);
+            }
+
+            // NAAB puede venir como NAAB o CODIGONAAB
+            int colNaab;
+            if (!headerMap.TryGetValue("NAAB", out colNaab) && !headerMap.TryGetValue("CODIGONAAB", out colNaab))
+            {
+                ModelState.AddModelError("", "Falta la columna NAAB (o CODIGONAAB).");
+                return View(vm);
+            }
+
+            foreach (var row in range.RowsUsed().Skip(1))
+            {
+                var fila = row.RowNumber();
+
+                var nombre = Norm(row.Cell(colNombre).GetString());
+                var naab = Norm(row.Cell(colNaab).GetString()).ToUpperInvariant();
+
+                if (string.IsNullOrWhiteSpace(nombre) || string.IsNullOrWhiteSpace(naab))
+                {
+                    filasError++;
+                    errores.Add($"Fila {fila}: NOMBRE/NAAB vacío.");
+                    continue;
+                }
+
+                if (setExistentes.Contains(naab))
+                {
+                    omitidosExistentes++;
+                    continue; // “solo NAAB nuevos”
+                }
+
+                if (!setArchivo.Add(naab))
+                {
+                    repetidosArchivo++;
+                    continue;
+                }
+
+                // crea macho (Animal)
+                nuevos.Add(new Animal
+                {
+                    sexo = "MACHO",
+                    idHato = vm.IdHato.Value,
+                    nombre = nombre,
+                    naab = naab,
+                    codigo = naab // opcional: lo dejo igual al NAAB para que se vea en la lista
+                });
+            }
+
+            if (nuevos.Count > 0)
+            {
+                _context.Animals.AddRange(nuevos);
+                await _context.SaveChangesAsync();
+            }
+
+            TempData["MachosMessage"] =
+                $"Importación OK: {nuevos.Count} nuevos | {omitidosExistentes} omitidos (ya existían) | {repetidosArchivo} repetidos en archivo | {filasError} con error.";
+
+            if (errores.Count > 0)
+                TempData["MachosErrores"] = string.Join("\n", errores.Take(20));
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        private async Task<bool> NaabExisteEnEmpresaAsync(string naab, int? excludeAnimalId = null)
+        {
+            naab = (naab ?? "").Trim().ToUpperInvariant();
+            if (string.IsNullOrWhiteSpace(naab)) return false;
+
+            if (IsSuperAdmin)
+            {
+                return await _context.Animals.AsNoTracking()
+                    .Where(a => a.sexo != null && a.sexo.ToUpper() == "MACHO")
+                    .Where(a => a.naab != null && a.naab.ToUpper() == naab)
+                    .Where(a => excludeAnimalId == null || a.Id != excludeAnimalId.Value)
+                    .AnyAsync();
+            }
+
+            var empresa = await GetEmpresaAsync();
+            if (empresa == null) return false;
+
+            return await _context.Animals.AsNoTracking()
+                .Where(a => a.sexo != null && a.sexo.ToUpper() == "MACHO")
+                .Where(a => a.idHatoNavigation.Establo.EmpresaId == empresa.Id)
+                .Where(a => a.naab != null && a.naab.ToUpper() == naab)
+                .Where(a => excludeAnimalId == null || a.Id != excludeAnimalId.Value)
+                .AnyAsync();
+        }
+
     }
 }

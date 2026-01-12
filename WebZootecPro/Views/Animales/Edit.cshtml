@@ -106,12 +106,8 @@
                     </select>
                 </div>
 
-                <div class="col-md-6 mb-3">
-                    <label asp-for="estadoProductivoId" class="form-label">Estado productivo</label>
-                    <select asp-for="estadoProductivoId" asp-items="ViewBag.EstadoProductivoId" class="form-select">
-                        <option value="">-- Seleccione --</option>
-                    </select>
-                </div>
+                <input type="hidden" asp-for="estadoProductivoId" />
+
             </div>
             <div class="row">
                 <div class="col-md-6 mb-3">

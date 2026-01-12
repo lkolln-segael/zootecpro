@@ -1,0 +1,56 @@
+﻿@model IEnumerable<WebZootecPro.Data.PlanLicencium>
+
+@if (TempData["PlanMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["PlanMessage"]</div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Mantenimiento - Planes</h2>
+    <a asp-action="Create" class="btn btn-primary btn-sm">Nuevo plan</a>
+</div>
+
+<table class="table table-striped table-bordered align-middle">
+    <thead>
+        <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Precio</th>
+            <th>Moneda</th>
+            <th>Indef.</th>
+            <th>MaxAnimales</th>
+            <th>MaxEstablos</th>
+            <th>Estado</th>
+            <th>Registro</th>
+            <th style="width:120px;"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var p in Model)
+        {
+            <tr>
+                <td>@p.Codigo</td>
+                <td>@p.Nombre</td>
+                <td>@p.Precio.ToString("0.00")</td>
+                <td>@p.Moneda</td>
+                <td>@(p.EsIndefinido ? "SI" : "NO")</td>
+                <td>@(p.EsIndefinido ? "Ilimitado" : (p.MaxAnimales?.ToString() ?? "-"))</td>
+                <td>@(p.MaxEstablos?.ToString() ?? "-")</td>
+                <td>
+                    @if (p.Activo)
+                    {
+                        <span class="badge bg-success">Activo</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Inactivo</span>
+                    }
+                </td>
+                <td>@p.FechaRegistro.ToString("yyyy-MM-dd")</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-warning btn-sm">Editar</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

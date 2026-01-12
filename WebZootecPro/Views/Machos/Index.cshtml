@@ -1,10 +1,24 @@
 ﻿@model IEnumerable<WebZootecPro.Data.Animal>
 
+@if (TempData["MachosMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["MachosMessage"]</div>
+}
+@if (TempData["MachosErrores"] != null)
+{
+    <div class="alert alert-warning">
+        <div class="fw-bold mb-1">Errores (máx 20):</div>
+        <pre class="mb-0">@TempData["MachosErrores"]</pre>
+    </div>
+}
+
 <h2>Lista de machos</h2>
 
-<div class="mb-3">
+<div class="mb-3 d-flex gap-2">
     <a asp-action="Create" class="btn btn-success">+ Nuevo macho</a>
+    <a asp-action="ImportarExcel" class="btn btn-primary">Importar Excel</a>
 </div>
+
 
 <table class="table table-bordered table-striped">
     <thead class="table-dark">
@@ -13,6 +27,7 @@
             <th>Nombre</th>
             <th>Arete</th>
             <th>Hato</th>
+            <th>NAAB</th>
             <th style="width: 180px;">Acciones</th>
         </tr>
     </thead>
@@ -24,6 +39,7 @@
                 <td>@a.nombre</td>
                 <td>@(a.arete ?? "-")</td>
                 <td>@a.idHatoNavigation?.nombre</td>
+                <td>@(a.naab ?? "-")</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@a.Id" class="btn btn-warning btn-sm">Editar</a>
                     <a asp-action="Delete" asp-route-id="@a.Id" class="btn btn-danger btn-sm">Eliminar</a>

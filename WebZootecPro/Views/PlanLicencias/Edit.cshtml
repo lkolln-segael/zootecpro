@@ -1,0 +1,78 @@
+﻿@model WebZootecPro.Data.PlanLicencium
+@{
+    ViewData["Title"] = "Editar Plan";
+}
+
+<h2>Editar plan</h2>
+
+<form asp-action="Edit" method="post" class="card">
+    <div class="card-body">
+        <div asp-validation-summary="All" class="alert alert-danger"></div>
+
+        <input type="hidden" asp-for="Id" />
+
+        <div class="mb-3">
+            <label class="form-label">Fecha registro</label>
+            <input class="form-control" value="@Model.FechaRegistro.ToString("yyyy-MM-dd HH:mm")" readonly />
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label asp-for="Codigo" class="form-label"></label>
+                <input asp-for="Codigo" class="form-control" />
+                <span asp-validation-for="Codigo" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-8 mb-3">
+                <label asp-for="Nombre" class="form-label"></label>
+                <input asp-for="Nombre" class="form-control" />
+                <span asp-validation-for="Nombre" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label asp-for="Precio" class="form-label"></label>
+                <input asp-for="Precio" class="form-control" />
+                <span asp-validation-for="Precio" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label asp-for="Moneda" class="form-label"></label>
+                <input asp-for="Moneda" class="form-control" />
+                <span asp-validation-for="Moneda" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-4 mb-3 d-flex align-items-end">
+                <div class="form-check">
+                    <input asp-for="EsIndefinido" class="form-check-input" />
+                    <label asp-for="EsIndefinido" class="form-check-label"></label>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label asp-for="MaxAnimales" class="form-label"></label>
+                <input asp-for="MaxAnimales" class="form-control" />
+                <span asp-validation-for="MaxAnimales" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label asp-for="MaxEstablos" class="form-label"></label>
+                <input asp-for="MaxEstablos" class="form-control" />
+                <span asp-validation-for="MaxEstablos" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-4 mb-3 d-flex align-items-end">
+                <div class="form-check">
+                    <input asp-for="Activo" class="form-check-input" />
+                    <label asp-for="Activo" class="form-check-label"></label>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        <a asp-action="Index" class="btn btn-secondary">Volver</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
