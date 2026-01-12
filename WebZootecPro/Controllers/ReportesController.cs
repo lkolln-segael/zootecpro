@@ -39,25 +39,40 @@ namespace WebZootecPro.Controllers
                 .FirstOrDefaultAsync(u => u.Id == id.Value);
         }
 
-        private IQueryable<Animal> BuildAnimalesScopeQuery(Usuario? u, int? idHatoFiltro)
+        private async Task<IQueryable<Animal>> BuildAnimalesScopeQueryAsync()
         {
             var q = _context.Animals
                 .AsNoTracking()
-                .Include(a => a.estado)
-                .Include(a => a.estadoProductivo)
                 .Include(a => a.idHatoNavigation)
-                .AsQueryable();
+                    .ThenInclude(h => h.Establo);
 
-            if (u?.idHato != null)
-                q = q.Where(a => a.idHato == u.idHato.Value);
-            else if (u?.idEstablo != null)
-                q = q.Where(a => a.idHatoNavigation.EstabloId == u.idEstablo.Value);
+            if (User.IsInRole("SUPERADMIN"))
+                return q;
 
-            if (idHatoFiltro != null)
-                q = q.Where(a => a.idHato == idHatoFiltro.Value);
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out var userId))
+                return q.Where(_ => false);
 
-            return q;
+            var u = await _context.Usuarios.AsNoTracking().FirstOrDefaultAsync(x => x.Id == userId);
+            if (u == null) return q.Where(_ => false);
+
+            if (u.idHato != null)
+                return q.Where(a => a.idHato == u.idHato.Value);
+
+            if (u.idEstablo != null)
+                return q.Where(a => a.idHatoNavigation.EstabloId == u.idEstablo.Value);
+
+            // ✅ ADMIN_EMPRESA (dueño) sin establo/hato: filtrar por su empresa
+            var empresaId = await _context.Empresas.AsNoTracking()
+                .Where(e => e.usuarioID == userId)
+                .Select(e => (int?)e.Id)
+                .FirstOrDefaultAsync();
+
+            if (empresaId == null) return q.Where(_ => false);
+
+            return q.Where(a => a.idHatoNavigation.Establo.EmpresaId == empresaId.Value);
         }
+
 
         private async Task CargarHatosAsync(Usuario? u, int? idHatoSeleccionado)
         {
@@ -121,10 +136,10 @@ namespace WebZootecPro.Controllers
                 fHasta = tmp;
             }
 
-            var scopeAnimalesQ = BuildAnimalesScopeQuery(u, idHato);
+            var animalesQ = await BuildAnimalesScopeQueryAsync();
 
             // Base: hembras activas (para KPI)
-            var hembrasActivasQ = scopeAnimalesQ.Where(a =>
+            var hembrasActivasQ = animalesQ.Where(a =>
                 (a.sexo ?? "").ToUpper() == "HEMBRA" &&
                 (a.estado == null || a.estado.nombre != "INACTIVO")
             );
@@ -462,9 +477,9 @@ namespace WebZootecPro.Controllers
             if (pveDias < 0) pveDias = 0;
             if (pveDias > 365) pveDias = 365;
 
-            var scopeAnimalesQ = BuildAnimalesScopeQuery(u, idHato);
+            var animalesQ = await BuildAnimalesScopeQueryAsync();
 
-            var hembrasActivas = await scopeAnimalesQ
+            var hembrasActivas = await animalesQ
                 .Where(a => (a.sexo ?? "").ToUpper() == "HEMBRA" && (a.estado == null || a.estado.nombre != "INACTIVO"))
                 .ToListAsync();
 
@@ -623,10 +638,11 @@ namespace WebZootecPro.Controllers
 
             var minDias = GetMinDiasConfirmacionPrenez(m);
 
-            var scopeAnimalesQ = BuildAnimalesScopeQuery(u, idHato);
+            var animalesQ = await BuildAnimalesScopeQueryAsync();
+
 
             // Solo hembras activas
-            var hembrasActivasQ = scopeAnimalesQ.Where(a =>
+            var hembrasActivasQ = animalesQ.Where(a =>
                 (a.sexo ?? "").ToUpper() == "HEMBRA" &&
                 (a.estado == null || a.estado.nombre != "INACTIVO")
             );

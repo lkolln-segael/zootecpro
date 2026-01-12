@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace WebZootecPro.Data;
 
 [Table("Prenez")]
+[Index("idHato", Name = "IX_Prenez_idHato")]
 [Index("idMadreAnimal", Name = "IX_Prenez_idMadreAnimal")]
 [Index("idPadreAnimal", Name = "IX_Prenez_idPadreAnimal")]
 [Index("idRegistroReproduccion", Name = "IX_Prenez_idRegistroReproduccion")]
@@ -47,6 +48,12 @@ public partial class Prenez
     public DateOnly? fechaProbableParto { get; set; }
 
     public DateOnly? fechaProbableSeca { get; set; }
+
+    public int? idHato { get; set; }
+
+    [ForeignKey("idHato")]
+    [InverseProperty("Prenezs")]
+    public virtual Hato? idHatoNavigation { get; set; }
 
     [ForeignKey("idMadreAnimal")]
     [InverseProperty("PrenezidMadreAnimalNavigations")]

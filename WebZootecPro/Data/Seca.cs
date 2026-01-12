@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace WebZootecPro.Data;
 
 [Table("Seca")]
+[Index("idHato", Name = "IX_Seca_idHato")]
 [Index("idRegistroReproduccion", Name = "IX_Seca_idRegistroReproduccion")]
 public partial class Seca
 {
@@ -22,6 +23,12 @@ public partial class Seca
     public DateTime? fechaSeca { get; set; }
 
     public int? diasSecaReal { get; set; }
+
+    public int? idHato { get; set; }
+
+    [ForeignKey("idHato")]
+    [InverseProperty("Secas")]
+    public virtual Hato? idHatoNavigation { get; set; }
 
     [ForeignKey("idRegistroReproduccion")]
     [InverseProperty("Secas")]

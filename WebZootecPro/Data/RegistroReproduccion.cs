@@ -8,6 +8,7 @@ namespace WebZootecPro.Data;
 
 [Table("RegistroReproduccion")]
 [Index("idAnimal", Name = "IX_RegistroReproduccion_idAnimal")]
+[Index("idHato", Name = "IX_RegistroReproduccion_idHato")]
 public partial class RegistroReproduccion
 {
     [Key]
@@ -20,6 +21,8 @@ public partial class RegistroReproduccion
     public DateTime fechaRegistro { get; set; }
 
     public int idAnimal { get; set; }
+
+    public int? idHato { get; set; }
 
     [InverseProperty("idRegistroReproduccionNavigation")]
     public virtual ICollection<Aborto> Abortos { get; set; } = new List<Aborto>();
@@ -42,4 +45,8 @@ public partial class RegistroReproduccion
     [ForeignKey("idAnimal")]
     [InverseProperty("RegistroReproduccions")]
     public virtual Animal idAnimalNavigation { get; set; } = null!;
+
+    [ForeignKey("idHato")]
+    [InverseProperty("RegistroReproduccions")]
+    public virtual Hato? idHatoNavigation { get; set; }
 }

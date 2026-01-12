@@ -125,7 +125,6 @@ public partial class ZootecContext : DbContext
 
     public virtual DbSet<vw_TratamientosEnfermerium> vw_TratamientosEnfermeria { get; set; }
 
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Aborto>(entity =>
@@ -133,6 +132,8 @@ public partial class ZootecContext : DbContext
             entity.HasOne(d => d.idCausaAbortoNavigation).WithMany(p => p.Abortos)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Aborto_CausaAborto");
+
+            entity.HasOne(d => d.idHatoNavigation).WithMany(p => p.Abortos).HasConstraintName("FK_Aborto_Hato");
 
             entity.HasOne(d => d.idRegistroReproduccionNavigation).WithMany(p => p.Abortos)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -232,6 +233,8 @@ public partial class ZootecContext : DbContext
 
         modelBuilder.Entity<ConfirmacionPrenez>(entity =>
         {
+            entity.HasOne(d => d.idHatoNavigation).WithMany(p => p.ConfirmacionPrenezs).HasConstraintName("FK_ConfirmacionPrenez_Hato");
+
             entity.HasOne(d => d.idRegistroReproduccionNavigation).WithMany(p => p.ConfirmacionPrenezs)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ConfirmacionPrenez_RegistroReproduccion");
@@ -326,6 +329,8 @@ public partial class ZootecContext : DbContext
         {
             entity.HasOne(d => d.idEstadoCriaNavigation).WithMany(p => p.Partos).HasConstraintName("FK_Parto_EstadoCria");
 
+            entity.HasOne(d => d.idHatoNavigation).WithMany(p => p.Partos).HasConstraintName("FK_Parto_Hato");
+
             entity.HasOne(d => d.idRegistroReproduccionNavigation).WithMany(p => p.Partos)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Parto_RegistroReproduccion");
@@ -346,6 +351,8 @@ public partial class ZootecContext : DbContext
 
         modelBuilder.Entity<Prenez>(entity =>
         {
+            entity.HasOne(d => d.idHatoNavigation).WithMany(p => p.Prenezs).HasConstraintName("FK_Prenez_Hato");
+
             entity.HasOne(d => d.idMadreAnimalNavigation).WithMany(p => p.PrenezidMadreAnimalNavigations).HasConstraintName("FK_Prenez_MadreAnimal");
 
             entity.HasOne(d => d.idPadreAnimalNavigation).WithMany(p => p.PrenezidPadreAnimalNavigations).HasConstraintName("FK_Prenez_PadreAnimal");
@@ -404,6 +411,8 @@ public partial class ZootecContext : DbContext
             entity.HasOne(d => d.idAnimalNavigation).WithMany(p => p.RegistroReproduccions)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_RegistroReproduccion_Animal");
+
+            entity.HasOne(d => d.idHatoNavigation).WithMany(p => p.RegistroReproduccions).HasConstraintName("FK_RegistroReproduccion_Hato");
         });
 
         modelBuilder.Entity<RegistroSalidum>(entity =>
@@ -495,6 +504,8 @@ public partial class ZootecContext : DbContext
 
         modelBuilder.Entity<Seca>(entity =>
         {
+            entity.HasOne(d => d.idHatoNavigation).WithMany(p => p.Secas).HasConstraintName("FK_Seca_Hato");
+
             entity.HasOne(d => d.idRegistroReproduccionNavigation).WithMany(p => p.Secas)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Seca_RegistroReproduccion");

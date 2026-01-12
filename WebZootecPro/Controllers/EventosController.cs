@@ -13,12 +13,43 @@ namespace WebZootecPro.Controllers
     {
         private readonly ZootecContext _context;
         private readonly int MINIMA_EDAD_INSEMINACION = 5;
+        private bool IsSuperAdmin => User.IsInRole("SUPERADMIN");
+        private bool IsAdminEmpresa => User.IsInRole("ADMIN_EMPRESA");
 
         public EventosController(ZootecContext context)
         {
             _context = context;
         }
 
+        private async Task<IQueryable<Animal>> ScopeAnimalesAsync(IQueryable<Animal> q)
+        {
+            if (IsSuperAdmin) return q;
+
+            var userId = GetCurrentUserId();
+            if (userId == null) return q.Where(_ => false);
+
+            if (IsAdminEmpresa)
+            {
+                // Dueño o colaborador de la empresa del establo
+                return q.Where(a =>
+                    a.idHatoNavigation.Establo.Empresa.usuarioID == userId.Value
+                    || a.idHatoNavigation.Establo.Empresa.Colaboradors.Any(c => c.idUsuario == userId.Value)
+                );
+            }
+
+            // Otros roles: amarrados a Hato o Establo
+            var u = await GetCurrentUserAsync();
+            if (u?.idHato != null) return q.Where(a => a.idHato == u.idHato.Value);
+            if (u?.idEstablo != null) return q.Where(a => a.idHatoNavigation.EstabloId == u.idEstablo.Value);
+
+            return q.Where(_ => false);
+        }
+
+        private async Task<bool> AnimalEsVisibleAsync(int animalId)
+        {
+            var q = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
+            return await q.AnyAsync(a => a.Id == animalId);
+        }
         private async Task<Usuario?> GetUsuarioActualAsync()
         {
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -117,46 +148,32 @@ namespace WebZootecPro.Controllers
 
         private async Task CargarCombosAsync(RegistrarEventoViewModel? model = null)
         {
-            var empresa = await GetEmpresaAsync();
-            var u = await GetUsuarioActualAsync();
+            var animalesQ = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
 
-            var animalesQ = _context.Animals
-                .AsNoTracking()
-                .AsQueryable();
+            // ✅ Solo ACTIVO para registrar eventos
+            var idActivo = await _context.EstadoAnimals.AsNoTracking()
+                .Where(x => x.nombre == "ACTIVO")
+                .Select(x => (int?)x.Id)
+                .FirstOrDefaultAsync();
 
-            if (string.IsNullOrWhiteSpace(model?.TipoEvento))
-                animalesQ = animalesQ.Where(a => false);
-
-            // Alcance
-            if (User.IsInRole("SUPERADMIN"))
-            {
-                // sin filtro
-            }
-            else if (u?.idHato != null)
-            {
-                animalesQ = animalesQ.Where(a => a.idHato == u.idHato.Value);
-            }
-            else if (u?.idEstablo != null)
-            {
-                animalesQ = animalesQ.Where(a => a.idHatoNavigation.EstabloId == u.idEstablo.Value);
-            }
-            else if (empresa != null)
-            {
-                animalesQ = animalesQ.Where(a => a.idHatoNavigation.Establo.EmpresaId == empresa.Id);
-            }
-            else
-            {
-                animalesQ = animalesQ.Where(a => false);
-            }
-
-            // ✅ SOLO HEMBRAS
-            animalesQ = animalesQ.Where(a => a.sexo != null && a.sexo.Trim().ToUpper() == "HEMBRA");
+            if (idActivo != null)
+                animalesQ = animalesQ.Where(a => a.estadoId == idActivo.Value);
 
             var tipo = (model?.TipoEvento ?? "").Trim().ToUpperInvariant();
 
+            // ✅ Solo restringir a HEMBRAS en eventos reproductivos
+            var tiposRepro = new HashSet<string>
+    {
+        "PARTO", "SERVICIO", "CONFIRMACION_PREÑEZ", "SECA", "ABORTO", "CELO"
+    };
+
+            if (string.IsNullOrEmpty(tipo) || tiposRepro.Contains(tipo))
+            {
+                animalesQ = animalesQ.Where(a => a.sexo != null && a.sexo.Trim().ToUpper() == "HEMBRA");
+            }
+
             if (tipo == "CONFIRMACION_PREÑEZ")
             {
-                // madres con servicio (inseminación) SIN confirmación aún
                 var madresPendientesQ =
                     (from p in _context.Prenezs.AsNoTracking()
                      where p.fechaInseminacion != null
@@ -176,18 +193,20 @@ namespace WebZootecPro.Controllers
                 {
                     Value = a.Id.ToString(),
                     Text = (a.arete ?? "-") + " - " + a.nombre
-
                 }).ToListAsync();
 
-
             ViewBag.TiposEvento = new List<SelectListItem>
-                {
-                    new("Parto",               "PARTO"),
-                    new("Servicio",        "SERVICIO"),
-                    new("Confirmación preñez", "CONFIRMACION_PREÑEZ"),
-                    new("Seca",                "SECA"),
-                    new("Aborto",              "ABORTO"),
-                };
+    {
+        new("Parto", "PARTO"),
+        new("Servicio", "SERVICIO"),
+        new("Confirmación preñez", "CONFIRMACION_PREÑEZ"),
+        new("Seca", "SECA"),
+        new("Aborto", "ABORTO"),
+
+        // ✅ NUEVOS
+        new("Venta", "VENTA"),
+        new("Muerte", "MUERTE"),
+    };
 
             ViewBag.IdTipoEnfermedad = new SelectList(
                 await _context.TipoEnfermedades.OrderBy(t => t.nombre).ToListAsync(),
@@ -205,43 +224,16 @@ namespace WebZootecPro.Controllers
             await CargarVeterinariosAsync(model ?? new RegistrarEventoViewModel());
         }
 
+
+
         private async Task CargarCombosServicioAsync(RegistrarEventoViewModel vm)
         {
-            // Protocolos
             ViewBag.Protocolos = new SelectList(new[]
             {
         "Ovsynch", "Presynch-Ovsynch", "CIDR", "IATF"
     }, vm.Protocolo);
 
-            // Toros: MISMO alcance que tus animales, pero MACHOS
-            var empresa = await GetEmpresaAsync();
-            var u = await GetUsuarioActualAsync();
-
-            var torosQ = _context.Animals
-                .AsNoTracking()
-                .AsQueryable();
-
-            if (User.IsInRole("SUPERADMIN"))
-            {
-                // sin filtro
-            }
-            else if (u?.idHato != null)
-            {
-                torosQ = torosQ.Where(a => a.idHato == u.idHato.Value);
-            }
-            else if (u?.idEstablo != null)
-            {
-                torosQ = torosQ.Where(a => a.idHatoNavigation.EstabloId == u.idEstablo.Value);
-            }
-            else if (empresa != null)
-            {
-                torosQ = torosQ.Where(a => a.idHatoNavigation.Establo.EmpresaId == empresa.Id);
-            }
-            else
-            {
-                torosQ = torosQ.Where(a => false);
-            }
-
+            var torosQ = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
             torosQ = torosQ.Where(a => a.sexo != null && a.sexo.Trim().ToUpper() == "MACHO");
 
             ViewBag.Toros = await torosQ
@@ -249,6 +241,7 @@ namespace WebZootecPro.Controllers
                 .Select(a => new { a.Id, a.nombre, a.arete, a.naab })
                 .ToListAsync();
         }
+
 
 
         [HttpGet]
@@ -269,6 +262,12 @@ namespace WebZootecPro.Controllers
         public async Task<IActionResult> CamposEvento(string tipoEvento, int? idAnimal)
         {
             var vm = new RegistrarEventoViewModel { TipoEvento = tipoEvento, IdAnimal = idAnimal };
+            // ✅ seguridad: si viene idAnimal, validar acceso
+            if (idAnimal.HasValue && idAnimal.Value > 0)
+            {
+                if (!await AnimalEsVisibleAsync(idAnimal.Value))
+                    return Forbid();
+            }
 
             await CargarCombosAsync(vm);
 
@@ -277,10 +276,12 @@ namespace WebZootecPro.Controllers
                 // default: 50 (o usa establo si está en 70)
                 if (idAnimal.HasValue && idAnimal.Value > 0)
                 {
-                    var animal = await _context.Animals.AsNoTracking().FirstOrDefaultAsync(a => a.Id == idAnimal.Value);
+                    var animalesScope = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
+                    var animal = await animalesScope.FirstOrDefaultAsync(a => a.Id == idAnimal.Value);
+
                     if (animal != null)
                     {
-                        var def = await GetPveDiasPorAnimalAsync(animal); // puede ser 60 si no configuraron
+                        var def = await GetPveDiasPorAnimalAsync(animal);
                         vm.PveDias = (def >= 70) ? 70 : 50;
                     }
                 }
@@ -370,6 +371,8 @@ namespace WebZootecPro.Controllers
                 "CONFIRMACION_PREÑEZ" => PartialView("_CamposConfirmacionPrenez", vm),
                 "SECA" => PartialView("_CamposSeca", vm),
                 "ABORTO" => PartialView("_CamposAborto", vm),
+                "VENTA" => PartialView("_CamposSalida", vm),
+                "MUERTE" => PartialView("_CamposSalida", vm),
                 /*"ENFERMEDAD" => PartialView("_CamposEnfermedad", vm),
                 "MEDICACION" => PartialView("_CamposMedicacion", vm),*/
                 // "PRODUCCION_LECHE" => PartialView("_CamposProduccionLeche", vm),
@@ -377,15 +380,16 @@ namespace WebZootecPro.Controllers
                 _ => PartialView("_CamposVacios", vm)
             };
         }
-
-
-
-
-
         private async Task PrepararMedicacionAsync(RegistrarEventoViewModel vm)
         {
-            // Casos (enfermedad) por animal
             if (vm.IdAnimal == null)
+            {
+                ViewBag.IdEnfermedad = new SelectList(Enumerable.Empty<SelectListItem>());
+                ViewBag.IdTipoTratamiento = new SelectList(Enumerable.Empty<SelectListItem>());
+                return;
+            }
+
+            if (!await AnimalEsVisibleAsync(vm.IdAnimal.Value))
             {
                 ViewBag.IdEnfermedad = new SelectList(Enumerable.Empty<SelectListItem>());
                 ViewBag.IdTipoTratamiento = new SelectList(Enumerable.Empty<SelectListItem>());
@@ -395,42 +399,36 @@ namespace WebZootecPro.Controllers
             var casos = await _context.Enfermedads
                 .AsNoTracking()
                 .Include(e => e.idTipoEnfermedadNavigation)
-                .Where(e => e.idAnimal == vm.IdAnimal.Value && e.fechaRecuperacion == null) // abiertos
+                .Where(e => e.idAnimal == vm.IdAnimal.Value && e.fechaRecuperacion == null)
                 .OrderByDescending(e => e.fechaDiagnostico)
                 .Select(e => new
                 {
                     e.Id,
+                    e.idTipoEnfermedad,
                     Texto = $"{e.idTipoEnfermedadNavigation.nombre} ({e.fechaDiagnostico:dd/MM/yyyy})"
                 })
                 .ToListAsync();
 
-            var casoSel = vm.IdEnfermedad ?? casos.FirstOrDefault()?.Id;
+            // si te mandan un IdEnfermedad que no pertenece al animal, lo ignoras
+            var casoSel = (vm.IdEnfermedad != null && casos.Any(x => x.Id == vm.IdEnfermedad.Value))
+                ? vm.IdEnfermedad
+                : casos.FirstOrDefault()?.Id;
+
             vm.IdEnfermedad = casoSel;
 
             ViewBag.IdEnfermedad = new SelectList(casos, "Id", "Texto", casoSel);
 
-            // Tratamientos según el tipo de enfermedad del caso seleccionado
             if (casoSel == null)
             {
                 ViewBag.IdTipoTratamiento = new SelectList(Enumerable.Empty<SelectListItem>());
                 return;
             }
 
-            var idTipoEnf = await _context.Enfermedads
-                .AsNoTracking()
-                .Where(e => e.Id == casoSel.Value)
-                .Select(e => (int?)e.idTipoEnfermedad)
-                .FirstOrDefaultAsync();
-
-            if (idTipoEnf == null)
-            {
-                ViewBag.IdTipoTratamiento = new SelectList(Enumerable.Empty<SelectListItem>());
-                return;
-            }
+            var idTipoEnf = casos.First(x => x.Id == casoSel.Value).idTipoEnfermedad;
 
             var tratamientos = await _context.TipoTratamientos
                 .AsNoTracking()
-                .Where(t => t.idTipoEnfermedad == idTipoEnf.Value)
+                .Where(t => t.idTipoEnfermedad == idTipoEnf)
                 .OrderBy(t => t.nombre)
                 .ToListAsync();
 
@@ -439,6 +437,7 @@ namespace WebZootecPro.Controllers
 
             ViewBag.IdTipoTratamiento = new SelectList(tratamientos, "Id", "nombre", tratSel);
         }
+
 
 
         // Para medicación: cargar tratamientos según tipo enfermedad
@@ -457,15 +456,20 @@ namespace WebZootecPro.Controllers
         [HttpGet]
         public async Task<IActionResult> TiposTratamientoPorCaso(int idEnfermedad)
         {
-            var idTipoEnfermedad = await _context.Enfermedads
-                .Where(e => e.Id == idEnfermedad)
-                .Select(e => (int?)e.idTipoEnfermedad)
-                .FirstOrDefaultAsync();
+            var animalesScope = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
+
+            var idTipoEnfermedad = await (
+                from e in _context.Enfermedads.AsNoTracking()
+                join a in animalesScope on e.idAnimal equals a.Id
+                where e.Id == idEnfermedad
+                select (int?)e.idTipoEnfermedad
+            ).FirstOrDefaultAsync();
 
             if (idTipoEnfermedad == null)
                 return Json(Array.Empty<object>());
 
             var data = await _context.TipoTratamientos
+                .AsNoTracking()
                 .Where(t => t.idTipoEnfermedad == idTipoEnfermedad.Value)
                 .OrderBy(t => t.nombre)
                 .Select(t => new { value = t.Id, text = t.nombre })
@@ -473,6 +477,7 @@ namespace WebZootecPro.Controllers
 
             return Json(data);
         }
+
 
 
         [HttpPost]
@@ -488,16 +493,13 @@ namespace WebZootecPro.Controllers
 
             }
 
-            var animal = await _context.Animals.FirstOrDefaultAsync(a => a.Id == model.IdAnimal);
-            if (animal == null)
-            {
-                ModelState.AddModelError(nameof(model.IdAnimal), "El animal seleccionado no existe.");
-                await CargarCombosAsync(model);
-                if (model.TipoEvento == "SERVICIO")
-                    await CargarCombosServicioAsync(model);
-                return View(model);
+            var animalQ = await ScopeAnimalesAsync(_context.Animals); // tracking
+            var animal = await animalQ.FirstOrDefaultAsync(a => a.Id == model.IdAnimal);
 
-            }
+            if (animal == null)
+                return Forbid();
+
+            var hatoEvento = animal.idHato;
 
             if (string.IsNullOrWhiteSpace(animal.arete))
             {
@@ -675,6 +677,7 @@ namespace WebZootecPro.Controllers
                         // ===== Guardar Parto =====
                         var parto = new Parto
                         {
+                            idHato = hatoEvento,
                             idRegistroReproduccion = rrIdCiclo,
                             tipo = tipoPartoNombre,
                             fechaRegistro = fechaHoraParto,
@@ -717,7 +720,7 @@ namespace WebZootecPro.Controllers
                             fechaNacimiento = fechaNac,
                             idMadre = animal.Id,
                             idPadre = padreIdCiclo,
-                            idHato = animal.idHato,
+                            idHato = hatoEvento,
                             idRaza = animal.idRaza,
                             estadoId = idActivo,
                             nacimientoEstimado = false
@@ -740,7 +743,7 @@ namespace WebZootecPro.Controllers
                                 fechaNacimiento = fechaNac,
                                 idMadre = animal.Id,
                                 idPadre = padreIdCiclo,
-                                idHato = animal.idHato,
+                                idHato = hatoEvento,
                                 idRaza = animal.idRaza,
                                 estadoId = idActivo,
                                 nacimientoEstimado = false
@@ -802,7 +805,7 @@ namespace WebZootecPro.Controllers
                         }
 
                         var idLactando = await _context.EstadoProductivos
-                            .Where(e => e.nombre == "LACTANDO") 
+                            .Where(e => e.nombre == "LACTANDO")
                             .Select(e => (int?)e.Id)
                             .FirstOrDefaultAsync();
 
@@ -820,13 +823,19 @@ namespace WebZootecPro.Controllers
 
                 case "CELO":
                     {
-                        var rr = new RegistroReproduccion { idAnimal = animal.Id, fechaRegistro = fechaEvt };
+                        var rr = new RegistroReproduccion
+                        {
+                            idAnimal = animal.Id,
+                            fechaRegistro = fechaEvt,
+                            idHato = hatoEvento
+                        };
                         _context.RegistroReproduccions.Add(rr);
                         await _context.SaveChangesAsync();
 
                         _context.Prenezs.Add(new Prenez
                         {
                             idRegistroReproduccion = rr.Id,
+                            idHato = hatoEvento,
                             fechaCelo = model.FechaEvento.Value,
                             idMadreAnimal = animal.Id,
                             idPadreAnimal = null,
@@ -903,17 +912,23 @@ namespace WebZootecPro.Controllers
                         // Autocompletar toro si eligió uno
                         if (model.IdPadreAnimal.HasValue)
                         {
-                            var toro = await _context.Animals
-                                .AsNoTracking()
+                            var torosScope = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
+
+                            var toro = await torosScope
                                 .Where(a => a.Id == model.IdPadreAnimal.Value)
-                                .Select(a => new { a.nombre, a.naab })
+                                .Select(a => new { a.nombre, a.naab, a.sexo })
                                 .FirstOrDefaultAsync();
 
-                            if (toro != null)
+                            if (toro == null)
+                                ModelState.AddModelError(nameof(model.IdPadreAnimal), "Toro no válido o sin acceso.");
+                            else if ((toro.sexo ?? "").Trim().ToUpper() != "MACHO")
+                                ModelState.AddModelError(nameof(model.IdPadreAnimal), "El animal seleccionado no es macho.");
+                            else
                             {
                                 if (string.IsNullOrWhiteSpace(model.NombreToro)) model.NombreToro = toro.nombre;
                                 if (string.IsNullOrWhiteSpace(model.CodigoNaab)) model.CodigoNaab = toro.naab;
                             }
+
                         }
 
                         // Validación MONTA vs IA
@@ -955,7 +970,8 @@ namespace WebZootecPro.Controllers
                         var rr = new RegistroReproduccion
                         {
                             idAnimal = animal.Id,
-                            fechaRegistro = fechaEvt
+                            fechaRegistro = fechaEvt,
+                            idHato = hatoEvento
                         };
 
                         _context.RegistroReproduccions.Add(rr);
@@ -972,6 +988,7 @@ namespace WebZootecPro.Controllers
                         _context.Prenezs.Add(new Prenez
                         {
                             idRegistroReproduccion = rr.Id,
+                            idHato = hatoEvento,
                             idMadreAnimal = animal.Id,
                             idPadreAnimal = model.IdPadreAnimal,
 
@@ -1051,6 +1068,8 @@ namespace WebZootecPro.Controllers
 
                         _context.ConfirmacionPrenezs.Add(new ConfirmacionPrenez
                         {
+                            idHato = hatoEvento,
+
                             tipo = model.ConfirmacionTipo!,
                             metodo = model.ConfirmacionMetodo,          // <-- NUEVO
                             fechaRegistro = fechaEvt,
@@ -1122,6 +1141,7 @@ namespace WebZootecPro.Controllers
 
                         _context.Secas.Add(new Seca
                         {
+                            idHato = hatoEvento,
                             idRegistroReproduccion = ciclo!.rrId,  // <-- MISMO RR DEL SERVICIO
                             fechaSeca = fechaEvt,                 // <-- NUEVO
                             motivo = model.Observaciones
@@ -1175,6 +1195,7 @@ namespace WebZootecPro.Controllers
 
                         var aborto = new Aborto
                         {
+                            idHato = hatoEvento,
                             idRegistroReproduccion = ciclo.rrId,  // <-- MISMO RR DEL SERVICIO
                             idCausaAborto = model.IdCausaAborto.Value,
                             fechaRegistro = fechaEvt,
@@ -1186,19 +1207,31 @@ namespace WebZootecPro.Controllers
                         break;
                     }
 
-
-
                 case "VENTA":
                 case "MUERTE":
                     {
-                        // Registrar salida
+                        if (model.TipoEvento == "VENTA" && string.IsNullOrWhiteSpace(model.DestinoSalida))
+                            ModelState.AddModelError(nameof(model.DestinoSalida), "Ingrese el comprador/destino de la venta.");
+
+                        if (model.TipoEvento == "MUERTE" &&
+                            string.IsNullOrWhiteSpace(model.DestinoSalida) &&
+                            string.IsNullOrWhiteSpace(model.Observaciones))
+                            ModelState.AddModelError(nameof(model.DestinoSalida), "Ingrese la causa de muerte o una observación.");
+
+                        if (!ModelState.IsValid)
+                        {
+                            await tx.RollbackAsync();
+                            await CargarCombosAsync(model);
+                            return View(model);
+                        }
+
                         _context.RegistroSalida.Add(new RegistroSalidum
                         {
                             nombre = model.DestinoSalida ?? "-",
                             tipoSalida = model.TipoEvento,
                             idAnimal = animal.Id,
                             fechaSalida = model.FechaEvento.Value,
-                            idHato = animal.idHato,
+                            idHato = hatoEvento,
                             usuarioId = userId,
                             destino = model.DestinoSalida,
                             observacion = model.Observaciones
@@ -1209,12 +1242,23 @@ namespace WebZootecPro.Controllers
                             .Select(x => (int?)x.Id)
                             .FirstOrDefaultAsync();
 
-                        animal.estadoId = inactivoId;
+                        if (inactivoId == null)
+                        {
+                            ModelState.AddModelError("", "No existe el Estado Animal 'INACTIVO'.");
+                            await tx.RollbackAsync();
+                            await CargarCombosAsync(model);
+                            return View(model);
+                        }
+
+                        animal.estadoId = inactivoId.Value;
                         _context.Update(animal);
 
                         await _context.SaveChangesAsync();
                         break;
                     }
+
+
+
 
                 /*case "ENFERMEDAD":
                   {
@@ -1325,6 +1369,7 @@ namespace WebZootecPro.Controllers
                         _context.EventoGenerals.Add(new EventoGeneral
                         {
                             idAnimal = animal.Id,
+                            idHato = hatoEvento,
                             fechaEvento = fechaEvt,
                             tipoEvento = model.TipoEvento,
                             tipoAnalisis = model.TipoEvento == "ANALISIS" ? model.TipoAnalisis : null,
@@ -1348,8 +1393,9 @@ namespace WebZootecPro.Controllers
         [HttpGet]
         public async Task<IActionResult> DatosAnimal(int idAnimal)
         {
-            var data = await _context.Animals
-                .AsNoTracking()
+            var q = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
+
+            var data = await q
                 .Where(a => a.Id == idAnimal)
                 .Select(a => new
                 {
@@ -1363,6 +1409,7 @@ namespace WebZootecPro.Controllers
 
             return Json(data);
         }
+
 
         private async Task CargarEnfermedadesPorAnimalAsync(int? idAnimal)
         {
@@ -1510,24 +1557,7 @@ namespace WebZootecPro.Controllers
             if (!string.IsNullOrWhiteSpace(fechaEvento) && DateOnly.TryParse(fechaEvento, out var f))
                 fecha = f;
 
-            var empresa = await GetEmpresaAsync();
-            var u = await GetUsuarioActualAsync();
-
-            var animalesQ = _context.Animals.AsNoTracking().AsQueryable();
-
-            // Alcance
-            if (User.IsInRole("SUPERADMIN"))
-            {
-                // sin filtro
-            }
-            else if (u?.idHato != null)
-                animalesQ = animalesQ.Where(a => a.idHato == u.idHato.Value);
-            else if (u?.idEstablo != null)
-                animalesQ = animalesQ.Where(a => a.idHatoNavigation.EstabloId == u.idEstablo.Value);
-            else if (empresa != null)
-                animalesQ = animalesQ.Where(a => a.idHatoNavigation.Establo.EmpresaId == empresa.Id);
-            else
-                animalesQ = animalesQ.Where(a => false);
+            var animalesQ = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
 
             // SOLO HEMBRAS
             animalesQ = animalesQ.Where(a => a.sexo != null && a.sexo.Trim().ToUpper() == "HEMBRA");
@@ -1564,7 +1594,6 @@ namespace WebZootecPro.Controllers
                 var fechaDt = fecha.ToDateTime(TimeOnly.MinValue);
 
                 // 2) PVE: si tiene último PARTO, debe haber terminado PVE (fechaFinPve <= fecha)
-                // 2) PVE: si tiene último PARTO, debe haber terminado PVE
                 var ultimoPartoPorAnimal =
                     from p in _context.Partos.AsNoTracking()
                     join rr in _context.RegistroReproduccions.AsNoTracking()
@@ -1651,8 +1680,6 @@ namespace WebZootecPro.Controllers
 
                 animalesQ = animalesQ.Where(a => !idsConServicio.Contains(a.Id) || idsServicioElegible.Contains(a.Id));
             }
-
-
             var items = await animalesQ
                 .OrderBy(a => a.arete)
                 .Select(a => new
@@ -1664,7 +1691,5 @@ namespace WebZootecPro.Controllers
 
             return Json(items);
         }
-
-
     }
 }
