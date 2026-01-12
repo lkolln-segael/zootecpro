@@ -1,9 +1,27 @@
 ﻿@model WebZootecPro.ViewModels.Eventos.RegistrarEventoViewModel
 
-<div class="row g-3">
-    <div class="col-lg-6 col-md-12">
-        <label asp-for="DestinoSalida" class="form-label"></label>
-        <input asp-for="DestinoSalida" class="form-control" placeholder="Comprador / Destino / Motivo..." />
-        <span asp-validation-for="DestinoSalida" class="text-danger small"></span>
+@{
+    var tipo = (Model?.TipoEvento ?? "").Trim().ToUpperInvariant();
+    var labelDestino = tipo == "MUERTE" ? "Causa de muerte" : "Destino / comprador";
+    var placeholder = tipo == "MUERTE"
+        ? "Ej: Enfermedad, accidente, sacrificio..."
+        : "Ej: Juan Pérez / Camal / Feria...";
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label class="form-label">@labelDestino</label>
+            <input asp-for="DestinoSalida" class="form-control" placeholder="@placeholder" />
+            <span asp-validation-for="DestinoSalida" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="col-md-12">
+        <div class="mb-3">
+            <label asp-for="Observaciones" class="form-label"></label>
+            <textarea asp-for="Observaciones" class="form-control" rows="3" placeholder="Observaciones adicionales..."></textarea>
+            <span asp-validation-for="Observaciones" class="text-danger"></span>
+        </div>
     </div>
 </div>

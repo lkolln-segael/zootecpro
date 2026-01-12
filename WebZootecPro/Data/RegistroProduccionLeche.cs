@@ -63,6 +63,7 @@ public partial class RegistroProduccionLeche
     public int? diasEnLeche { get; set; }
 
     [StringLength(50)]
+    [Unicode(false)]
     public string? fuente { get; set; }
 
     [InverseProperty("idRegistroProduccionLecheNavigation")]

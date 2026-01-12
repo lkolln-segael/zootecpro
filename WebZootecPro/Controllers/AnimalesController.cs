@@ -33,7 +33,11 @@ namespace WebZootecPro.Controllers
             if (IsAdminEmpresa)
             {
                 // dueño: animales cuya empresa pertenece a este admin
-                return q.Where(a => a.idHatoNavigation.Establo.Empresa.usuarioID == userId.Value);
+                return q.Where(a =>
+                    a.idHatoNavigation.Establo.Empresa.usuarioID == userId.Value
+                 || a.idHatoNavigation.Establo.Empresa.Colaboradors.Any(c => c.idUsuario == userId.Value)
+                );
+
             }
 
             // roles con establo/hato asignado
@@ -44,75 +48,205 @@ namespace WebZootecPro.Controllers
             return q.Where(_ => false);
         }
 
+        private async Task<IQueryable<Hato>> ScopeHatosAsync(IQueryable<Hato> q)
+        {
+            if (IsSuperAdmin) return q;
+
+            var userId = GetCurrentUserId();
+            if (userId == null) return q.Where(_ => false);
+
+            if (IsAdminEmpresa)
+            {
+                return q.Where(h =>
+                    h.Establo.Empresa.usuarioID == userId.Value
+                    || h.Establo.Empresa.Colaboradors.Any(c => c.idUsuario == userId.Value)
+                );
+            }
+
+            var u = await _context.Usuarios
+                .AsNoTracking()
+                .Where(x => x.Id == userId.Value)
+                .Select(x => new { x.idHato, x.idEstablo })
+                .FirstOrDefaultAsync();
+
+            if (u == null) return q.Where(_ => false);
+            if (u.idHato != null) return q.Where(h => h.Id == u.idHato.Value);
+            if (u.idEstablo != null) return q.Where(h => h.EstabloId == u.idEstablo.Value);
+
+            return q.Where(_ => false);
+        }
+
+        private async Task<int?> GetEmpresaIdPorHatoAsync(int hatoId)
+        {
+            return await _context.Hatos
+                .AsNoTracking()
+                .Where(h => h.Id == hatoId)
+                .Select(h => (int?)h.Establo.EmpresaId)
+                .FirstOrDefaultAsync();
+        }
+
+        private async Task<int?> GetEstabloIdPorHatoAsync(int hatoId)
+        {
+            return await _context.Hatos
+                .AsNoTracking()
+                .Where(h => h.Id == hatoId)
+                .Select(h => (int?)h.EstabloId)
+                .FirstOrDefaultAsync();
+        }
+
+        private async Task<bool> AnimalPerteneceAEstabloAsync(int animalId, int establoId)
+        {
+            var scope = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
+            return await scope.AnyAsync(a => a.Id == animalId && a.idHatoNavigation.EstabloId == establoId);
+        }
+
+
+        private async Task<bool> AnimalEsVisibleAsync(int animalId)
+        {
+            var q = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
+            return await q.AnyAsync(a => a.Id == animalId);
+        }
+
         private async Task CargarCombosAsync(Animal? animal = null, int? excludeAnimalId = null)
         {
-            var empresa = await GetEmpresaAsync();
-            var establo = await _context.Establos.FirstOrDefaultAsync(e => e.EmpresaId == empresa.Id);
-            // HATOS
-            ViewBag.IdHato = new SelectList(
-                await _context.Hatos.AsNoTracking().Where(h => establo.Id == h.EstabloId).OrderBy(h => h.nombre).ToListAsync(),
-                "Id", "nombre", animal?.idHato
-            );
+            // =========================
+            // 1) HATOS (multiempresa real)
+            // =========================
+            List<Hato> hatos;
 
-            // ESTADO (inventario)
-            ViewBag.EstadoId = new SelectList(
+            if (IsSuperAdmin)
+            {
+                hatos = await _context.Hatos.AsNoTracking()
+                    .OrderBy(h => h.nombre)
+                    .ToListAsync();
+            }
+            else
+            {
+                var hatosQ = await ScopeHatosAsync(_context.Hatos.AsNoTracking());
+                hatos = await hatosQ
+                    .OrderBy(h => h.nombre)
+                    .ToListAsync();
+            }
+
+            // Default: si no hay hato seleccionado, ponemos el primero visible (evita combos vacíos)
+            if (animal != null && animal.idHato <= 0 && hatos.Count > 0)
+                animal.idHato = hatos[0].Id;
+
+            var slHatos = new SelectList(hatos, "Id", "nombre", animal?.idHato);
+            ViewBag.IdHato = slHatos;
+            ViewData["idHato"] = slHatos; // compatibilidad con vistas scaffold
+
+            // =========================
+            // 2) MAESTROS
+            // =========================
+            var slEstado = new SelectList(
                 await _context.EstadoAnimals.AsNoTracking().OrderBy(e => e.nombre).ToListAsync(),
                 "Id", "nombre", animal?.estadoId
             );
+            ViewBag.EstadoId = slEstado;
+            ViewData["estadoId"] = slEstado;
 
-            // PROPÓSITO
-            ViewBag.PropositoId = new SelectList(
+            var slProposito = new SelectList(
                 await _context.PropositoAnimals.AsNoTracking().OrderBy(p => p.nombre).ToListAsync(),
                 "Id", "nombre", animal?.propositoId
             );
+            ViewBag.PropositoId = slProposito;
+            ViewData["propositoId"] = slProposito;
 
-            // PROCEDENCIA
-            ViewBag.ProcedenciaId = new SelectList(
+            var slProcedencia = new SelectList(
                 await _context.ProcedenciaAnimals.AsNoTracking().OrderBy(p => p.nombre).ToListAsync(),
                 "Id", "nombre", animal?.procedenciaId
             );
+            ViewBag.ProcedenciaId = slProcedencia;
+            ViewData["procedenciaId"] = slProcedencia;
 
-            // RAZA
-            ViewBag.IdRaza = new SelectList(
+            var slRaza = new SelectList(
                 await _context.Razas.AsNoTracking().OrderBy(r => r.nombre).ToListAsync(),
                 "Id", "nombre", animal?.idRaza
             );
+            ViewBag.IdRaza = slRaza;
+            ViewData["idRaza"] = slRaza;
 
-            // ESTADO PRODUCTIVO
-            ViewBag.EstadoProductivoId = new SelectList(
+            var slEstadoProd = new SelectList(
                 await _context.EstadoProductivos.AsNoTracking().OrderBy(e => e.nombre).ToListAsync(),
                 "Id", "nombre", animal?.estadoProductivoId
             );
+            ViewBag.EstadoProductivoId = slEstadoProd;
+            ViewData["estadoProductivoId"] = slEstadoProd;
 
-            ViewBag.IdCategoriaAnimal = new SelectList(
+            var slCategoria = new SelectList(
                 await _context.CategoriaAnimals.AsNoTracking().OrderBy(c => c.Nombre).ToListAsync(),
                 "IdCategoriaAnimal", "Nombre", animal?.IdCategoriaAnimal
             );
+            ViewBag.IdCategoriaAnimal = slCategoria;
+            ViewData["IdCategoriaAnimal"] = slCategoria;
 
-            // PADRES / MADRES
-            var padres = await _context.Animals.AsNoTracking()
-                .Where(a => a.idHatoNavigation.EstabloId == establo.Id && a.sexo == "MACHO" && (excludeAnimalId == null || a.Id != excludeAnimalId))
-                .OrderBy(a => a.codigo)
-                .Select(a => new
+            // =========================
+            // 3) PADRE / MADRE (filtrado por establo del hato seleccionado)
+            // =========================
+            int? establoId = null;
+
+            if (animal?.idHato > 0)
+            {
+                if (IsSuperAdmin)
                 {
-                    a.Id,
-                    Label = (a.codigo ?? "-") + " - " + (a.nombre ?? "-")
-                })
+                    establoId = await _context.Hatos.AsNoTracking()
+                        .Where(h => h.Id == animal.idHato)
+                        .Select(h => (int?)h.EstabloId)
+                        .FirstOrDefaultAsync();
+                }
+                else
+                {
+                    var hatosQ = await ScopeHatosAsync(_context.Hatos.AsNoTracking());
+                    establoId = await hatosQ
+                        .Where(h => h.Id == animal.idHato)
+                        .Select(h => (int?)h.EstabloId)
+                        .FirstOrDefaultAsync();
+                }
+            }
+
+
+            var animalesScope = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
+
+            var padresQ = animalesScope.Where(a =>
+                a.sexo == "MACHO" && (excludeAnimalId == null || a.Id != excludeAnimalId));
+
+            var madresQ = animalesScope.Where(a =>
+                a.sexo == "HEMBRA" && (excludeAnimalId == null || a.Id != excludeAnimalId));
+
+            // Si no hay hato seleccionado, no mostramos padres/madres para evitar cruces multiempresa
+            if (establoId != null)
+            {
+                padresQ = padresQ.Where(a => a.idHatoNavigation.EstabloId == establoId.Value);
+                madresQ = madresQ.Where(a => a.idHatoNavigation.EstabloId == establoId.Value);
+            }
+            else
+            {
+                padresQ = padresQ.Where(_ => false);
+                madresQ = madresQ.Where(_ => false);
+            }
+
+            var padres = await padresQ
+                .OrderBy(a => a.codigo)
+                .Select(a => new { a.Id, Label = (a.codigo ?? "-") + " - " + (a.nombre ?? "-") })
                 .ToListAsync();
 
-            var madres = await _context.Animals.AsNoTracking()
-                .Where(a => a.sexo == "HEMBRA" && (excludeAnimalId == null || a.Id != excludeAnimalId))
+            var madres = await madresQ
                 .OrderBy(a => a.codigo)
-                .Select(a => new
-                {
-                    a.Id,
-                    Label = (a.codigo ?? "-") + " - " + (a.nombre ?? "-")
-                })
+                .Select(a => new { a.Id, Label = (a.codigo ?? "-") + " - " + (a.nombre ?? "-") })
                 .ToListAsync();
 
-            ViewBag.IdPadre = new SelectList(padres, "Id", "Label", animal?.idPadre);
-            ViewBag.IdMadre = new SelectList(madres, "Id", "Label", animal?.idMadre);
+            var slPadre = new SelectList(padres, "Id", "Label", animal?.idPadre);
+            var slMadre = new SelectList(madres, "Id", "Label", animal?.idMadre);
+
+            ViewBag.IdPadre = slPadre;
+            ViewData["idPadre"] = slPadre;
+
+            ViewBag.IdMadre = slMadre;
+            ViewData["idMadre"] = slMadre;
         }
+
+
 
         private void LimpiarValidacionNavegaciones()
         {
@@ -171,9 +305,15 @@ namespace WebZootecPro.Controllers
             // ADMIN_EMPRESA: hatos cuyo establo pertenece a una empresa del usuario (Empresa.usuarioID)
             if (IsAdminEmpresa)
             {
-                return await _context.Hatos
-                    .AnyAsync(h => h.Id == hatoId && h.Establo.Empresa.usuarioID == userId.Value);
+                return await _context.Hatos.AnyAsync(h =>
+                    h.Id == hatoId &&
+                    (
+                        h.Establo.Empresa.usuarioID == userId.Value
+                        || h.Establo.Empresa.Colaboradors.Any(c => c.idUsuario == userId.Value)
+                    )
+                );
             }
+
 
             // Otros roles: si está amarrado a Hato => solo ese Hato.
             // Si está amarrado a Establo => cualquier Hato de ese Establo.
@@ -268,39 +408,38 @@ namespace WebZootecPro.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // 1) Diccionario: partos por animal (Parto -> RegistroReproduccion -> Animal)
-            var usuarioId = GetCurrentUserId();
-            var usuario = await GetCurrentUserAsync();
-            var empresa = await GetEmpresaAsync();
-            var establo = await _context.Establos.FirstOrDefaultAsync(e => e.EmpresaId == empresa.Id);
+            // 0) Animales visibles (según rol) -> solo hembras
+            var animalesQ = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
+
+            var animales = await animalesQ
+                .Where(a => a.sexo != null && a.sexo.Trim().ToUpper() == "HEMBRA")
+                .Include(a => a.idHatoNavigation)
+                .Include(a => a.idPadreNavigation)
+                    .ThenInclude(p => p!.idPadreNavigation)
+                .Include(a => a.idMadreNavigation)
+                    .ThenInclude(m => m!.idPadreNavigation)
+                .OrderBy(a => a.codigo)
+                .ToListAsync();
+
+            var animalIds = animales.Select(a => a.Id).ToList();
+
+            // 1) Partos por animal (solo animales visibles)
             var partosPorAnimal = await _context.Partos
                 .AsNoTracking()
                 .Join(_context.RegistroReproduccions.AsNoTracking(),
                     p => p.idRegistroReproduccion,
                     rr => rr.Id,
-                    (p, rr) => new { rr.idAnimal })
-                .GroupBy(x => x.idAnimal)
+                    (p, rr) => rr.idAnimal)
+                .Where(idAnimal => animalIds.Contains(idAnimal))
+                .GroupBy(idAnimal => idAnimal)
                 .Select(g => new { AnimalId = g.Key, Total = g.Count() })
                 .ToDictionaryAsync(x => x.AnimalId, x => x.Total);
 
-            // 2) Diccionario: hatos
-            var hatos = await _context.Hatos
-                .AsNoTracking()
-                .Where(h => empresa != null && establo.Id == h.Id
-                    || usuario.RolId == 1)
-                .ToDictionaryAsync(h => h.Id, h => h.nombre);
-
-            // 3) Animales con padres para abuelos
-            var animales = await _context.Animals
-                .Where(a => hatos.Keys.Contains(a.idHato))
-                .Where(a => a.sexo != null && a.sexo.Trim().ToUpper() == "HEMBRA")
-                .AsNoTracking()
-                .Include(a => a.idPadreNavigation)               // Padre
-                .ThenInclude(p => p!.idPadreNavigation)         // Abuelo paterno
-                .Include(a => a.idMadreNavigation)              // Madre
-                .ThenInclude(m => m!.idPadreNavigation)         // Abuelo materno
-                .OrderBy(a => a.codigo)
-                .ToListAsync();
+            // 2) Hatos (desde los animales ya cargados)
+            var hatos = animales
+                .Select(a => new { a.idHato, Nombre = a.idHatoNavigation.nombre })
+                .GroupBy(x => x.idHato)
+                .ToDictionary(g => g.Key, g => g.First().Nombre);
 
             var hoy = DateOnly.FromDateTime(DateTime.Today);
 
@@ -356,9 +495,9 @@ namespace WebZootecPro.Controllers
                 };
             }).ToList();
 
-            // IMPORTANTE: solo devolvemos la lista, no metemos el historial aquí
             return View(model);
         }
+
 
 
         // ----------------- DETAILS -----------------
@@ -366,7 +505,9 @@ namespace WebZootecPro.Controllers
         {
             if (id == null) return NotFound();
 
-            var animal = await _context.Animals
+            var animalQ = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
+
+            var animal = await animalQ
                 .Include(a => a.idHatoNavigation)
                 .Include(a => a.idRazaNavigation)
                 .Include(a => a.procedencia)
@@ -496,6 +637,7 @@ namespace WebZootecPro.Controllers
         public async Task<IActionResult> Create(Animal animal)
         {
             LimpiarValidacionNavegaciones();
+
             animal.sexo = "HEMBRA";
             ModelState.Remove(nameof(Animal.sexo));
 
@@ -520,9 +662,6 @@ namespace WebZootecPro.Controllers
             ModelState.Remove(nameof(Animal.estadoId));
             ModelState.Remove(nameof(Animal.procedenciaId));
 
-            // Navegaciones (por scaffold)
-            ModelState.Remove(nameof(Animal.idHatoNavigation));
-
             // Si por alguna razón no existen los maestros:
             if (animal.estadoId == null)
                 ModelState.AddModelError(nameof(Animal.estadoId), "No existe el estado ACTIVO en EstadoAnimal.");
@@ -531,7 +670,8 @@ namespace WebZootecPro.Controllers
 
             animal.nombre = (animal.nombre ?? "").Trim();
             animal.codigo = (animal.codigo ?? "").Trim();
-            animal.arete = (animal.arete ?? "").Trim();
+            animal.arete = (animal.arete ?? "").Trim().ToUpper();
+
 
             // --- ARETE obligatorio + único ---
             if (string.IsNullOrWhiteSpace(animal.arete))
@@ -539,9 +679,48 @@ namespace WebZootecPro.Controllers
 
             if (!string.IsNullOrWhiteSpace(animal.arete))
             {
-                var existeArete = await _context.Animals.AnyAsync(a => a.arete == animal.arete);
-                if (existeArete)
-                    ModelState.AddModelError(nameof(animal.arete), "El arete ya existe, ingrese otro.");
+                // hato debe ser visible (seguridad)
+                if (!await HatoEsVisibleAsync(animal.idHato))
+                {
+                    ModelState.AddModelError(nameof(animal.idHato), "Hato inválido para este usuario.");
+                }
+                else
+                {
+                    var empresaId = await GetEmpresaIdPorHatoAsync(animal.idHato);
+                    if (empresaId == null)
+                    {
+                        ModelState.AddModelError(nameof(animal.idHato), "No se pudo determinar la empresa del hato.");
+                    }
+                    else
+                    {
+                        var existeArete = await _context.Animals
+                            .Where(a => a.arete == animal.arete)
+                            .Join(_context.Hatos, a => a.idHato, h => h.Id, (a, h) => new { a, h })
+                            .AnyAsync(x => x.h.Establo.EmpresaId == empresaId.Value);
+
+                        if (existeArete)
+                            ModelState.AddModelError(nameof(animal.arete), "El arete ya existe en esta empresa, ingrese otro.");
+                    }
+                }
+            }
+
+            // Validar Hato SIEMPRE (aunque arete esté vacío)
+            if (!await HatoEsVisibleAsync(animal.idHato))
+                ModelState.AddModelError(nameof(animal.idHato), "Hato inválido para este usuario.");
+
+            // Validar que Padre/Madre sean del mismo establo del hato seleccionado
+            var establoIdSel = await GetEstabloIdPorHatoAsync(animal.idHato);
+            if (establoIdSel == null)
+            {
+                ModelState.AddModelError(nameof(animal.idHato), "No se pudo determinar el establo del hato.");
+            }
+            else
+            {
+                if (animal.idPadre != null && !await AnimalPerteneceAEstabloAsync(animal.idPadre.Value, establoIdSel.Value))
+                    ModelState.AddModelError(nameof(animal.idPadre), "El padre no pertenece al establo del hato seleccionado.");
+
+                if (animal.idMadre != null && !await AnimalPerteneceAEstabloAsync(animal.idMadre.Value, establoIdSel.Value))
+                    ModelState.AddModelError(nameof(animal.idMadre), "La madre no pertenece al establo del hato seleccionado.");
             }
 
             // ---------------- Validación normal ----------------
@@ -569,6 +748,29 @@ namespace WebZootecPro.Controllers
                     ModelState.AddModelError(string.Empty, errorLicencia);
                     await tx.RollbackAsync();
 
+                    await CargarCombosAsync(animal, excludeAnimalId: animal.Id);
+                    return View(animal);
+                }
+
+                // Revalidar ARETE DENTRO de la transacción (anti-concurrencia)
+                var empresaIdTx = await GetEmpresaIdPorHatoAsync(animal.idHato);
+                if (empresaIdTx == null)
+                {
+                    ModelState.AddModelError(nameof(animal.idHato), "No se pudo determinar la empresa del hato.");
+                    await tx.RollbackAsync();
+                    await CargarCombosAsync(animal, excludeAnimalId: animal.Id);
+                    return View(animal);
+                }
+
+                var existeAreteTx = await _context.Animals
+                    .Where(a => a.arete == animal.arete)
+                    .Join(_context.Hatos, a => a.idHato, h => h.Id, (a, h) => new { a, h })
+                    .AnyAsync(x => x.h.Establo.EmpresaId == empresaIdTx.Value);
+
+                if (existeAreteTx)
+                {
+                    ModelState.AddModelError(nameof(animal.arete), "El arete ya existe en esta empresa, ingrese otro.");
+                    await tx.RollbackAsync();
                     await CargarCombosAsync(animal, excludeAnimalId: animal.Id);
                     return View(animal);
                 }
@@ -622,16 +824,16 @@ namespace WebZootecPro.Controllers
         [Authorize(Roles = "SUPERADMIN,ADMIN_EMPRESA,USUARIO_EMPRESA")]
         public async Task<IActionResult> Edit(int? id)
         {
+            
             if (id == null) return NotFound();
 
-            var animal = await _context.Animals.FindAsync(id);
+            var animalQ = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
+            var animal = await animalQ.FirstOrDefaultAsync(a => a.Id == id);
             if (animal == null) return NotFound();
 
             await CargarCombosAsync(animal, excludeAnimalId: animal.Id);
             return View(animal);
         }
-
-
 
         [Authorize(Roles = "SUPERADMIN,ADMIN_EMPRESA,USUARIO_EMPRESA")]
         [HttpPost]
@@ -641,93 +843,146 @@ namespace WebZootecPro.Controllers
     "idHato,idPadre,idMadre,estadoId,propositoId,idRaza,procedenciaId,nacimientoEstimado,estadoProductivoId,IdCategoriaAnimal"
 )] Animal model)
         {
-            if (id != model.Id)
-                return NotFound();
+            LimpiarValidacionNavegaciones();
+            // 0) Seguridad base
+            if (id != model.Id) return NotFound();
+            if (!await AnimalEsVisibleAsync(id)) return Forbid();
+            if (!await HatoEsVisibleAsync(model.idHato)) return Forbid();
 
-            ModelState.Remove(nameof(Animal.idHatoNavigation));
+            // 1) Validar establo del hato
+            var establoIdSel = await GetEstabloIdPorHatoAsync(model.idHato);
+            if (establoIdSel == null)
+            {
+                ModelState.AddModelError(nameof(model.idHato), "No se pudo determinar el establo del hato.");
+                await CargarCombosAsync(model, excludeAnimalId: model.Id);
+                return View(model);
+            }
 
+            // 2) Validar padre/madre: visibles + del mismo establo
+            if (model.idPadre != null)
+            {
+                if (!await AnimalEsVisibleAsync(model.idPadre.Value)) return Forbid();
 
-            model.arete = (model.arete ?? "").Trim();
+                if (!await AnimalPerteneceAEstabloAsync(model.idPadre.Value, establoIdSel.Value))
+                {
+                    ModelState.AddModelError(nameof(model.idPadre), "El padre no pertenece al establo del hato seleccionado.");
+                    await CargarCombosAsync(model, excludeAnimalId: model.Id);
+                    return View(model);
+                }
+            }
 
-            // --- ARETE obligatorio ---
+            if (model.idMadre != null)
+            {
+                if (!await AnimalEsVisibleAsync(model.idMadre.Value)) return Forbid();
+
+                if (!await AnimalPerteneceAEstabloAsync(model.idMadre.Value, establoIdSel.Value))
+                {
+                    ModelState.AddModelError(nameof(model.idMadre), "La madre no pertenece al establo del hato seleccionado.");
+                    await CargarCombosAsync(model, excludeAnimalId: model.Id);
+                    return View(model);
+                }
+            }
+
+            // Scaffold: evita validación por navegación
+
+            // 3) Arete obligatorio
+            model.arete = (model.arete ?? "").Trim().ToUpper();
+
             if (string.IsNullOrWhiteSpace(model.arete))
                 ModelState.AddModelError(nameof(model.arete), "Ingrese arete.");
 
-            // Si falla la validación, hay que recargar combos (ajusta nombres si tus acciones los usan distinto)
-            void CargarCombos()
-            {
-                ViewData["idHato"] = new SelectList(_context.Hatos, "Id", "nombre", model.idHato);
-                ViewData["idPadre"] = new SelectList(_context.Animals, "Id", "nombre", model.idPadre);
-                ViewData["idMadre"] = new SelectList(_context.Animals, "Id", "nombre", model.idMadre);
-                ViewData["estadoId"] = new SelectList(_context.EstadoAnimals, "Id", "nombre", model.estadoId);
-                ViewData["propositoId"] = new SelectList(_context.PropositoAnimals, "Id", "nombre", model.propositoId);
-                ViewData["idRaza"] = new SelectList(_context.Razas, "Id", "nombre", model.idRaza);
-                ViewData["procedenciaId"] = new SelectList(_context.ProcedenciaAnimals, "Id", "nombre", model.procedenciaId);
-                ViewData["estadoProductivoId"] = new SelectList(_context.EstadoProductivos, "Id", "nombre", model.estadoProductivoId);
-                ViewData["IdCategoriaAnimal"] = new SelectList(_context.CategoriaAnimals, "IdCategoriaAnimal", "Nombre", model.IdCategoriaAnimal);
-            }
-
             if (!ModelState.IsValid)
             {
-                CargarCombos();
+                await CargarCombosAsync(model, excludeAnimalId: model.Id);
                 return View(model);
             }
 
-            // Traer el registro real de BD (clave para NO sobreescribir con null lo que no venga del form)
-            var animalDb = await _context.Animals.FirstOrDefaultAsync(a => a.Id == id);
-            if (animalDb == null)
-                return NotFound();
-
-            // Validación de ARETE único (si no está vacío)
-            var existeArete = await _context.Animals
-    .AnyAsync(a => a.Id != id && a.arete == model.arete);
-
-            if (existeArete)
-            {
-                ModelState.AddModelError("arete", "El arete ya existe, ingrese otro.");
-                CargarCombos();
-                return View(model);
-            }
-
-
-            // Actualiza SOLO tus campos
-            animalDb.nombre = model.nombre;
-            animalDb.sexo = model.sexo;
-            animalDb.codigo = model.codigo;
-            animalDb.arete = model.arete;
-
-            animalDb.IdentificadorElectronico = model.IdentificadorElectronico;
-            animalDb.OtroIdentificador = model.OtroIdentificador;
-            animalDb.color = model.color;
-            animalDb.fechaNacimiento = model.fechaNacimiento;
-            animalDb.observaciones = model.observaciones;
-
-            animalDb.idHato = model.idHato;
-            animalDb.idPadre = model.idPadre;
-            animalDb.idMadre = model.idMadre;
-
-            animalDb.estadoId = model.estadoId;
-            animalDb.propositoId = model.propositoId;
-            animalDb.idRaza = model.idRaza;
-            animalDb.procedenciaId = model.procedenciaId;
-            animalDb.nacimientoEstimado = model.nacimientoEstimado;
-            //animalDb.estadoProductivoId = model.estadoProductivoId;
-            animalDb.IdCategoriaAnimal = model.IdCategoriaAnimal;
+            // =========================================================
+            // 4) TRANSACCIÓN SERIALIZABLE (anti-concurrencia de arete)
+            // =========================================================
+            await using var tx = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
 
             try
             {
+                // Traer el registro real dentro del TX
+                var animalDb = await _context.Animals.FirstOrDefaultAsync(a => a.Id == id);
+                if (animalDb == null)
+                {
+                    await tx.RollbackAsync();
+                    return NotFound();
+                }
+
+                // Empresa del hato (dentro del TX)
+                var empresaIdEdit = await GetEmpresaIdPorHatoAsync(model.idHato);
+                if (empresaIdEdit == null)
+                {
+                    ModelState.AddModelError(nameof(model.idHato), "No se pudo determinar la empresa del hato.");
+                    await tx.RollbackAsync();
+                    await CargarCombosAsync(model, excludeAnimalId: model.Id);
+                    return View(model);
+                }
+
+                // Revalidar ARETE único dentro del TX
+                var existeAreteTx = await _context.Animals
+                    .Where(a => a.Id != id && a.arete == model.arete)
+                    .Join(_context.Hatos, a => a.idHato, h => h.Id, (a, h) => new { a, h })
+                    .AnyAsync(x => x.h.Establo.EmpresaId == empresaIdEdit.Value);
+
+                if (existeAreteTx)
+                {
+                    ModelState.AddModelError(nameof(model.arete), "El arete ya existe en esta empresa, ingrese otro.");
+                    await tx.RollbackAsync();
+                    await CargarCombosAsync(model, excludeAnimalId: model.Id);
+                    return View(model);
+                }
+
+                // 5) Actualizar campos
+                animalDb.nombre = model.nombre;
+                animalDb.sexo = model.sexo;
+                animalDb.codigo = model.codigo;
+                animalDb.arete = model.arete;
+                animalDb.IdentificadorElectronico = model.IdentificadorElectronico;
+                animalDb.OtroIdentificador = model.OtroIdentificador;
+                animalDb.color = model.color;
+                animalDb.fechaNacimiento = model.fechaNacimiento;
+                animalDb.observaciones = model.observaciones;
+                animalDb.idHato = model.idHato;
+                animalDb.idPadre = model.idPadre;
+                animalDb.idMadre = model.idMadre;
+                animalDb.estadoId = model.estadoId;
+                animalDb.propositoId = model.propositoId;
+                animalDb.idRaza = model.idRaza;
+                animalDb.procedenciaId = model.procedenciaId;
+                animalDb.nacimientoEstimado = model.nacimientoEstimado;
+                animalDb.IdCategoriaAnimal = model.IdCategoriaAnimal;
+
                 await _context.SaveChangesAsync();
+                await tx.CommitAsync();
+
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateConcurrencyException)
             {
-                var existe = await _context.Animals.AnyAsync(e => e.Id == id);
-                if (!existe) return NotFound();
-                throw;
+                await tx.RollbackAsync();
+                ModelState.AddModelError(string.Empty, "El registro fue modificado por otro usuario. Vuelva a intentar.");
+                await CargarCombosAsync(model, excludeAnimalId: model.Id);
+                return View(model);
+            }
+            catch (DbUpdateException ex)
+            {
+                await tx.RollbackAsync();
+                ModelState.AddModelError(string.Empty, $"Error al guardar: {ex.InnerException?.Message ?? ex.Message}");
+                await CargarCombosAsync(model, excludeAnimalId: model.Id);
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                ModelState.AddModelError(string.Empty, $"Error inesperado: {ex.Message}");
+                await CargarCombosAsync(model, excludeAnimalId: model.Id);
+                return View(model);
             }
         }
-
-
         // ----------------- DELETE -----------------
         [HttpGet]
         [Authorize(Roles = "SUPERADMIN,ADMIN_EMPRESA")]
@@ -735,9 +990,8 @@ namespace WebZootecPro.Controllers
         {
             if (id == null) return NotFound();
 
-            var animal = await _context.Animals
-                .FirstOrDefaultAsync(a => a.Id == id);
-
+            var animalQ = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
+            var animal = await animalQ.FirstOrDefaultAsync(a => a.Id == id);
             if (animal == null) return NotFound();
 
             return View(animal);
@@ -748,6 +1002,10 @@ namespace WebZootecPro.Controllers
         [Authorize(Roles = "SUPERADMIN,ADMIN_EMPRESA")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            var animalQ = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
+            var ok = await animalQ.AnyAsync(a => a.Id == id);
+            if (!ok) return Forbid();
+
             var animal = await _context.Animals.FindAsync(id);
             if (animal != null)
             {
@@ -760,9 +1018,8 @@ namespace WebZootecPro.Controllers
         [HttpGet]
         public async Task<IActionResult> Historial(int id)
         {
-            var animal = await _context.Animals
-                .AsNoTracking()
-                .FirstOrDefaultAsync(a => a.Id == id);
+            var animal = await (await ScopeAnimalesAsync(_context.Animals.AsNoTracking()))
+    .FirstOrDefaultAsync(a => a.Id == id);
 
             if (animal == null) return NotFound();
 
@@ -1038,5 +1295,6 @@ namespace WebZootecPro.Controllers
 
             return PartialView("_HistorialAnimal", vm);
         }
+
     }
 }

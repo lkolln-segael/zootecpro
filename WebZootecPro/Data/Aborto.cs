@@ -8,6 +8,7 @@ namespace WebZootecPro.Data;
 
 [Table("Aborto")]
 [Index("idCausaAborto", Name = "IX_Aborto_idCausaAborto")]
+[Index("idHato", Name = "IX_Aborto_idHato")]
 [Index("idRegistroReproduccion", Name = "IX_Aborto_idRegistroReproduccion")]
 public partial class Aborto
 {
@@ -23,9 +24,15 @@ public partial class Aborto
 
     public int? diasATermino { get; set; }
 
+    public int? idHato { get; set; }
+
     [ForeignKey("idCausaAborto")]
     [InverseProperty("Abortos")]
     public virtual CausaAborto idCausaAbortoNavigation { get; set; } = null!;
+
+    [ForeignKey("idHato")]
+    [InverseProperty("Abortos")]
+    public virtual Hato? idHatoNavigation { get; set; }
 
     [ForeignKey("idRegistroReproduccion")]
     [InverseProperty("Abortos")]
