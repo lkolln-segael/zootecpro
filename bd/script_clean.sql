@@ -1,0 +1,13 @@
+CREATE DATABASE ZootecPro;
+GO
+USE ZootecPro;
+GO
+BEGIN TRANSACTION;
+GO
+
+
+
+COMMIT;
+GO
+
+

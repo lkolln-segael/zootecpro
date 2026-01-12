@@ -38,22 +38,27 @@ namespace WebZootecPro.Controllers
     private async Task<int?> GetEstabloScopeAsync()
     {
       var empresa = await GetEmpresaAsync();
-      var establo = await _context.Establos.FirstOrDefaultAsync(e => e.EmpresaId == empresa.Id);
-      return establo.Id;
+      var establo = await _context.Establos.FirstOrDefaultAsync(e => empresa != null && e.EmpresaId == empresa.Id);
+      return establo != null ? establo.Id : -1;
     }
     private async Task<Empresa?> GetEmpresaAsync()
     {
       var usuario = await GetUsuarioActualAsync();
-      return await _context.Empresas.FirstOrDefaultAsync(e => e.usuarioID == usuario.Id
-          || e.Colaboradors.Select(e => e.idUsuario).Contains(usuario.Id));
+      if (usuario == null) return null;
+
+      return await _context.Empresas.FirstOrDefaultAsync(e =>
+          e.usuarioID == usuario.Id
+          || e.Colaboradors.Any(c => c.idUsuario == usuario.Id));
     }
+
     [HttpGet]
     public async Task<IActionResult> Index()
     {
       var hoy = DateTime.Today;
+      var usuario = await GetUsuarioActualAsync();
       var establo = await GetEstabloScopeAsync();
       var enfermedades = await _context.Enfermedads
-        .Where(e => e.idAnimalNavigation.idHatoNavigation.EstabloId == establo)
+        .Where(e => usuario.RolId == 1 || e.idAnimalNavigation.idHatoNavigation.EstabloId == establo)
         .AsNoTracking()
         .ToListAsync();
 
@@ -78,7 +83,7 @@ namespace WebZootecPro.Controllers
 
       // combos/diccionarios
       ViewBag.IdAnimal = await _context.Animals
-        .Where(a => a.idHatoNavigation.EstabloId == establo)
+        .Where(a => (usuario != null && usuario.RolId == 1) || (establo != null && a.idHatoNavigation.EstabloId == establo))
         .AsNoTracking()
         .ToDictionaryAsync(a => a.Id, a => a.codigo ?? a.nombre ?? "SIN CÓDIGO");
 
@@ -88,7 +93,7 @@ namespace WebZootecPro.Controllers
 
       ViewBag.IdVeterinario = await _context.Usuarios
         .AsNoTracking()
-        .Where(u => u.Rol.Nombre.ToUpper() == "VETERINARIO" && u.idEstablo == establo)
+        .Where(u => (usuario != null && usuario.RolId == 1) || u.Rol.Nombre.ToUpper() == "VETERINARIO" && (establo != null && u.idEstablo == establo))
         .ToDictionaryAsync(v => v.Id, v => v.nombre);
 
       return View(model);

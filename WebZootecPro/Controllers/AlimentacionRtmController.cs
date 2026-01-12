@@ -37,14 +37,17 @@ public class AlimentacionRtmController : Controller
   private async Task<int?> GetEstabloScopeAsync()
   {
     var empresa = await GetEmpresaAsync();
-    var establo = await _context.Establos.FirstOrDefaultAsync(e => e.EmpresaId == empresa.Id);
-    return establo.Id;
+    var establo = await _context.Establos.FirstOrDefaultAsync(e => empresa != null && e.EmpresaId == empresa.Id);
+    return establo != null ? establo.Id : -1;
   }
   private async Task<Empresa?> GetEmpresaAsync()
   {
     var usuario = await GetUsuarioActualAsync();
-    return await _context.Empresas.FirstOrDefaultAsync(e => e.usuarioID == usuario.Id
-        || e.Colaboradors.Select(e => e.idUsuario).Contains(usuario.Id));
+    if (usuario == null) return null;
+
+    return await _context.Empresas.FirstOrDefaultAsync(e =>
+        e.usuarioID == usuario.Id
+        || e.Colaboradors.Any(c => c.idUsuario == usuario.Id));
   }
   private async Task CargarHatosAsync(Usuario? u, int? hatoIdSel)
   {
