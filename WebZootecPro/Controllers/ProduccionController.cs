@@ -33,6 +33,8 @@ namespace WebZootecPro.Controllers
                 .FirstOrDefaultAsync(u => u.Id == userId.Value);
         }
 
+    
+
         private void CargarComboFuentes(string? selected = null)
         {
             var fuentes = new List<SelectListItem>
@@ -55,13 +57,53 @@ namespace WebZootecPro.Controllers
         // GET: Produccion
         public async Task<IActionResult> Index(DateTime? desde, DateTime? hasta, int? idAnimal)
         {
-            var empresa = await GetEmpresaAsync();
-            var establo = await _context.Establos.FirstOrDefaultAsync(e => e.EmpresaId == empresa.Id);
+            var userId = GetCurrentUserId();
+            if (userId == null) return Forbid();
+
+            // empresas scope
+            List<int> empresaIds;
+
+            if (User.IsInRole("SUPERADMIN"))
+            {
+                empresaIds = new List<int>(); // sin filtro
+            }
+            else if (User.IsInRole("ADMIN_EMPRESA"))
+            {
+                empresaIds = await _context.Empresas.AsNoTracking()
+                    .Where(e => e.usuarioID == userId.Value)
+                    .Select(e => e.Id)
+                    .ToListAsync();
+            }
+            else
+            {
+                empresaIds = await _context.Colaboradors.AsNoTracking()
+                    .Where(c => c.idUsuario == userId.Value)
+                    .Select(c => c.EmpresaId.Value)
+                    .Distinct()
+                    .ToListAsync();
+            }
+
+            if (!User.IsInRole("SUPERADMIN") && empresaIds.Count == 0)
+                return View(new List<RegistroProduccionLeche>());
+
+            // restricción por establo/hato del usuario (si existe)
+            var u = await _context.Usuarios.AsNoTracking()
+                .Select(x => new { x.Id, x.idEstablo, x.idHato })
+                .FirstOrDefaultAsync(x => x.Id == userId.Value);
+
             var q = _context.RegistroProduccionLeches
-            .Include(r => r.idAnimalNavigation)
-            .Include(r => r.Calidads)
-            .Where(r => r.idAnimalNavigation.idHatoNavigation.EstabloId == establo.Id)
-            .AsQueryable();
+                .AsNoTracking()
+                .Include(r => r.idAnimalNavigation)
+                .Include(r => r.Calidads)
+                .AsQueryable();
+
+            if (!User.IsInRole("SUPERADMIN"))
+                q = q.Where(r => empresaIds.Contains(r.idAnimalNavigation.idHatoNavigation.Establo.EmpresaId));
+
+            if (u?.idHato != null)
+                q = q.Where(r => r.idAnimalNavigation.idHato == u.idHato.Value);
+            else if (u?.idEstablo != null)
+                q = q.Where(r => r.idAnimalNavigation.idHatoNavigation.EstabloId == u.idEstablo.Value);
 
             if (desde.HasValue)
                 q = q.Where(r => r.fechaOrdeno >= desde.Value.Date);
@@ -70,13 +112,16 @@ namespace WebZootecPro.Controllers
                 q = q.Where(r => r.fechaOrdeno <= hasta.Value.Date.AddDays(1).AddTicks(-1));
 
             if (idAnimal.HasValue)
+            {
+                // evita filtrar por animal ajeno
+                if (!await AnimalVisibleAsync(idAnimal.Value)) return NotFound();
                 q = q.Where(r => r.idAnimal == idAnimal.Value);
+            }
 
             var lista = await q
                 .OrderByDescending(r => r.fechaOrdeno)
                 .ThenBy(r => r.turno)
                 .ToListAsync();
-
 
             await CargarComboAnimales(idAnimal);
             ViewBag.Desde = desde?.ToString("yyyy-MM-dd");
@@ -85,10 +130,15 @@ namespace WebZootecPro.Controllers
             return View(lista);
         }
 
+
         // GET: Produccion/Registrar
         [Authorize(Roles = "SUPERADMIN,ADMIN_EMPRESA,INSPECTOR,USUARIO_EMPRESA")]
         public async Task<IActionResult> Registrar(int? idAnimal)
         {
+            if (idAnimal.HasValue && !await AnimalVisibleAsync(idAnimal.Value))
+                return NotFound();
+
+
             var vm = new RegistrarProduccionViewModel
             {
                 FechaOrdeno = DateTime.Today,
@@ -111,6 +161,8 @@ namespace WebZootecPro.Controllers
         [HttpGet]
         public async Task<IActionResult> CalcularDel(int idAnimal, DateTime fechaOrdeno)
         {
+            if (!await AnimalVisibleAsync(idAnimal)) return Forbid();
+
             var del = await CalcularDiasEnLecheAsync(idAnimal, fechaOrdeno);
             return Json(new { diasEnLeche = del });
         }
@@ -127,6 +179,11 @@ namespace WebZootecPro.Controllers
                 CargarComboFuentes(vm.Fuente);
 
                 return View(vm);
+            }
+
+            if (!vm.IdAnimal.HasValue || !await AnimalVisibleAsync(vm.IdAnimal.Value))
+            {
+                return NotFound();
             }
 
             var animal = await _context.Animals.FirstOrDefaultAsync(a => a.Id == vm.IdAnimal);
@@ -395,6 +452,7 @@ namespace WebZootecPro.Controllers
         [HttpGet]
         public async Task<IActionResult> GetRetiroLeche(int idAnimal, DateTime fechaOrdeno)
         {
+            if (!await AnimalVisibleAsync(idAnimal)) return Forbid();
             // usamos mediodía para evitar temas de hora 00:00
             var dt = fechaOrdeno.Date.AddHours(12);
             var hasta = await GetRetiroLecheHastaAsync(idAnimal, dt);
@@ -702,6 +760,55 @@ namespace WebZootecPro.Controllers
 
             return View(rows);
         }
+
+        private async Task<bool> AnimalVisibleAsync(int idAnimal)
+        {
+            if (User.IsInRole("SUPERADMIN")) return true;
+
+            var userId = GetCurrentUserId();
+            if (userId == null) return false;
+
+            // empresa(s) a la que pertenece el usuario:
+            // - ADMIN_EMPRESA: dueño (Empresas.usuarioID)
+            // - otros roles: colaborador (Colaborador.EmpresaId)
+            List<int> empresaIds;
+
+            if (User.IsInRole("ADMIN_EMPRESA"))
+            {
+                empresaIds = await _context.Empresas.AsNoTracking()
+                    .Where(e => e.usuarioID == userId.Value)
+                    .Select(e => e.Id)
+                    .ToListAsync();
+            }
+            else
+            {
+                empresaIds = await _context.Colaboradors.AsNoTracking()
+                .Where(c => c.idUsuario == userId.Value && c.EmpresaId.HasValue)
+                .Select(c => c.EmpresaId.Value) // Ahora es int en lugar de int?
+                .Distinct()
+                .ToListAsync();
+
+            }
+
+            if (empresaIds.Count == 0) return false;
+
+            // si el usuario tiene hato/establo asignado, aplica restricción extra
+            var u = await _context.Usuarios.AsNoTracking()
+                .Select(x => new { x.Id, x.idEstablo, x.idHato })
+                .FirstOrDefaultAsync(x => x.Id == userId.Value);
+
+            var q = _context.Animals.AsNoTracking()
+                .Where(a => a.Id == idAnimal)
+                .Where(a => empresaIds.Contains(a.idHatoNavigation.Establo.EmpresaId));
+
+            if (u?.idHato != null)
+                q = q.Where(a => a.idHato == u.idHato.Value);
+            else if (u?.idEstablo != null)
+                q = q.Where(a => a.idHatoNavigation.EstabloId == u.idEstablo.Value);
+
+            return await q.AnyAsync();
+        }
+
 
     }
 }

@@ -23,8 +23,27 @@ namespace WebZootecPro.Controllers
         }
 
         // ----------------- HELPERS -----------------
-        // Solo cargamos Hatos (ya no existe TipoAnimal)
-        // ----------------- HELPERS -----------------
+        private async Task<IQueryable<Animal>> ScopeAnimalesAsync(IQueryable<Animal> q)
+        {
+            if (IsSuperAdmin) return q;
+
+            var userId = GetCurrentUserId();
+            if (userId == null) return q.Where(_ => false);
+
+            if (IsAdminEmpresa)
+            {
+                // dueño: animales cuya empresa pertenece a este admin
+                return q.Where(a => a.idHatoNavigation.Establo.Empresa.usuarioID == userId.Value);
+            }
+
+            // roles con establo/hato asignado
+            var u = await GetCurrentUserAsync();
+            if (u?.idHato != null) return q.Where(a => a.idHato == u.idHato.Value);
+            if (u?.idEstablo != null) return q.Where(a => a.idHatoNavigation.EstabloId == u.idEstablo.Value);
+
+            return q.Where(_ => false);
+        }
+
         private async Task CargarCombosAsync(Animal? animal = null, int? excludeAnimalId = null)
         {
             var empresa = await GetEmpresaAsync();
