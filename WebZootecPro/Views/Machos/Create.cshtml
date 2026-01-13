@@ -2,50 +2,50 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
-    ViewData["Title"] = "Registrar macho";
-    var hatos = ViewBag.Hatos as List<SelectListItem> ?? new();
-}
+ViewData["Title"] = "Registrar macho";
+var hatos = ViewBag.Hatos as List<SelectListItem> ?? new();
+  }
 
-<h2>Registrar macho</h2>
+  <h2>Registrar macho</h2>
 
-<form asp-action="Create" method="post" class="card p-3">
+  <form asp-action="Create" method="post" class="card p-3">
     <div class="row g-3">
 
-        <div class="col-md-6">
-            <label class="form-label">Nombre</label>
-            <input asp-for="nombre" class="form-control" />
-            <span asp-validation-for="nombre" class="text-danger"></span>
-        </div>
+      <div class="col-md-6">
+        <label class="form-label">Nombre</label>
+        <input asp-for="nombre" class="form-control" />
+        <span asp-validation-for="nombre" class="text-danger"></span>
+      </div>
 
-        <div class="col-md-4">
-            <label class="form-label">NAAB</label>
-            <input asp-for="naab" class="form-control" />
-            <span asp-validation-for="naab" class="text-danger"></span>
-        </div>
+      <div class="col-md-4">
+        <label class="form-label">NAAB</label>
+        <input asp-for="naab" class="form-control" />
+        <span asp-validation-for="naab" class="text-danger"></span>
+      </div>
 
-        <div class="col-md-4">
-            <label class="form-label">Hato</label>
-            <select asp-for="idHato" class="form-select" asp-items="hatos">
-                <option value="">-- Seleccione --</option>
-            </select>
-            <span asp-validation-for="idHato" class="text-danger"></span>
-        </div>
+      <div class="col-md-4">
+        <label class="form-label">Hato</label>
+        <select asp-for="idHato" class="form-select" asp-items="@ViewBag.IdHato">
+          <option value="">-- Seleccione --</option>
+        </select>
+        <span asp-validation-for="idHato" class="text-danger"></span>
+      </div>
 
-        @* Forzamos el sexo macho (por seguridad). Si tu controller ya lo fuerza, igual no estorba *@
-        <input type="hidden" asp-for="sexo" value="MACHO" />
+      @* Forzamos el sexo macho (por seguridad). Si tu controller ya lo fuerza, igual no estorba *@
+      <input type="hidden" asp-for="sexo" value="MACHO" />
 
-        <div class="col-12 d-flex gap-2">
-            <button class="btn btn-primary">
-                <i class="bi bi-check2-circle"></i> Guardar
-            </button>
-            <a class="btn btn-outline-secondary" asp-action="Index">
-                Cancelar
-            </a>
-        </div>
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-primary">
+          <i class="bi bi-check2-circle"></i> Guardar
+        </button>
+        <a class="btn btn-outline-secondary" asp-action="Index">
+          Cancelar
+        </a>
+      </div>
 
     </div>
-</form>
+  </form>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+  @section Scripts {
+  <partial name="_ValidationScriptsPartial" />
+  }
