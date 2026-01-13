@@ -35,8 +35,8 @@ namespace WebZootecPro.ViewModels.Eventos
         [DataType(DataType.Time)]
         public TimeOnly? HoraParto { get; set; }
 
-        [Display(Name = "PVE (días)")]
-        public int? PveDias { get; set; }
+        //[Display(Name = "PVE (días)")]
+        //public int? PveDias { get; set; }
 
         [Display(Name = "Sexo de la cría")]
         public int? IdSexoCria { get; set; }
@@ -48,15 +48,15 @@ namespace WebZootecPro.ViewModels.Eventos
         public int? IdEstadoCria { get; set; }
 
         public string? AreteCria1 { get; set; } 
-        public string? AreteCria2 { get; set; }  
+        //public string? AreteCria2 { get; set; }  
 
         [Display(Name = "Nombre cría 1")]
         [StringLength(60)]
         public string? NombreCria1 { get; set; }
 
-        [Display(Name = "Nombre cría 2 (si mellizo)")]
-        [StringLength(60)]
-        public string? NombreCria2 { get; set; }
+        //[Display(Name = "Nombre cría 2")]
+        //[StringLength(60)]
+        //public string? NombreCria2 { get; set; }
 
         // ====== REPRODUCCIÓN / OTROS ======
 
@@ -68,7 +68,7 @@ namespace WebZootecPro.ViewModels.Eventos
         [Display(Name = "Motivo de seca")]
         public string? SecaMotivo { get; set; }
 
-        [Display(Name = "Padre (toro)")]
+        [Display(Name = "Padre")]
         public int? IdPadreAnimal { get; set; }
 
         // ====== ENFERMEDAD / MEDICACIÓN ======
@@ -109,21 +109,25 @@ namespace WebZootecPro.ViewModels.Eventos
         [DataType(DataType.Time)]
         public TimeOnly? HoraServicio { get; set; }
 
-        [Display(Name = "Nombre del toro")]
-        [StringLength(150)]
-        public string? NombreToro { get; set; }
+        //[Display(Name = "Nombre del toro")]
+        //[StringLength(150)]
+        //public string? NombreToro { get; set; }
 
         [Display(Name = "Código NAAB")]
         [StringLength(20)]
         public string? CodigoNaab { get; set; }
 
-        [Display(Name = "Protocolo (OVYSINCH, CIDER, IATF...)")]
+        [Display(Name = "Protocolo ")]
         [StringLength(50)]
         public string? Protocolo { get; set; }
 
         //confirmacion prenez
         [Display(Name = "Método")]
         public string? ConfirmacionMetodo { get; set; } // "ECOGRAFIA" | "PALPACION"
+
+        [Display(Name = "Inseminador")]
+        public int? IdInseminador { get; set; }
+
 
     }
 }

@@ -273,20 +273,9 @@ namespace WebZootecPro.Controllers
 
             if (tipoEvento == "PARTO")
             {
-                // default: 50 (o usa establo si está en 70)
-                if (idAnimal.HasValue && idAnimal.Value > 0)
-                {
-                    var animalesScope = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
-                    var animal = await animalesScope.FirstOrDefaultAsync(a => a.Id == idAnimal.Value);
-
-                    if (animal != null)
-                    {
-                        var def = await GetPveDiasPorAnimalAsync(animal);
-                        vm.PveDias = (def >= 70) ? 70 : 50;
-                    }
-                }
                 await CargarCombosPartoAsync(vm);
             }
+
 
 
             if (tipoEvento == "SERVICIO")
@@ -532,11 +521,6 @@ namespace WebZootecPro.Controllers
                 case "PARTO":
                     {
                         // ===== Validaciones básicas =====
-                        if (model.PveDias == null)
-                            ModelState.AddModelError(nameof(model.PveDias), "Seleccione PVE (50 o 70).");
-                        else if (model.PveDias != 50 && model.PveDias != 70)
-                            ModelState.AddModelError(nameof(model.PveDias), "PVE inválido.");
-
                         if (model.IdSexoCria == null)
                             ModelState.AddModelError(nameof(model.IdSexoCria), "Seleccione el sexo de la cría.");
 
@@ -548,9 +532,6 @@ namespace WebZootecPro.Controllers
 
                         if (model.HoraParto == null)
                             ModelState.AddModelError(nameof(model.HoraParto), "Ingrese la hora del parto.");
-
-                        if (string.IsNullOrWhiteSpace(model.AreteCria1))
-                            ModelState.AddModelError(nameof(model.AreteCria1), "Ingrese el Areté de la cría 1.");
 
                         // Leer texto del sexo (para saber si es mellizo)
                         var sexoTxt = "";
@@ -577,12 +558,9 @@ namespace WebZootecPro.Controllers
                         if (hembra1 && string.IsNullOrWhiteSpace(model.NombreCria1))
                             ModelState.AddModelError(nameof(model.NombreCria1), "Ingrese el nombre de la cría 1.");
 
-                        if (esMellizo && hembra2 && string.IsNullOrWhiteSpace(model.NombreCria2))
-                            ModelState.AddModelError(nameof(model.NombreCria2), "Ingrese el nombre de la cría 2.");
-
                         // ===== Validar aretes y duplicados =====
                         var arete1 = (model.AreteCria1 ?? "").Trim();
-                        var arete2 = (model.AreteCria2 ?? "").Trim();
+
 
                         if (!string.IsNullOrWhiteSpace(arete1))
                         {
@@ -591,21 +569,7 @@ namespace WebZootecPro.Controllers
                                 ModelState.AddModelError(nameof(model.AreteCria1), "Ya existe un animal con ese Areté.");
                         }
 
-                        if (esMellizo)
-                        {
-                            if (string.IsNullOrWhiteSpace(arete2))
-                                ModelState.AddModelError(nameof(model.AreteCria2), "Ingrese el Areté de la cría 2 (mellizo).");
 
-                            if (!string.IsNullOrWhiteSpace(arete2) && arete2 == arete1)
-                                ModelState.AddModelError(nameof(model.AreteCria2), "El Areté de la cría 2 no puede ser igual al de la cría 1.");
-
-                            if (!string.IsNullOrWhiteSpace(arete2))
-                            {
-                                var existeArete2 = await _context.Animals.AnyAsync(a => a.arete == arete2);
-                                if (existeArete2)
-                                    ModelState.AddModelError(nameof(model.AreteCria2), "Ya existe un animal con ese Areté (cría 2).");
-                            }
-                        }
 
                         if (!ModelState.IsValid)
                         {
@@ -706,8 +670,9 @@ namespace WebZootecPro.Controllers
                         }
 
                         // ===== PVE =====
-                        var pveDias = model.PveDias ?? 50; // ya validado, esto es fallback
+                        var pveDias = await GetPveDiasPorAnimalAsync(animal);  // devuelve 50–70 (o 60 default)
                         var fechaFinPve = DateOnly.FromDateTime(fechaHoraParto).AddDays(pveDias);
+
 
                         // ===== Guardar Parto =====
                         var parto = new Parto
@@ -720,9 +685,7 @@ namespace WebZootecPro.Controllers
                             idTipoParto = model.IdTipoParto.Value,
                             idEstadoCria = model.IdEstadoCria.Value,
                             nombreCria1 = model.NombreCria1,
-                            nombreCria2 = esMellizo ? model.NombreCria2 : null,
                             areteCria1 = arete1,
-                            areteCria2 = esMellizo ? arete2 : null,
                             horaParto = model.HoraParto.Value,
                             pveDias = pveDias,
 
@@ -761,31 +724,6 @@ namespace WebZootecPro.Controllers
                             nacimientoEstimado = false
                         };
                         _context.Animals.Add(cria1);
-
-                        Animal? cria2 = null;
-                        if (esMellizo)
-                        {
-                            var nombreCria2 = !string.IsNullOrWhiteSpace(model.NombreCria2)
-                                ? model.NombreCria2.Trim()
-                                : $"CRIA {arete2}";
-
-                            cria2 = new Animal
-                            {
-                                nombre = nombreCria2,
-                                arete = arete2,
-                                codigo = arete2, // idem
-                                sexo = hembra2 ? "HEMBRA" : "MACHO",
-                                fechaNacimiento = fechaNac,
-                                idMadre = animal.Id,
-                                idPadre = padreIdCiclo,
-                                idHato = hatoEvento,
-                                idRaza = animal.idRaza,
-                                estadoId = idActivo,
-                                nacimientoEstimado = false
-                            };
-                            _context.Animals.Add(cria2);
-                        }
-
                         await _context.SaveChangesAsync();
 
                         // ===== RegistroIngresos (ALTA) =====
@@ -804,21 +742,6 @@ namespace WebZootecPro.Controllers
                             observacion = "Alta automática por parto"
                         });
 
-                        if (cria2 != null)
-                        {
-                            _context.RegistroIngresos.Add(new RegistroIngreso
-                            {
-                                codigoIngreso = $"ING-{ahora:yyyyMMddHHmmss}-{cria2.Id}",
-                                tipoIngreso = "ALTA",
-                                idAnimal = cria2.Id,
-                                fechaIngreso = fechaIngreso,
-                                idHato = cria2.idHato,
-                                usuarioId = userId,
-                                origen = "NACIMIENTO",
-                                observacion = "Alta automática por parto (mellizo)"
-                            });
-                        }
-
                         // ===== RegistroNacimiento =====
                         _context.RegistroNacimientos.Add(new RegistroNacimiento
                         {
@@ -827,17 +750,6 @@ namespace WebZootecPro.Controllers
                             fecha = fechaNac,
                             observacionesNacimiento = "Nacimiento automático por PARTO"
                         });
-
-                        if (cria2 != null)
-                        {
-                            _context.RegistroNacimientos.Add(new RegistroNacimiento
-                            {
-                                idAnimal = cria2.Id,
-                                idRegistroReproduccion = rrIdCiclo,
-                                fecha = fechaNac,
-                                observacionesNacimiento = "Nacimiento automático por PARTO (mellizo)"
-                            });
-                        }
 
                         var idLactando = await _context.EstadoProductivos
                             .Where(e => e.nombre == "LACTANDO")
@@ -960,7 +872,7 @@ namespace WebZootecPro.Controllers
                                 ModelState.AddModelError(nameof(model.IdPadreAnimal), "El animal seleccionado no es macho.");
                             else
                             {
-                                if (string.IsNullOrWhiteSpace(model.NombreToro)) model.NombreToro = toro.nombre;
+                                
                                 if (string.IsNullOrWhiteSpace(model.CodigoNaab)) model.CodigoNaab = toro.naab;
                             }
 
@@ -974,7 +886,7 @@ namespace WebZootecPro.Controllers
 
                             model.CodigoNaab = null;
                             model.Protocolo = null;
-                            model.NombreToro = null;
+                          
                             model.HoraServicio = null;
                         }
                         else // IA (incluye null -> lo tratas como IA)
@@ -988,8 +900,7 @@ namespace WebZootecPro.Controllers
                             if (string.IsNullOrWhiteSpace(model.CodigoNaab))
                                 ModelState.AddModelError(nameof(model.CodigoNaab), "Ingrese NAAB.");
 
-                            if (model.IdPadreAnimal == null && string.IsNullOrWhiteSpace(model.NombreToro))
-                                ModelState.AddModelError(nameof(model.NombreToro), "Ingrese el nombre del toro o selecciónelo de la lista.");
+        
                         }
 
                         // ✅ AHORA SÍ: cortar antes de guardar
@@ -1030,15 +941,14 @@ namespace WebZootecPro.Controllers
                             fechaInseminacion = fechaInsem,
                             horaServicio = model.HoraServicio,
                             numeroServicio = nroServ,
-
-                            nombreToro = model.NombreToro,
                             codigoNaab = model.CodigoNaab,
                             protocolo = model.Protocolo,
 
                             fechaProbableParto = fechaProbParto,
                             fechaProbableSeca = fechaProbSeca,
 
-                            observacion = model.Observaciones
+                            observacion = model.Observaciones,
+
                         });
 
                         await _context.SaveChangesAsync();
@@ -1521,15 +1431,6 @@ namespace WebZootecPro.Controllers
                 await _context.SexoCria.OrderBy(x => x.Nombre).ToListAsync(),
                 "Id", "Nombre", model?.IdSexoCria
             );
-
-            ViewBag.PveDias = new SelectList(
-                new[] {
-                    new SelectListItem { Value = "50", Text = "50 días" },
-                    new SelectListItem { Value = "70", Text = "70 días" }
-                },
-                "Value", "Text", (model?.PveDias?.ToString() ?? "50")
-            );
-
 
             ViewBag.IdTipoParto = new SelectList(
                 await _context.TipoPartos.OrderBy(x => x.Nombre).ToListAsync(),

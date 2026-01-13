@@ -9,7 +9,7 @@
         <div class="d-flex gap-3">
             <label class="form-check">
                 <input class="form-check-input" type="radio" name="TipoServicio" value="IA" @(Model.TipoServicio != "MONTA" ? "checked" : "") />
-                <span class="form-check-label">Inseminación Artificial (IA)</span>
+                <span class="form-check-label">Inseminación Artificial</span>
             </label>
             <label class="form-check">
                 <input class="form-check-input" type="radio" name="TipoServicio" value="MONTA" @(Model.TipoServicio == "MONTA" ? "checked" : "") />
@@ -19,7 +19,7 @@
     </div>
 
     <div class="col-md-6">
-        <label class="form-label">Toro (lista de machos)</label>
+        <label class="form-label">Toro</label>
 
         <select asp-for="IdPadreAnimal" class="form-select" id="IdPadreAnimal">
             <option value="">-- Seleccione toro --</option>
@@ -41,11 +41,7 @@
         <span asp-validation-for="CodigoNaab" class="text-danger small"></span>
     </div>
 
-    <div class="col-md-6" id="bloqueNombreToro">
-        <label class="form-label">Nombre del toro</label>
-        <input asp-for="NombreToro" class="form-control" id="NombreToro" style="background-color: rgba(15, 23, 42, 0.96)" />
-        <span asp-validation-for="NombreToro" class="text-danger small"></span>
-    </div>
+
 
     <div class="col-md-6" id="bloqueProtocolo">
         <label class="form-label">Protocolo reproductivo</label>
@@ -56,12 +52,12 @@
     </div>
 
     <div class="col-md-6">
-        <label class="form-label">Fecha probable de parto (Fecha + 279)</label>
+        <label class="form-label">Fecha probable de parto</label>
         <input class="form-control" id="FechaProbPartoCalc" readonly style="background-color: rgba(15, 23, 42, 0.96)" />
     </div>
 
     <div class="col-md-6">
-        <label class="form-label">Fecha probable de seca (Parto - 60)</label>
+        <label class="form-label">Fecha probable de seca</label>
         <input class="form-control" id="FechaProbSecaCalc" readonly style="background-color: rgba(15, 23, 42, 0.96)" />
     </div>
     <div class="col-md-3" id="bloqueHoraServicio">
@@ -69,11 +65,14 @@
         <input asp-for="HoraServicio" type="time" class="form-control" />
         <span asp-validation-for="HoraServicio" class="text-danger small"></span>
     </div>
-
-
-    <div class="col-12">
-        <div class="form-text">Monta Natural: solo fecha del evento + toro. IA: NAAB + protocolo.</div>
+    <div class="col-md-3" id="bloqueInseminador">
+        <label asp-for="IdInseminador" class="form-label"></label>
+        <select asp-for="IdInseminador" asp-items="ViewBag.Inseminadores" class="form-select">
+            <option value="">-- Seleccione --</option>
+        </select>
+        <span asp-validation-for="IdInseminador" class="text-danger small"></span>
     </div>
+
 </div>
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

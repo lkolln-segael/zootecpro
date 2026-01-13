@@ -43,25 +43,6 @@
     <span asp-validation-for="NombreCria1" class="text-danger small"></span>
   </div>
 
-  <div class="col-lg-3 col-md-6">
-        <label asp-for="AreteCria2" class="form-label"></label>
-        <input id="rpCria2" asp-for="AreteCria2" class="form-control" />
-        <span asp-validation-for="AreteCria2" class="text-danger small"></span>
-  </div>
-
-  <div class="col-lg-3 col-md-6">
-    <label asp-for="NombreCria2" class="form-label"></label>
-    <input id="nombreCria2" asp-for="NombreCria2" class="form-control" />
-    <span asp-validation-for="NombreCria2" class="text-danger small"></span>
-  </div>
-
-    <div class="col-lg-3 col-md-6">
-        <label asp-for="PveDias" class="form-label"></label>
-        <select asp-for="PveDias" asp-items="ViewBag.PveDias" class="form-select">
-            <option value="">-- Seleccione --</option>
-        </select>
-        <span asp-validation-for="PveDias" class="text-danger small"></span>
-    </div>
     <div class="mb-3">
         <label class="form-label">Fecha probable de parto</label>
         <input id="FechaProbableParto" class="form-control" type="date" readonly style="background-color: rgba(15, 23, 42, 0.96)" />
