@@ -482,25 +482,13 @@ namespace WebZootecPro.Controllers
 
             }
 
-            var animalQ = await ScopeAnimalesAsync(_context.Animals); // tracking
+            var animalQ = await ScopeAnimalesAsync(_context.Animals); 
             var animal = await animalQ.FirstOrDefaultAsync(a => a.Id == model.IdAnimal);
 
             if (animal == null)
                 return Forbid();
 
             var hatoEvento = animal.idHato;
-
-            if (string.IsNullOrWhiteSpace(animal.arete))
-            {
-                ModelState.AddModelError(nameof(model.IdAnimal), "El animal seleccionado no tiene Areté. Regístrelo antes de continuar.");
-                await CargarCombosAsync(model);
-                if (model.TipoEvento == "SERVICIO")
-                    await CargarCombosServicioAsync(model);
-                return View(model);
-
-            }
-
-
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             int? userId = int.TryParse(userIdStr, out var u) ? u : null;
 
@@ -582,9 +570,6 @@ namespace WebZootecPro.Controllers
                         // ===== Fecha + hora del parto =====
                         var fechaHoraParto = model.FechaEvento!.Value.ToDateTime(model.HoraParto!.Value);
 
-                        // ✅ Regla de campañas por animal:
-                        // No se permite iniciar una nueva campaña (PARTO) si existe una campaña anterior sin cerrar (sin SECA).
-                        // (Primera campaña: si no hay PARTO previo, no exige SECA.)
                         var ultimoPartoAnimal = await _context.Partos.AsNoTracking()
                             .Join(_context.RegistroReproduccions.AsNoTracking(),
                                 p => p.idRegistroReproduccion,
