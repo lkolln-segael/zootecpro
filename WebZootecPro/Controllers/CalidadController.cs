@@ -37,8 +37,8 @@ namespace WebZootecPro.Controllers
     private async Task<int?> GetEstabloScopeAsync()
     {
       var empresa = await GetEmpresaAsync();
-      var establo = await _context.Establos.FirstOrDefaultAsync(e => e.EmpresaId == empresa.Id);
-      return establo.Id;
+      var establo = await _context.Establos.FirstOrDefaultAsync(e => empresa != null && e.EmpresaId == empresa.Id);
+      return establo != null ? establo.Id : -1;
     }
     private async Task<Empresa?> GetEmpresaAsync()
     {

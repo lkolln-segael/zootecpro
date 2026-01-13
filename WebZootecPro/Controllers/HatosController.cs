@@ -42,16 +42,23 @@ namespace WebZootecPro.Controllers
     private async Task<Empresa?> GetEmpresaAsync()
     {
       var usuario = await GetUsuarioActualAsync();
-      return await _context.Empresas.FirstOrDefaultAsync(e => e.usuarioID == usuario.Id
-          || e.Colaboradors.Select(e => e.idUsuario).Contains(usuario.Id));
+      if (usuario == null)
+        return null;
+
+      return await _context.Empresas
+          .FirstOrDefaultAsync(e => e.usuarioID == usuario.Id
+              || (e.Colaboradors != null
+                  && e.Colaboradors.Select(c => c.idUsuario).Contains(usuario.Id)));
     }
 
 
     // GET: Hatos
     public async Task<IActionResult> Index()
     {
+      var usuario = await GetUsuarioActualAsync();
       var establo = await GetEstabloScopeAsync();
-      var hatos = await _context.Hatos.Where(h => h.EstabloId == establo).ToListAsync();
+      var hatos = await _context.Hatos.Where(h => usuario != null && usuario.RolId == 1 ||
+          h.EstabloId == establo).ToListAsync();
 
       ViewBag.Establos = await _context.Establos
           .Where(e => e.Id == establo)
@@ -64,9 +71,15 @@ namespace WebZootecPro.Controllers
     // GET: Hatos/Create
     public async Task<IActionResult> Create()
     {
+      var usuario = await GetUsuarioActualAsync();
       var empresa = await GetEmpresaAsync();
+      var establos = await _context.Establos
+        .Where(e => empresa != null && e.EmpresaId == empresa.Id
+            || usuario != null && usuario.RolId == 1)
+        .OrderBy(e => e.nombre)
+        .ToListAsync();
       ViewBag.IdEstablo = new SelectList(
-          await _context.Establos.Where(e => e.EmpresaId == empresa.Id).OrderBy(e => e.nombre).ToListAsync(),
+          establos,
           "Id",          // ✅ mayúscula
           "nombre"
       );
