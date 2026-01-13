@@ -537,21 +537,44 @@ namespace WebZootecPro.Controllers
             var abuelaMaterna = animal.idMadreNavigation?.idMadreNavigation;
 
             // Campañas del establo del animal
-            var establoId = animal.idHatoNavigation.EstabloId;
+            // ==================================================
+            // Campañas del ANIMAL (lactancias)
+            // Inicio = PARTO (Parto.fechaRegistro)
+            // Fin    = SECA  (Seca.fechaSeca)
+            // ==================================================
 
-            var campanias = await _context.CampaniaLecheras
+            // 1) Partos del animal
+            var partos = await _context.Partos
                 .AsNoTracking()
-                .Where(c => c.EstabloId == establoId && c.activa)
-                .OrderByDescending(c => c.fechaInicio)
+                .Join(_context.RegistroReproduccions.AsNoTracking(),
+                    p => p.idRegistroReproduccion,
+                    rr => rr.Id,
+                    (p, rr) => new { p.fechaRegistro, rr.idAnimal })
+                .Where(x => x.idAnimal == animal.Id)
+                .Select(x => x.fechaRegistro)
+                .OrderBy(x => x)
                 .ToListAsync();
 
-            // Traemos todas las producciones del animal una sola vez (para calcular en memoria)
+            // 2) Secas del animal
+            var secas = await _context.Secas
+                .AsNoTracking()
+                .Join(_context.RegistroReproduccions.AsNoTracking(),
+                    s => s.idRegistroReproduccion,
+                    rr => rr.Id,
+                    (s, rr) => new { s.fechaSeca, rr.idAnimal })
+                .Where(x => x.idAnimal == animal.Id && x.fechaSeca != null)
+                .Select(x => x.fechaSeca!.Value)
+                .OrderBy(x => x)
+                .ToListAsync();
+
+            // 3) Producciones del animal (una sola vez para calcular en memoria)
+            //    (si tienes fechaOrdeno, úsala; si no, se usa fechaRegistro)
             var regs = await _context.RegistroProduccionLeches
                 .AsNoTracking()
                 .Where(r => r.idAnimal == animal.Id)
                 .Select(r => new
                 {
-                    r.fechaRegistro,
+                    Fecha = (r.fechaOrdeno ?? r.fechaRegistro),
                     Producido = (decimal)(r.pesoOrdeno ?? 0),
                     Industria = (decimal)(r.cantidadIndustria ?? 0),
                     Terneros = (decimal)(r.cantidadTerneros ?? 0),
@@ -560,21 +583,38 @@ namespace WebZootecPro.Controllers
                 })
                 .ToListAsync();
 
+            // 4) Armar campañas: PARTO -> primera SECA posterior (antes del siguiente PARTO)
             var items = new List<ProduccionCampaniaItemVm>();
+            var secaIdx = 0;
 
-            foreach (var c in campanias)
+            for (var i = 0; i < partos.Count; i++)
             {
-                var ini = c.fechaInicio.ToDateTime(TimeOnly.MinValue);
-                var fin = c.fechaFin.ToDateTime(TimeOnly.MaxValue);
+                var inicio = partos[i];
+                DateTime? nextParto = (i + 1 < partos.Count) ? partos[i + 1] : null;
 
-                var q = regs.Where(x => x.fechaRegistro >= ini && x.fechaRegistro <= fin);
+                while (secaIdx < secas.Count && secas[secaIdx] <= inicio)
+                    secaIdx++;
+
+                DateTime? fin = null;
+                if (secaIdx < secas.Count)
+                {
+                    var candidata = secas[secaIdx];
+                    if (nextParto == null || candidata < nextParto.Value)
+                    {
+                        fin = candidata;
+                        secaIdx++;
+                    }
+                }
+
+                var finParaCalculo = fin ?? DateTime.Now;
+                var q = regs.Where(x => x.Fecha >= inicio && x.Fecha <= finParaCalculo);
 
                 items.Add(new ProduccionCampaniaItemVm
                 {
-                    IdCampania = c.Id,
-                    Nombre = c.nombre,
-                    FechaInicio = c.fechaInicio,
-                    FechaFin = c.fechaFin,
+                    IdCampania = i + 1,
+                    Nombre = $"Campaña {i + 1}",
+                    FechaInicio = DateOnly.FromDateTime(inicio),
+                    FechaFin = fin.HasValue ? DateOnly.FromDateTime(fin.Value) : null,
                     Producido = q.Sum(x => x.Producido),
                     Industria = q.Sum(x => x.Industria),
                     Terneros = q.Sum(x => x.Terneros),
@@ -582,6 +622,8 @@ namespace WebZootecPro.Controllers
                     VentaDirecta = q.Sum(x => x.Venta)
                 });
             }
+
+            items = items.OrderByDescending(x => x.FechaInicio).ToList();
 
             var vm = new AnimalDetallesViewModel
             {

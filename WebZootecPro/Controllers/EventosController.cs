@@ -618,6 +618,41 @@ namespace WebZootecPro.Controllers
                         // ===== Fecha + hora del parto =====
                         var fechaHoraParto = model.FechaEvento!.Value.ToDateTime(model.HoraParto!.Value);
 
+                        // ✅ Regla de campañas por animal:
+                        // No se permite iniciar una nueva campaña (PARTO) si existe una campaña anterior sin cerrar (sin SECA).
+                        // (Primera campaña: si no hay PARTO previo, no exige SECA.)
+                        var ultimoPartoAnimal = await _context.Partos.AsNoTracking()
+                            .Join(_context.RegistroReproduccions.AsNoTracking(),
+                                p => p.idRegistroReproduccion,
+                                rr => rr.Id,
+                                (p, rr) => new { p.fechaRegistro, rr.idAnimal })
+                            .Where(x => x.idAnimal == animal.Id && x.fechaRegistro < fechaHoraParto)
+                            .OrderByDescending(x => x.fechaRegistro)
+                            .Select(x => (DateTime?)x.fechaRegistro)
+                            .FirstOrDefaultAsync();
+
+                        if (ultimoPartoAnimal != null)
+                        {
+                            var ultimaSecaAnimal = await _context.Secas.AsNoTracking()
+                                .Join(_context.RegistroReproduccions.AsNoTracking(),
+                                    s => s.idRegistroReproduccion,
+                                    rr => rr.Id,
+                                    (s, rr) => new { s.fechaSeca, rr.idAnimal })
+                                .Where(x => x.idAnimal == animal.Id && x.fechaSeca != null && x.fechaSeca.Value < fechaHoraParto)
+                                .OrderByDescending(x => x.fechaSeca)
+                                .Select(x => (DateTime?)x.fechaSeca)
+                                .FirstOrDefaultAsync();
+
+                            if (ultimaSecaAnimal == null || ultimaSecaAnimal.Value < ultimoPartoAnimal.Value)
+                            {
+                                ModelState.AddModelError("", "No se puede registrar PARTO: la campaña anterior no está cerrada. Registra SECA para terminar la campaña antes de iniciar otra.");
+                                await tx.RollbackAsync();
+                                await CargarCombosAsync(model);
+                                await CargarCombosPartoAsync(model);
+                                return View(model);
+                            }
+                        }
+
                         // Tipo parto texto
                         var tipoPartoNombre = await _context.TipoPartos
                             .Where(x => x.Id == model.IdTipoParto!.Value)
@@ -1084,6 +1119,47 @@ namespace WebZootecPro.Controllers
 
                 case "SECA":
                     {
+                        // ✅ Regla de campañas por animal:
+                        // La SECA cierra una campaña (lactancia). Debe existir un PARTO previo y no debe haberse cerrado ya.
+                        var ultimoPartoAnimal = await _context.Partos.AsNoTracking()
+                            .Join(_context.RegistroReproduccions.AsNoTracking(),
+                                p => p.idRegistroReproduccion,
+                                rr => rr.Id,
+                                (p, rr) => new { p.fechaRegistro, rr.idAnimal })
+                            .Where(x => x.idAnimal == animal.Id && x.fechaRegistro <= fechaEvt)
+                            .OrderByDescending(x => x.fechaRegistro)
+                            .Select(x => (DateTime?)x.fechaRegistro)
+                            .FirstOrDefaultAsync();
+
+                        if (ultimoPartoAnimal == null)
+                            ModelState.AddModelError("", "No se puede registrar SECA: el animal no tiene PARTO previo (no hay campaña que cerrar).");
+                        else
+                        {
+                            var ultimaSecaAnimal = await _context.Secas.AsNoTracking()
+                                .Join(_context.RegistroReproduccions.AsNoTracking(),
+                                    s => s.idRegistroReproduccion,
+                                    rr => rr.Id,
+                                    (s, rr) => new { s.fechaSeca, rr.idAnimal })
+                                .Where(x => x.idAnimal == animal.Id && x.fechaSeca != null && x.fechaSeca.Value <= fechaEvt)
+                                .OrderByDescending(x => x.fechaSeca)
+                                .Select(x => (DateTime?)x.fechaSeca)
+                                .FirstOrDefaultAsync();
+
+                            if (ultimaSecaAnimal != null && ultimaSecaAnimal.Value > ultimoPartoAnimal.Value)
+                                ModelState.AddModelError("", $"No se puede registrar SECA: la campaña ya fue cerrada el {ultimaSecaAnimal.Value:dd/MM/yyyy}.");
+
+                            if (fechaEvt <= ultimoPartoAnimal.Value)
+                                ModelState.AddModelError(nameof(model.FechaEvento), $"La SECA debe ser posterior al PARTO ({ultimoPartoAnimal.Value:dd/MM/yyyy}).");
+                        }
+
+                        // ✅ cortar si hubo errores ANTES de seguir con tu lógica de ciclo
+                        if (!ModelState.IsValid)
+                        {
+                            await tx.RollbackAsync();
+                            await CargarCombosAsync(model);
+                            return View(model);
+                        }
+
                         // Buscar ciclo activo: servicio con confirmación POSITIVA y sin PARTO/ABORTO
                         var ciclo = await (
                              from p in _context.Prenezs

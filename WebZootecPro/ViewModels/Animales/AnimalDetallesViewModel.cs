@@ -21,7 +21,9 @@ namespace WebZootecPro.ViewModels.Animales
         public int IdCampania { get; set; }
         public string Nombre { get; set; } = "";
         public DateOnly FechaInicio { get; set; }
-        public DateOnly FechaFin { get; set; }
+        public DateOnly? FechaFin { get; set; } // null = campaña activa
+
+        public bool Activa => !FechaFin.HasValue;
 
         public decimal Producido { get; set; }
         public decimal Industria { get; set; }

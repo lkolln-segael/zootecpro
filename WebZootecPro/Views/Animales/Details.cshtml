@@ -1,104 +1,42 @@
 ﻿@model WebZootecPro.ViewModels.Animales.AnimalDetallesViewModel
-@{
-    ViewData["Title"] = "Detalles del animal";
-    var a = Model.Animal;
+
+<h5 class="mb-3">Producción por campaña (por vaca)</h5>
+
+@if (Model.ProduccionPorCampania == null || Model.ProduccionPorCampania.Count == 0)
+{
+    <div class="alert alert-warning">No hay campañas registradas para este animal (sin PARTO).</div>
 }
-
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Detalles del animal</h5>
-        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Volver</a>
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Campaña</th>
+                    <th>Inicio</th>
+                    <th>Fin</th>
+                    <th class="text-end">Producido</th>
+                    <th class="text-end">Industria</th>
+                    <th class="text-end">Terneros</th>
+                    <th class="text-end">Descartada</th>
+                    <th class="text-end">Venta directa</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var x in Model.ProduccionPorCampania)
+                {
+                    <tr>
+                        <td>@x.Nombre</td>
+                        <td>@x.FechaInicio.ToString("dd/MM/yyyy")</td>
+                        <td>@(x.FechaFin.HasValue? x.FechaFin.Value.ToString("dd/MM/yyyy") : "ACTIVA")</td>
+                        <td class="text-end">@x.Producido.ToString("0.00")</td>
+                        <td class="text-end">@x.Industria.ToString("0.00")</td>
+                        <td class="text-end">@x.Terneros.ToString("0.00")</td>
+                        <td class="text-end">@x.Descartada.ToString("0.00")</td>
+                        <td class="text-end">@x.VentaDirecta.ToString("0.00")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
-
-    <div class="card-body">
-        <dl class="row">
-            <dt class="col-sm-3">Nombre</dt>
-            <dd class="col-sm-9">@a.nombre</dd>
-
-            <dt class="col-sm-3">Código</dt>
-            <dd class="col-sm-9">@a.codigo</dd>
-
-            <dt class="col-sm-3">Hato</dt>
-            <dd class="col-sm-9">@a.idHatoNavigation?.nombre</dd>
-
-            <dt class="col-sm-3">Raza</dt>
-            <dd class="col-sm-9">@a.idRazaNavigation?.nombre</dd>
-
-            <dt class="col-sm-3">Procedencia</dt>
-            <dd class="col-sm-9">@a.procedencia?.nombre</dd>
-
-            <dt class="col-sm-3">Propósito</dt>
-            <dd class="col-sm-9">@a.proposito?.nombre</dd>
-
-            <dt class="col-sm-3">Estado (inventario)</dt>
-            <dd class="col-sm-9">@a.estado?.nombre</dd>
-
-            <dt class="col-sm-3">Estado productivo</dt>
-            <dd class="col-sm-9">@a.estadoProductivo?.nombre</dd>
-
-            <dt class="col-sm-3">Padre</dt>
-            <dd class="col-sm-9">@a.idPadreNavigation?.codigo - @a.idPadreNavigation?.nombre</dd>
-
-            <dt class="col-sm-3">Madre</dt>
-            <dd class="col-sm-9">@a.idMadreNavigation?.codigo - @a.idMadreNavigation?.nombre</dd>
-
-            <dt class="col-sm-3">Abuelo paterno</dt>
-            <dd class="col-sm-9">@Model.AbueloPaterno?.codigo - @Model.AbueloPaterno?.nombre</dd>
-
-            <dt class="col-sm-3">Abuela paterna</dt>
-            <dd class="col-sm-9">@Model.AbuelaPaterna?.codigo - @Model.AbuelaPaterna?.nombre</dd>
-
-            <dt class="col-sm-3">Abuelo materno</dt>
-            <dd class="col-sm-9">@Model.AbueloMaterno?.codigo - @Model.AbueloMaterno?.nombre</dd>
-
-            <dt class="col-sm-3">Abuela materna</dt>
-            <dd class="col-sm-9">@Model.AbuelaMaterna?.codigo - @Model.AbuelaMaterna?.nombre</dd>
-
-            <dt class="col-sm-3">Observaciones</dt>
-            <dd class="col-sm-9">@a.observaciones</dd>
-        </dl>
-
-        <hr />
-
-        <h5 class="mb-3">Producción por campaña</h5>
-
-        @if (Model.ProduccionPorCampania == null || !Model.ProduccionPorCampania.Any())
-        {
-            <div class="alert alert-warning">No hay campañas activas para el establo del animal.</div>
-        }
-        else
-        {
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Campaña</th>
-                            <th>Inicio</th>
-                            <th>Fin</th>
-                            <th class="text-end">Producido</th>
-                            <th class="text-end">Industria</th>
-                            <th class="text-end">Terneros</th>
-                            <th class="text-end">Descartada</th>
-                            <th class="text-end">Venta directa</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var x in Model.ProduccionPorCampania)
-                        {
-                            <tr>
-                                <td>@x.Nombre</td>
-                                <td>@x.FechaInicio.ToString("dd/MM/yyyy")</td>
-                                <td>@x.FechaFin.ToString("dd/MM/yyyy")</td>
-                                <td class="text-end">@x.Producido.ToString("0.00")</td>
-                                <td class="text-end">@x.Industria.ToString("0.00")</td>
-                                <td class="text-end">@x.Terneros.ToString("0.00")</td>
-                                <td class="text-end">@x.Descartada.ToString("0.00")</td>
-                                <td class="text-end">@x.VentaDirecta.ToString("0.00")</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-    </div>
-</div>
+}

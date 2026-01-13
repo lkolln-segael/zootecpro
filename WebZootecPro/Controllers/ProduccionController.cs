@@ -281,8 +281,23 @@ namespace WebZootecPro.Controllers
             }
 
             // DEL (Días en leche) = días desde el último PARTO registrado
-            var diasEnLeche = await CalcularDiasEnLecheAsync(animal.Id, vm.FechaOrdeno);
-            vm.DiasEnLeche = diasEnLeche;
+            /*var diasEnLeche = await CalcularDiasEnLecheAsync(animal.Id, vm.FechaOrdeno);
+            vm.DiasEnLeche = diasEnLeche;*/
+
+            // ✅ Validar campaña activa (PARTO -> SECA) para esa fecha/hora de ordeño
+            var valCamp = await ValidarCampaniaActivaAsync(animal.Id, fechaInicioOrdeno.Value);
+            if (!valCamp.Ok)
+            {
+                ModelState.AddModelError("", valCamp.Error ?? "No se puede registrar producción: campaña inválida.");
+                await CargarComboAnimales(vm.IdAnimal);
+                CargarComboFuentes(vm.Fuente);
+                return View(vm);
+            }
+
+            // DEL (Días en leche) = días desde el último PARTO registrado (al momento del ordeño)
+            var diasEnLeche = await CalcularDiasEnLecheAsync(animal.Id, fechaInicioOrdeno.Value);
+
+
 
             // ✅ SANIDAD -> PRODUCCIÓN: Retiro de leche
             var retiroHasta = await GetRetiroLecheHastaAsync(animal.Id, fechaInicioOrdeno.Value);
@@ -426,28 +441,66 @@ namespace WebZootecPro.Controllers
 
             return result;
         }
-
-        // DEL: desde último parto (Parto.fechaRegistro) del animal
-        private async Task<int?> CalcularDiasEnLecheAsync(int idAnimal, DateTime fechaOrdeno)
+        // Campaña activa = existe PARTO previo y NO existe SECA posterior a ese PARTO (a la fecha indicada)
+        private async Task<(bool Ok, string? Error)> ValidarCampaniaActivaAsync(int idAnimal, DateTime fechaOrdeno)
         {
-            // Último parto del animal: Parto -> RegistroReproduccion (que tiene idAnimal)
+            // usamos fin de día para cubrir casos donde solo envían fecha (00:00)
+            var corte = fechaOrdeno.Date.AddDays(1).AddTicks(-1);
+
             var ultimoParto = await _context.Partos.AsNoTracking()
                 .Join(_context.RegistroReproduccions.AsNoTracking(),
                       p => p.idRegistroReproduccion,
                       rr => rr.Id,
                       (p, rr) => new { p.fechaRegistro, rr.idAnimal })
-                .Where(x => x.idAnimal == idAnimal)
+                .Where(x => x.idAnimal == idAnimal && x.fechaRegistro <= corte)
                 .OrderByDescending(x => x.fechaRegistro)
                 .Select(x => (DateTime?)x.fechaRegistro)
                 .FirstOrDefaultAsync();
 
             if (ultimoParto == null)
-                return null;
+                return (false, "No se puede registrar producción: el animal no tiene PARTO previo (no hay campaña activa).");
+
+            var ultimaSeca = await _context.Secas.AsNoTracking()
+                .Join(_context.RegistroReproduccions.AsNoTracking(),
+                      s => s.idRegistroReproduccion,
+                      rr => rr.Id,
+                      (s, rr) => new { s.fechaSeca, rr.idAnimal })
+                .Where(x => x.idAnimal == idAnimal && x.fechaSeca != null && x.fechaSeca.Value <= corte)
+                .OrderByDescending(x => x.fechaSeca)
+                .Select(x => (DateTime?)x.fechaSeca)
+                .FirstOrDefaultAsync();
+
+            // si la última seca es posterior al último parto, la campaña ya terminó
+            if (ultimaSeca != null && ultimaSeca.Value > ultimoParto.Value)
+                return (false, $"No se puede registrar producción: la campaña terminó el {ultimaSeca.Value:dd/MM/yyyy} (SECA). Registre un nuevo PARTO para iniciar otra campaña.");
+
+            return (true, null);
+        }
+
+
+
+        // DEL: desde último parto (Parto.fechaRegistro) del animal
+        private async Task<int?> CalcularDiasEnLecheAsync(int idAnimal, DateTime fechaOrdeno)
+        {
+            var corte = fechaOrdeno.Date.AddDays(1).AddTicks(-1);
+
+            var ultimoParto = await _context.Partos.AsNoTracking()
+                .Join(_context.RegistroReproduccions.AsNoTracking(),
+                      p => p.idRegistroReproduccion,
+                      rr => rr.Id,
+                      (p, rr) => new { p.fechaRegistro, rr.idAnimal })
+                .Where(x => x.idAnimal == idAnimal && x.fechaRegistro <= corte)
+                .OrderByDescending(x => x.fechaRegistro)
+                .Select(x => (DateTime?)x.fechaRegistro)
+                .FirstOrDefaultAsync();
+
+            if (ultimoParto == null) return null;
 
             var del = (fechaOrdeno.Date - ultimoParto.Value.Date).Days;
             if (del < 0) del = 0;
             return del;
         }
+
 
         [HttpGet]
         public async Task<IActionResult> GetRetiroLeche(int idAnimal, DateTime fechaOrdeno)
