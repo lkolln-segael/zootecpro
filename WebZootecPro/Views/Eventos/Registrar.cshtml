@@ -1,329 +1,330 @@
 ﻿@model WebZootecPro.ViewModels.Eventos.RegistrarEventoViewModel
 
 @{
-    ViewData["Title"] = "Registrar evento";
+ViewData["Title"] = "Registrar evento";
 }
 
 <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Registrar Evento Reproductivo</h5>
-        <span class="text-muted small">
-            Fecha del día: @DateTime.Today.ToString("dd/MM/yy")
-        </span>
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Registrar Evento Reproductivo</h5>
+    <span class="text-muted small">
+      Fecha del día: @DateTime.Today.ToString("dd/MM/yy")
+    </span>
+  </div>
+
+  <div class="card-body">
+    @if (TempData["EventosMessage"] != null)
+    {
+    <div class="alert alert-success">
+      @TempData["EventosMessage"]
     </div>
+    }
 
-    <div class="card-body">
-        @if (TempData["EventosMessage"] != null)
-        {
-            <div class="alert alert-success">
-                @TempData["EventosMessage"]
-            </div>
-        }
+    <form asp-action="Registrar" method="post" novalidate>
+      <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
 
-        <form asp-action="Registrar" method="post" novalidate>
-            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+      <div class="row g-3 mb-3">
+        <div class="col-lg-3 col-md-6">
+          <label asp-for="TipoEvento" class="form-label"></label>
+          <select asp-for="TipoEvento" asp-items="ViewBag.TiposEvento" class="form-select" id="TipoEvento">
+            <option value="">-- Seleccione evento --</option>
+          </select>
+          <span asp-validation-for="TipoEvento" class="text-danger small"></span>
+        </div>
 
-            <div class="row g-3 mb-3">
-                <div class="col-lg-3 col-md-6">
-                    <label asp-for="TipoEvento" class="form-label"></label>
-                    <select asp-for="TipoEvento" asp-items="ViewBag.TiposEvento" class="form-select" id="TipoEvento">
-                        <option value="">-- Seleccione evento --</option>
-                    </select>
-                    <span asp-validation-for="TipoEvento" class="text-danger small"></span>
-                </div>
+        <div class="col-lg-6 col-md-12">
+          <label asp-for="IdAnimal" class="form-label"></label>
+          <select asp-for="IdAnimal" asp-items="ViewBag.IdAnimal" class="form-select" id="IdAnimal">
+            <option value="">-- Buscar animal (Areté / nombre) --</option>
+          </select>
+          <span asp-validation-for="IdAnimal" class="text-danger small"></span>
+        </div>
 
-                <div class="col-lg-6 col-md-12">
-                    <label asp-for="IdAnimal" class="form-label"></label>
-                    <select asp-for="IdAnimal" asp-items="ViewBag.IdAnimal" class="form-select" id="IdAnimal">
-                        <option value="">-- Buscar animal (Areté / nombre) --</option>
-                    </select>
-                    <span asp-validation-for="IdAnimal" class="text-danger small"></span>
-                </div>
+        <div class="col-lg-3 col-md-6">
+          <label asp-for="Arete" class="form-label">Areté</label>
+          <input asp-for="Arete" class="form-control" id="Arete" readonly
+            style="background-color: rgba(15, 23, 42, 0.96)" />
+          <span asp-validation-for="Arete" class="text-danger small"></span>
+        </div>
 
-                <div class="col-lg-3 col-md-6">
-                    <label asp-for="Arete" class="form-label">Areté</label>
-                    <input asp-for="Arete" class="form-control" id="Arete" readonly style="background-color: rgba(15, 23, 42, 0.96)" />
-                    <span asp-validation-for="Arete" class="text-danger small"></span>
-                </div>
+        <div class="col-lg-3 col-md-6">
+          <label asp-for="FechaEvento" class="form-label"></label>
+          <input asp-for="FechaEvento" type="date" class="form-control" id="FechaEvento" />
+          <span asp-validation-for="FechaEvento" class="text-danger small"></span>
+        </div>
+      </div>
 
-                <div class="col-lg-3 col-md-6">
-                    <label asp-for="FechaEvento" class="form-label"></label>
-                    <input asp-for="FechaEvento" type="date" class="form-control" id="FechaEvento" />
-                    <span asp-validation-for="FechaEvento" class="text-danger small"></span>
-                </div>
-            </div>
+      <div id="camposEvento" class="mb-3"></div>
 
-            <div id="camposEvento" class="mb-3"></div>
+      <div class="mb-3" id="bloqueObservaciones">
+        <label asp-for="Observaciones" class="form-label"></label>
+        <textarea asp-for="Observaciones" rows="3" class="form-control"></textarea>
+        <span asp-validation-for="Observaciones" class="text-danger small"></span>
+      </div>
 
-            <div class="mb-3" id="bloqueObservaciones">
-                <label asp-for="Observaciones" class="form-label"></label>
-                <textarea asp-for="Observaciones" rows="3" class="form-control"></textarea>
-                <span asp-validation-for="Observaciones" class="text-danger small"></span>
-            </div>
-
-            <button type="submit" class="btn btn-primary">Aceptar</button>
-            <a asp-controller="Animales" asp-action="Index" class="btn btn-outline-secondary ms-2">Volver</a>
-        </form>
-    </div>
+      <button type="submit" class="btn btn-primary">Aceptar</button>
+      <a asp-controller="Animales" asp-action="Index" class="btn btn-outline-secondary ms-2">Volver</a>
+    </form>
+  </div>
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+<partial name="_ValidationScriptsPartial" />
 
-    <script>
-        $(function () {
-          const $tipo   = $("#TipoEvento");
-          const $animal = $("#IdAnimal");
-          const $fecha  = $("#FechaEvento");
-          const $arete  = $("#Arete");
-          const $cont   = $("#camposEvento");
+<script>
+  $(function () {
+    const $tipo = $("#TipoEvento");
+    const $animal = $("#IdAnimal");
+    const $fecha = $("#FechaEvento");
+    const $arete = $("#Arete");
+    const $cont = $("#camposEvento");
 
-          // Select2 (UNA sola vez)
-          $animal.select2({
-            theme: "bootstrap-5",
-            placeholder: "-- Buscar animal (Areté / nombre) --",
-            allowClear: true,
-            width: "100%",
-            minimumInputLength: 0,
-            dropdownParent: $animal.closest("form")
-          });
+    // Select2 (UNA sola vez)
+    $animal.select2({
+      theme: "bootstrap-5",
+      placeholder: "-- Buscar animal (Areté / nombre) --",
+      allowClear: true,
+      width: "100%",
+      minimumInputLength: 0,
+      dropdownParent: $animal.closest("form")
+    });
 
-          // ========= helpers =========
-          function parseYMD(v) {
-            if (!v) return null;
-            const d = new Date(v + "T00:00:00");
-            return isNaN(d.getTime()) ? null : d;
-          }
+    // ========= helpers =========
+    function parseYMD(v) {
+      if (!v) return null;
+      const d = new Date(v + "T00:00:00");
+      return isNaN(d.getTime()) ? null : d;
+    }
 
-          function addDays(d, days) {
-            const x = new Date(d.getTime());
-            x.setDate(x.getDate() + days);
-            return x;
-          }
+    function addDays(d, days) {
+      const x = new Date(d.getTime());
+      x.setDate(x.getDate() + days);
+      return x;
+    }
 
-          function pad2(n) { return (n < 10 ? "0" : "") + n; }
+    function pad2(n) {return (n < 10 ? "0" : "") + n;}
 
-          function formatDMY(d) {
-            return pad2(d.getDate()) + "/" + pad2(d.getMonth() + 1) + "/" + d.getFullYear();
-          }
+    function formatDMY(d) {
+      return pad2(d.getDate()) + "/" + pad2(d.getMonth() + 1) + "/" + d.getFullYear();
+    }
 
-          function setVal(id, val) {
-            const el = document.getElementById(id);
-            if (el) el.value = val || "";
-          }
+    function setVal(id, val) {
+      const el = document.getElementById(id);
+      if (el) el.value = val || "";
+    }
 
-          function actualizarCalculos() {
-            const tipo = (($tipo.val() || "").trim()).toUpperCase();
-            const fEvt = parseYMD($fecha.val());
+    function actualizarCalculos() {
+      const tipo = (($tipo.val() || "").trim()).toUpperCase();
+      const fEvt = parseYMD($fecha.val());
 
-            // SERVICIO: +279 y -60
-            if (tipo === "SERVICIO" && fEvt) {
-              const parto = addDays(fEvt, 279);
-              const seca  = addDays(parto, -60);
-              setVal("FechaProbPartoCalc", formatDMY(parto));
-              setVal("FechaProbSecaCalc",  formatDMY(seca));
-            } else {
-              setVal("FechaProbPartoCalc", "");
-              setVal("FechaProbSecaCalc",  "");
-            }
+      // SERVICIO: +279 y -60
+      if (tipo === "SERVICIO" && fEvt) {
+        const parto = addDays(fEvt, 279);
+        const seca = addDays(parto, -60);
+        setVal("FechaProbPartoCalc", formatDMY(parto));
+        setVal("FechaProbSecaCalc", formatDMY(seca));
+      } else {
+        setVal("FechaProbPartoCalc", "");
+        setVal("FechaProbSecaCalc", "");
+      }
 
-            // ABORTO: días al aborto = fechaEvento - fecha inseminación
-            if (tipo === "ABORTO") {
-              const fInsemStr = document.getElementById("FechaInseminacionAborto")?.value || "";
-              const fInsem = parseYMD(fInsemStr);
-              if (fEvt && fInsem) {
-                const diff = Math.floor((fEvt - fInsem) / 86400000);
-                setVal("DiasAlAbortoCalc", diff >= 0 ? diff.toString() : "");
-              } else {
-                setVal("DiasAlAbortoCalc", "");
-              }
-            } else {
-              setVal("DiasAlAbortoCalc", "");
-            }
-          }
+      // ABORTO: días al aborto = fechaEvento - fecha inseminación
+      if (tipo === "ABORTO") {
+        const fInsemStr = document.getElementById("FechaInseminacionAborto")?.value || "";
+        const fInsem = parseYMD(fInsemStr);
+        if (fEvt && fInsem) {
+          const diff = Math.floor((fEvt - fInsem) / 86400000);
+          setVal("DiasAlAbortoCalc", diff >= 0 ? diff.toString() : "");
+        } else {
+          setVal("DiasAlAbortoCalc", "");
+        }
+      } else {
+        setVal("DiasAlAbortoCalc", "");
+      }
+    }
 
-          // ========= ajax carga =========
-          async function cargarCampos() {
-            const tipo = ($tipo.val() || "").trim();
-            const idAnimal = ($animal.val() || "").toString();
+    // ========= ajax carga =========
+    async function cargarCampos() {
+      const tipo = ($tipo.val() || "").trim();
+      const idAnimal = ($animal.val() || "").toString();
 
-            if (!tipo) { $cont.html(""); return; }
+      if (!tipo) {$cont.html(""); return;}
 
-            const url = '@Url.Action("CamposEvento", "Eventos")'
-              + '?tipoEvento=' + encodeURIComponent(tipo)
-              + '&idAnimal=' + encodeURIComponent(idAnimal);
+      const url = '@Url.Action("CamposEvento", "Eventos")'
+        + '?tipoEvento=' + encodeURIComponent(tipo)
+        + '&idAnimal=' + encodeURIComponent(idAnimal);
 
-            const res = await fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" }});
-            $cont.html(await res.text());
+      const res = await fetch(url, {headers: {"X-Requested-With": "XMLHttpRequest"}});
+      $cont.html(await res.text());
 
-            // IMPORTANTE: inicializa toggle IA/MONTA después de inyectar el partial
-            if (window.initCamposServicio) window.initCamposServicio();
+      // IMPORTANTE: inicializa toggle IA/MONTA después de inyectar el partial
+      if (window.initCamposServicio) window.initCamposServicio();
 
-            actualizarCalculos();
-          }
+      actualizarCalculos();
+    }
 
-          async function cargarArete() {
-            const idAnimal = ($animal.val() || "").toString();
-            if (!idAnimal) { $arete.val(""); return; }
+    async function cargarArete() {
+      const idAnimal = ($animal.val() || "").toString();
+      if (!idAnimal) {$arete.val(""); return;}
 
-            const url = '@Url.Action("DatosAnimal", "Eventos")'
-              + '?idAnimal=' + encodeURIComponent(idAnimal);
+      const url = '@Url.Action("DatosAnimal", "Eventos")'
+        + '?idAnimal=' + encodeURIComponent(idAnimal);
 
-            const res = await fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" }});
-            const data = await res.json();
+      const res = await fetch(url, {headers: {"X-Requested-With": "XMLHttpRequest"}});
+      const data = await res.json();
 
-            $arete.val(data.arete || "");
+      $arete.val(data.arete || "");
 
-            if (!data.arete || !data.arete.trim()) {
-              alert("Este animal no tiene Areté. Regístrelo antes de continuar.");
-              $animal.val(null).trigger("change.select2");
-              $arete.val("");
-            }
-          }
+      if (!data.arete || !data.arete.trim()) {
+        alert("Este animal no tiene Areté. Regístrelo antes de continuar.");
+        $animal.val(null).trigger("change.select2");
+        $arete.val("");
+      }
+    }
 
-          async function recargarAnimales() {
-            const tipo  = ($tipo.val() || "").trim();
-            const fecha = $fecha.val() || "";
+    async function recargarAnimales() {
+      const tipo = ($tipo.val() || "").trim();
+      const fecha = $fecha.val() || "";
 
-            if (!tipo) {
-              $animal.empty().append(new Option("", "", true, false));
-              $animal.val(null).trigger("change.select2");
-              $arete.val("");
-              return;
-            }
+      if (!tipo) {
+        $animal.empty().append(new Option("", "", true, false));
+        $animal.val(null).trigger("change.select2");
+        $arete.val("");
+        return;
+      }
 
-            const url = '@Url.Action("AnimalesPorEvento", "Eventos")'
-              + '?tipoEvento=' + encodeURIComponent(tipo)
-              + '&fechaEvento=' + encodeURIComponent(fecha);
+      const url = '@Url.Action("AnimalesPorEvento", "Eventos")'
+        + '?tipoEvento=' + encodeURIComponent(tipo)
+        + '&fechaEvento=' + encodeURIComponent(fecha);
 
-            const res = await fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" }});
-            const data = await res.json();
+      const res = await fetch(url, {headers: {"X-Requested-With": "XMLHttpRequest"}});
+      const data = await res.json();
 
-            $animal.empty().append(new Option("", "", true, false));
-            data.forEach(x => $animal.append(new Option(x.text, x.value, false, false)));
+      $animal.empty().append(new Option("", "", true, false));
+      data.forEach(x => $animal.append(new Option(x.text, x.value, false, false)));
 
-            $animal.val(null).trigger("change.select2");
-            $arete.val("");
-          }
+      $animal.val(null).trigger("change.select2");
+      $arete.val("");
+    }
 
-          // ========= listeners =========
-          $tipo.on("change", async function () {
-            await recargarAnimales();
-            await cargarCampos();
-          });
+    // ========= listeners =========
+    $tipo.on("change", async function () {
+      await recargarAnimales();
+      await cargarCampos();
+    });
 
-          $animal.on("change select2:select select2:clear", async function () {
-            await cargarArete();
-            await cargarCampos();
-          });
+    $animal.on("change select2:select select2:clear", async function () {
+      await cargarArete();
+      await cargarCampos();
+    });
 
-          $fecha.on("change", async function () {
-            const t = (($tipo.val() || "").trim()).toUpperCase();
+    $fecha.on("change", async function () {
+      const t = (($tipo.val() || "").trim()).toUpperCase();
 
-            if (t === "CONFIRMACION_PREÑEZ" || t === "SERVICIO") {
-              await recargarAnimales();
-              await cargarCampos();
-            } else {
-              actualizarCalculos(); // ABORTO o cálculos de pantalla
-            }
-          });
+      if (t === "CONFIRMACION_PREÑEZ" || t === "SERVICIO") {
+        await recargarAnimales();
+        await cargarCampos();
+      } else {
+        actualizarCalculos(); // ABORTO o cálculos de pantalla
+      }
+    });
 
-        });
-    </script>
+  });
+</script>
 
-    <!-- Toggle IA/MONTA: una sola vez y con listeners delegados -->
-    <script>
-        (function () {
-          if (window.__servicioToggleBound) return;
-          window.__servicioToggleBound = true;
+<!-- Toggle IA/MONTA: una sola vez y con listeners delegados -->
+<script>
+  (function () {
+    if (window.__servicioToggleBound) return;
+    window.__servicioToggleBound = true;
 
-          function getTipoServicio() {
-            return document.querySelector('input[name="TipoServicio"]:checked')?.value || "IA";
-          }
+    function getTipoServicio() {
+      return document.querySelector('input[name="TipoServicio"]:checked')?.value || "IA";
+    }
 
-          function setHidden(id, hidden) {
-            const el = document.getElementById(id);
-            if (!el) return;
-            el.classList.toggle("d-none", !!hidden);
-          }
+    function setHidden(id, hidden) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle("d-none", !!hidden);
+    }
 
-          function setDisabled(id, disabled) {
-            const el = document.getElementById(id);
-            if (!el) return;
-            el.disabled = !!disabled;
-            if (disabled) el.value = "";
-          }
+    function setDisabled(id, disabled) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.disabled = !!disabled;
+      if (disabled) el.value = "";
+    }
 
-          function setDisabledByName(name, disabled) {
-            const el = document.querySelector(`[name="${name}"]`);
-            if (!el) return;
-            el.disabled = !!disabled;
-            if (disabled) el.value = "";
-          }
+    function setDisabledByName(name, disabled) {
+      const el = document.querySelector(`[name="${name}"]`);
+      if (!el) return;
+      el.disabled = !!disabled;
+      if (disabled) el.value = "";
+    }
 
-          function handleToroAutofill() {
-            const tipo = getTipoServicio();
-            const sel = document.getElementById("IdPadreAnimal");
-            if (!sel) return;
+    function handleToroAutofill() {
+      const tipo = getTipoServicio();
+      const sel = document.getElementById("IdPadreAnimal");
+      if (!sel) return;
 
-            const naabInput = document.getElementById("CodigoNaab");
-            const nombreInput = document.getElementById("NombreToro");
+      const naabInput = document.getElementById("CodigoNaab");
+      const nombreInput = document.getElementById("NombreToro");
 
-            if (tipo === "MONTA") return;
+      if (tipo === "MONTA") return;
 
-            if (sel.value) {
-              const opt = sel.selectedOptions?.[0];
-              const naab = opt?.dataset?.naab || "";
-              const nombre = opt?.dataset?.nombre || "";
+      if (sel.value) {
+        const opt = sel.selectedOptions?.[0];
+        const naab = opt?.dataset?.naab || "";
+        const nombre = opt?.dataset?.nombre || "";
 
-              if (naabInput) naabInput.value = naab;
+        if (naabInput) naabInput.value = naab;
 
-              if (nombreInput) {
-                nombreInput.value = nombre;
-                nombreInput.disabled = true;
-              }
-            } else {
-              if (naabInput) naabInput.value = "";
-              if (nombreInput) {
-                nombreInput.value = "";
-                nombreInput.disabled = false;
-              }
-            }
-          }
+        if (nombreInput) {
+          nombreInput.value = nombre;
+          nombreInput.disabled = true;
+        }
+      } else {
+        if (naabInput) naabInput.value = "";
+        if (nombreInput) {
+          nombreInput.value = "";
+          nombreInput.disabled = false;
+        }
+      }
+    }
 
-          function syncServicioUI() {
-            const esMonta = (getTipoServicio() === "MONTA");
+    function syncServicioUI() {
+      const esMonta = (getTipoServicio() === "MONTA");
 
-            setHidden("bloqueIA", esMonta);
-            setHidden("bloqueNombreToro", esMonta);
-            setHidden("bloqueProtocolo", esMonta);
-            setHidden("bloqueHoraServicio", esMonta);
+      setHidden("bloqueIA", esMonta);
+      setHidden("bloqueNombreToro", esMonta);
+      setHidden("bloqueProtocolo", esMonta);
+      setHidden("bloqueHoraServicio", esMonta);
 
-            setDisabled("CodigoNaab", esMonta);
-            setDisabled("NombreToro", esMonta);
-            setDisabled("Protocolo", esMonta);
-            setDisabledByName("HoraServicio", esMonta);
+      setDisabled("CodigoNaab", esMonta);
+      setDisabled("NombreToro", esMonta);
+      setDisabled("Protocolo", esMonta);
+      setDisabledByName("HoraServicio", esMonta);
 
-            if (!esMonta) handleToroAutofill();
-          }
+      if (!esMonta) handleToroAutofill();
+    }
 
-          // callable luego de inyectar el partial
-          window.initCamposServicio = syncServicioUI;
+    // callable luego de inyectar el partial
+    window.initCamposServicio = syncServicioUI;
 
-          document.addEventListener("change", function (e) {
-            if (!e.target) return;
+    document.addEventListener("change", function (e) {
+      if (!e.target) return;
 
-            if (e.target.name === "TipoServicio") {
-              syncServicioUI();
-              return;
-            }
+      if (e.target.name === "TipoServicio") {
+        syncServicioUI();
+        return;
+      }
 
-            if (e.target.id === "IdPadreAnimal") {
-              handleToroAutofill();
-              return;
-            }
-          });
+      if (e.target.id === "IdPadreAnimal") {
+        handleToroAutofill();
+        return;
+      }
+    });
 
-        })();
-    </script>
+  })();
+</script>
 }

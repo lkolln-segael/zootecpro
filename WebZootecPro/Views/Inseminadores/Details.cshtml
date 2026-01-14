@@ -1,0 +1,32 @@
+@model WebZootecPro.ViewModels.Inseminador.InseminadorViewModel
+
+<h2>Detalle del Inseminador</h2>
+
+<hr />
+
+<dl class="row">
+  <dt class="col-sm-2">
+    @Html.DisplayNameFor(m => m.Nombre)
+  </dt>
+  <dd class="col-sm-10">
+    @Html.DisplayFor(m => m.Nombre)
+  </dd>
+
+  <dt class="col-sm-2">
+    @Html.DisplayNameFor(m => m.Apellido)
+  </dt>
+  <dd class="col-sm-10">
+    @Html.DisplayFor(m => m.Apellido)
+  </dd>
+</dl>
+
+<hr />
+
+<p>
+  <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+    Editar
+  </a>
+  <a asp-action="Index" class="btn btn-secondary">
+    Volver
+  </a>
+</p>

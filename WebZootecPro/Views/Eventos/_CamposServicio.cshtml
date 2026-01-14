@@ -1,99 +1,101 @@
 ﻿@model WebZootecPro.ViewModels.Eventos.RegistrarEventoViewModel
 @{
-    var toros = ViewBag.Toros as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
-}
+var toros = ViewBag.Toros as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    }
 
-<div class="row g-3">
-    <div class="col-12">
+    <div class="row g-3">
+      <div class="col-12">
         <label class="form-label">Tipo de servicio</label>
         <div class="d-flex gap-3">
-            <label class="form-check">
-                <input class="form-check-input" type="radio" name="TipoServicio" value="IA" @(Model.TipoServicio != "MONTA" ? "checked" : "") />
-                <span class="form-check-label">Inseminación Artificial</span>
-            </label>
-            <label class="form-check">
-                <input class="form-check-input" type="radio" name="TipoServicio" value="MONTA" @(Model.TipoServicio == "MONTA" ? "checked" : "") />
-                <span class="form-check-label">Monta Natural</span>
-            </label>
+          <label class="form-check">
+            <input class="form-check-input" type="radio" name="TipoServicio" value="IA" @(Model.TipoServicio !="MONTA"
+              ? "checked" : "" ) />
+            <span class="form-check-label">Inseminación Artificial</span>
+          </label>
+          <label class="form-check">
+            <input class="form-check-input" type="radio" name="TipoServicio" value="MONTA" @(Model.TipoServicio=="MONTA"
+              ? "checked" : "" ) />
+            <span class="form-check-label">Monta Natural</span>
+          </label>
         </div>
-    </div>
+      </div>
 
-    <div class="col-md-6">
+      <div class="col-md-6">
         <label class="form-label">Toro</label>
 
         <select asp-for="IdPadreAnimal" class="form-select" id="IdPadreAnimal">
-            <option value="">-- Seleccione toro --</option>
-            @foreach (var t in toros)
-            {
-                var selected = (Model.IdPadreAnimal != null && (int)Model.IdPadreAnimal == (int)t.Id) ? "selected" : null;
-                <option value="@t.Id" data-naab="@t.naab" data-nombre="@t.nombre" selected="@selected">
-                    @((t.arete ?? "-") + " - " + t.nombre)
-                </option>
-            }
+          <option value="">-- Seleccione toro --</option>
+          @foreach (var t in toros)
+          {
+          var selected = (Model.IdPadreAnimal != null && (int)Model.IdPadreAnimal == (int)t.Id) ? "selected" : null;
+          <option value="@t.Id" data-naab="@t.naab" data-nombre="@t.nombre" selected="@selected">
+            @((t.arete ?? "-") + " - " + t.nombre)
+          </option>
+          }
         </select>
 
         <span asp-validation-for="IdPadreAnimal" class="text-danger small"></span>
-    </div>
+      </div>
 
-    <div class="col-md-6" id="bloqueIA">
+      <div class="col-md-6" id="bloqueIA">
         <label class="form-label">NAAB</label>
         <input asp-for="CodigoNaab" class="form-control" id="CodigoNaab" />
         <span asp-validation-for="CodigoNaab" class="text-danger small"></span>
-    </div>
+      </div>
 
 
 
-    <div class="col-md-6" id="bloqueProtocolo">
+      <div class="col-md-6" id="bloqueProtocolo">
         <label class="form-label">Protocolo reproductivo</label>
         <select asp-for="Protocolo" asp-items="ViewBag.Protocolos" class="form-select" id="Protocolo">
-            <option value="">-- Seleccione --</option>
+          <option value="">-- Seleccione --</option>
         </select>
         <span asp-validation-for="Protocolo" class="text-danger small"></span>
-    </div>
+      </div>
 
-    <div class="col-md-6">
+      <div class="col-md-6">
         <label class="form-label">Fecha probable de parto</label>
         <input class="form-control" id="FechaProbPartoCalc" readonly style="background-color: rgba(15, 23, 42, 0.96)" />
-    </div>
+      </div>
 
-    <div class="col-md-6">
+      <div class="col-md-6">
         <label class="form-label">Fecha probable de seca</label>
         <input class="form-control" id="FechaProbSecaCalc" readonly style="background-color: rgba(15, 23, 42, 0.96)" />
-    </div>
-    <div class="col-md-3" id="bloqueHoraServicio">
+      </div>
+      <div class="col-md-3" id="bloqueHoraServicio">
         <label asp-for="HoraServicio" class="form-label"></label>
         <input asp-for="HoraServicio" type="time" class="form-control" />
         <span asp-validation-for="HoraServicio" class="text-danger small"></span>
-    </div>
-    <div class="col-md-3" id="bloqueInseminador">
+      </div>
+      <div class="col-md-3" id="bloqueInseminador">
         <label asp-for="IdInseminador" class="form-label"></label>
         <select asp-for="IdInseminador" asp-items="ViewBag.Inseminadores" class="form-select">
-            <option value="">-- Seleccione --</option>
+          <option value="">-- Seleccione --</option>
         </select>
         <span asp-validation-for="IdInseminador" class="text-danger small"></span>
-    </div>
+      </div>
 
-</div>
-@section Scripts {
+    </div>
+    @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-        document.addEventListener("change", (e) => {
-          if (e.target && e.target.id === "IdPadreAnimal") {
-            const opt = e.target.selectedOptions?.[0];
-            const naab = opt?.dataset?.naab || "";
-            const nombre = opt?.dataset?.nombre || "";
+      document.addEventListener("change", (e) => {
+        if (e.target && e.target.id === "IdPadreAnimal") {
+          const opt = e.target.selectedOptions?.[0];
+          const naab = opt?.dataset?.naab || "";
+          const nombre = opt?.dataset?.nombre || "";
 
-            const naabInput = document.getElementById("CodigoNaab");
-            const nombreInput = document.getElementById("NombreToro");
+          const naabInput = document.getElementById("CodigoNaab");
+          const nombreInput = document.getElementById("NombreToro");
 
-            if (naabInput) naabInput.value = naab;
-            if (nombreInput) nombreInput.value = nombre;
+          if (naabInput) naabInput.value = naab;
+          if (nombreInput) nombreInput.value = nombre;
 
-            // Si eligió toro, deshabilita nombre manual
-            if (nombreInput) nombreInput.disabled = (e.target.value !== "");
-          }
-        });
+          // Si eligió toro, deshabilita nombre manual
+          if (nombreInput) nombreInput.disabled = (e.target.value !== "");
+        }
+      });
     </script>
 
-}
+    }

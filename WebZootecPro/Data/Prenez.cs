@@ -11,59 +11,64 @@ namespace WebZootecPro.Data;
 [Index("idMadreAnimal", Name = "IX_Prenez_idMadreAnimal")]
 [Index("idPadreAnimal", Name = "IX_Prenez_idPadreAnimal")]
 [Index("idRegistroReproduccion", Name = "IX_Prenez_idRegistroReproduccion")]
+[Index("IdInseminador", Name = "IX_Prenez_IdInseminador")] // 👈 índice recomendado
 public partial class Prenez
 {
-    [Key]
-    public int Id { get; set; }
+  [Key]
+  public int Id { get; set; }
 
-    public DateOnly? fechaCelo { get; set; }
+  public DateOnly? fechaCelo { get; set; }
+  public DateOnly? fechaInseminacion { get; set; }
+  public DateOnly? fechaDiagnostico { get; set; }
 
-    public DateOnly? fechaInseminacion { get; set; }
+  public int? idPadreAnimal { get; set; }
+  public int? idMadreAnimal { get; set; }
 
-    public DateOnly? fechaDiagnostico { get; set; }
+  public int idRegistroReproduccion { get; set; }
 
-    public int? idPadreAnimal { get; set; }
+  [StringLength(600)]
+  public string? observacion { get; set; }
 
-    public int? idMadreAnimal { get; set; }
+  [Precision(0)]
+  public TimeOnly? horaServicio { get; set; }
 
-    public int idRegistroReproduccion { get; set; }
+  public int? numeroServicio { get; set; }
 
-    [StringLength(600)]
-    public string? observacion { get; set; }
+  [StringLength(150)]
+  public string? nombreToro { get; set; }
 
-    [Precision(0)]
-    public TimeOnly? horaServicio { get; set; }
+  [StringLength(20)]
+  public string? codigoNaab { get; set; }
 
-    public int? numeroServicio { get; set; }
+  [StringLength(50)]
+  public string? protocolo { get; set; }
 
-    [StringLength(150)]
-    public string? nombreToro { get; set; }
+  public DateOnly? fechaProbableParto { get; set; }
+  public DateOnly? fechaProbableSeca { get; set; }
 
-    [StringLength(20)]
-    public string? codigoNaab { get; set; }
+  public int? idHato { get; set; }
 
-    [StringLength(50)]
-    public string? protocolo { get; set; }
+  // 🔑 NUEVO FK
+  public int? IdInseminador { get; set; }
 
-    public DateOnly? fechaProbableParto { get; set; }
+  // 🔁 Navegaciones existentes
+  [ForeignKey("idHato")]
+  [InverseProperty("Prenezs")]
+  public virtual Hato? idHatoNavigation { get; set; }
 
-    public DateOnly? fechaProbableSeca { get; set; }
+  [ForeignKey("idMadreAnimal")]
+  [InverseProperty("PrenezidMadreAnimalNavigations")]
+  public virtual Animal? idMadreAnimalNavigation { get; set; }
 
-    public int? idHato { get; set; }
+  [ForeignKey("idPadreAnimal")]
+  [InverseProperty("PrenezidPadreAnimalNavigations")]
+  public virtual Animal? idPadreAnimalNavigation { get; set; }
 
-    [ForeignKey("idHato")]
-    [InverseProperty("Prenezs")]
-    public virtual Hato? idHatoNavigation { get; set; }
+  [ForeignKey("idRegistroReproduccion")]
+  [InverseProperty("Prenezs")]
+  public virtual RegistroReproduccion idRegistroReproduccionNavigation { get; set; } = null!;
 
-    [ForeignKey("idMadreAnimal")]
-    [InverseProperty("PrenezidMadreAnimalNavigations")]
-    public virtual Animal? idMadreAnimalNavigation { get; set; }
-
-    [ForeignKey("idPadreAnimal")]
-    [InverseProperty("PrenezidPadreAnimalNavigations")]
-    public virtual Animal? idPadreAnimalNavigation { get; set; }
-
-    [ForeignKey("idRegistroReproduccion")]
-    [InverseProperty("Prenezs")]
-    public virtual RegistroReproduccion idRegistroReproduccionNavigation { get; set; } = null!;
+  [ForeignKey("IdInseminador")]
+  [InverseProperty("Prenezs")]
+  public virtual Inseminador? Inseminador { get; set; }
 }
