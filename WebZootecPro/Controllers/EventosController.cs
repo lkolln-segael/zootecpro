@@ -557,8 +557,6 @@ namespace WebZootecPro.Controllers
                                 ModelState.AddModelError(nameof(model.AreteCria1), "Ya existe un animal con ese Areté.");
                         }
 
-
-
                         if (!ModelState.IsValid)
                         {
                             await tx.RollbackAsync();
@@ -567,7 +565,6 @@ namespace WebZootecPro.Controllers
                             return View(model);
                         }
 
-                        // ===== Fecha + hora del parto =====
                         var fechaHoraParto = model.FechaEvento!.Value.ToDateTime(model.HoraParto!.Value);
 
                         var ultimoPartoAnimal = await _context.Partos.AsNoTracking()
