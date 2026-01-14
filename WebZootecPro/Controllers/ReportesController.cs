@@ -39,54 +39,61 @@ namespace WebZootecPro.Controllers
                 .FirstOrDefaultAsync(u => u.Id == id.Value);
         }
 
+        // ✅ ESTE es el scope real multiempresa (dueño o colaborador).
+        private async Task<IQueryable<Animal>> ScopeAnimalesAsync(IQueryable<Animal> q)
+        {
+            if (User.IsInRole("SUPERADMIN"))
+                return q;
+
+            var userId = GetUsuarioId();
+            if (userId == null) return q.Where(_ => false);
+
+            var u = await _context.Usuarios.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == userId.Value);
+
+            if (u == null) return q.Where(_ => false);
+
+            // 1) Amarrado a Hato
+            if (u.idHato != null)
+                return q.Where(a => a.idHato == u.idHato.Value);
+
+            // 2) Amarrado a Establo
+            if (u.idEstablo != null)
+                return q.Where(a => a.idHatoNavigation.EstabloId == u.idEstablo.Value);
+
+            // 3) Admin empresa / usuario empresa SIN hato/establo: dueño o colaborador
+            return q.Where(a =>
+                a.idHatoNavigation.Establo.Empresa.usuarioID == userId.Value
+                || a.idHatoNavigation.Establo.Empresa.Colaboradors.Any(c => c.idUsuario == userId.Value)
+            );
+        }
+
+        // ✅ Tu método existente, pero ahora usa el scope correcto
         private async Task<IQueryable<Animal>> BuildAnimalesScopeQueryAsync()
         {
             var q = _context.Animals
                 .AsNoTracking()
                 .Include(a => a.idHatoNavigation)
-                    .ThenInclude(h => h.Establo);
+                    .ThenInclude(h => h.Establo)
+                        .ThenInclude(e => e.Empresa);
 
-            if (User.IsInRole("SUPERADMIN"))
-                return q;
-
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdStr, out var userId))
-                return q.Where(_ => false);
-
-            var u = await _context.Usuarios.AsNoTracking().FirstOrDefaultAsync(x => x.Id == userId);
-            if (u == null) return q.Where(_ => false);
-
-            if (u.idHato != null)
-                return q.Where(a => a.idHato == u.idHato.Value);
-
-            if (u.idEstablo != null)
-                return q.Where(a => a.idHatoNavigation.EstabloId == u.idEstablo.Value);
-
-            // ✅ ADMIN_EMPRESA (dueño) sin establo/hato: filtrar por su empresa
-            var empresaId = await _context.Empresas.AsNoTracking()
-                .Where(e => e.usuarioID == userId)
-                .Select(e => (int?)e.Id)
-                .FirstOrDefaultAsync();
-
-            if (empresaId == null) return q.Where(_ => false);
-
-            return q.Where(a => a.idHatoNavigation.Establo.EmpresaId == empresaId.Value);
+            return await ScopeAnimalesAsync(q);
         }
 
-
+        // ✅ REEMPLAZA tu CargarHatosAsync (el tuyo filtraba mal para ADMIN_EMPRESA)
         private async Task CargarHatosAsync(Usuario? u, int? idHatoSeleccionado)
         {
-            var hatosQ = _context.Hatos.AsNoTracking().AsQueryable();
+            var animalesQ = await BuildAnimalesScopeQueryAsync();
 
-            if (u?.idEstablo != null)
-                hatosQ = hatosQ.Where(h => h.EstabloId == u.idEstablo.Value);
+            var hatos = await animalesQ
+                .Select(a => new { Id = a.idHato, Nombre = a.idHatoNavigation.nombre })
+                .Distinct()
+                .OrderBy(x => x.Nombre)
+                .ToListAsync();
 
-            if (u?.idHato != null)
-                hatosQ = hatosQ.Where(h => h.Id == u.idHato.Value);
-
-            var hatos = await hatosQ.OrderBy(h => h.nombre).ToListAsync();
-            ViewBag.IdHato = new SelectList(hatos, "Id", "nombre", idHatoSeleccionado);
+            ViewBag.IdHato = new SelectList(hatos, "Id", "Nombre", idHatoSeleccionado);
         }
+
 
         private static int GetMinDiasConfirmacionPrenez(string? metodo)
         {
@@ -776,31 +783,52 @@ namespace WebZootecPro.Controllers
         {
             var d1 = (desde ?? DateTime.Today.AddDays(-7)).Date;
             var d2 = (hasta ?? DateTime.Today).Date;
-
-            // para incluir el día final completo
             var d2Fin = d2.AddDays(1);
 
-            var q = _context.RegistroProduccionLeches
-                .AsNoTracking()
-                .Include(r => r.idAnimalNavigation)
-                    .ThenInclude(a => a.idHatoNavigation)
-                .Where(r => (r.fechaOrdeno ?? r.fechaRegistro) >= d1
-         && (r.fechaOrdeno ?? r.fechaRegistro) < d2Fin);
+            var animalesScopeBase = await BuildAnimalesScopeQueryAsync();
+
+            // ✅ hatos permitidos (para combo + validar hatoId)
+            var hatosPermitidos = await animalesScopeBase
+                .Select(a => new { Id = a.idHato, Nombre = a.idHatoNavigation.nombre })
+                .Distinct()
+                .OrderBy(x => x.Nombre)
+                .ToListAsync();
+
+            ViewBag.Hatos = hatosPermitidos
+                .Select(x => new SelectListItem { Value = x.Id.ToString(), Text = x.Nombre })
+                .ToList();
+
+            if (hatoId.HasValue && !hatosPermitidos.Any(x => x.Id == hatoId.Value))
+                return Forbid();
+
+            // ✅ query restringida por scope (join por animal)
+            var q = from r in _context.RegistroProduccionLeches.AsNoTracking()
+                    join a in animalesScopeBase on r.idAnimal equals a.Id
+                    where (r.fechaOrdeno ?? r.fechaRegistro) >= d1
+                       && (r.fechaOrdeno ?? r.fechaRegistro) < d2Fin
+                    select new
+                    {
+                        Fecha = (r.fechaOrdeno ?? r.fechaRegistro).Date,
+                        Turno = r.turno,
+                        HatoId = a.idHato,
+                        Hato = a.idHatoNavigation.nombre,
+
+                        r.idAnimal,
+                        Producido = r.pesoOrdeno ?? 0m,
+                        Industria = r.cantidadIndustria ?? 0m,
+                        Terneros = r.cantidadTerneros ?? 0m,
+                        Descartada = r.cantidadDescartada ?? 0m,
+                        VentaDirecta = r.cantidadVentaDirecta ?? 0m
+                    };
 
             if (hatoId.HasValue)
-                q = q.Where(r => r.idAnimalNavigation.idHato == hatoId.Value);
+                q = q.Where(x => x.HatoId == hatoId.Value);
 
             if (!string.IsNullOrWhiteSpace(turno))
-                q = q.Where(r => r.turno == turno);
+                q = q.Where(x => x.Turno == turno);
 
             var items = await q
-                .GroupBy(r => new
-                {
-                    Fecha = (r.fechaOrdeno ?? r.fechaRegistro).Date,
-                    Turno = r.turno,
-                    HatoId = r.idAnimalNavigation.idHato,
-                    Hato = r.idAnimalNavigation.idHatoNavigation.nombre
-                })
+                .GroupBy(x => new { x.Fecha, x.Turno, x.HatoId, x.Hato })
                 .Select(g => new ProduccionDiariaItemVm
                 {
                     Fecha = g.Key.Fecha,
@@ -808,11 +836,11 @@ namespace WebZootecPro.Controllers
                     HatoId = g.Key.HatoId,
                     Hato = g.Key.Hato,
 
-                    Producido = g.Sum(x => x.pesoOrdeno ?? 0),
-                    Industria = g.Sum(x => x.cantidadIndustria ?? 0),
-                    Terneros = g.Sum(x => x.cantidadTerneros ?? 0),
-                    Descartada = g.Sum(x => x.cantidadDescartada ?? 0),
-                    VentaDirecta = g.Sum(x => x.cantidadVentaDirecta ?? 0),
+                    Producido = g.Sum(x => x.Producido),
+                    Industria = g.Sum(x => x.Industria),
+                    Terneros = g.Sum(x => x.Terneros),
+                    Descartada = g.Sum(x => x.Descartada),
+                    VentaDirecta = g.Sum(x => x.VentaDirecta),
 
                     VacasOrdeñadas = g.Select(x => x.idAnimal).Distinct().Count(),
                     Registros = g.Count()
@@ -822,28 +850,16 @@ namespace WebZootecPro.Controllers
                 .ThenBy(x => x.Turno)
                 .ToListAsync();
 
-            var vm = new ProduccionDiariaVm
+            return View(new ProduccionDiariaVm
             {
                 Desde = d1,
                 Hasta = d2,
                 HatoId = hatoId,
                 Turno = turno,
                 Items = items
-            };
-
-            // combos hatos
-            var usuario = await GetUsuarioActualAsync();
-            var hatos = _context.Hatos.AsNoTracking();
-            if (usuario?.idEstablo != null)
-                hatos = hatos.Where(h => h.EstabloId == usuario.idEstablo.Value);
-
-            ViewBag.Hatos = await hatos
-                .OrderBy(h => h.nombre)
-                .Select(h => new SelectListItem { Value = h.Id.ToString(), Text = h.nombre })
-                .ToListAsync();
-
-            return View(vm);
+            });
         }
+
 
         // ===================================
         // Reporte: Alimentación (Entregas)
@@ -976,6 +992,277 @@ namespace WebZootecPro.Controllers
                 Items = items
             });
         }
+
+        [HttpGet]
+        public async Task<IActionResult> ControlLecheroDiario(int? hatoId, DateTime? fecha)
+        {
+            var f = (fecha ?? DateTime.Today).Date;
+            var f2 = f.AddDays(1);
+
+            // ✅ Scope multiempresa (empresa dueño / colaborador / hato / establo)
+            var animalesScope = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
+
+            // (Opcional) solo hembras para control de leche
+            animalesScope = animalesScope.Where(a => (a.sexo ?? "").Trim().ToUpper() == "HEMBRA");
+
+            // ✅ Hatos permitidos SOLO de mis animales (no del universo)
+            var hatosPermitidos = await (
+                from a in animalesScope
+                join h in _context.Hatos.AsNoTracking() on a.idHato equals h.Id
+                select new { h.Id, h.nombre }
+            ).Distinct()
+             .OrderBy(x => x.nombre)
+             .ToListAsync();
+
+            ViewBag.Hatos = hatosPermitidos
+                .Select(x => new SelectListItem { Value = x.Id.ToString(), Text = x.nombre })
+                .ToList();
+
+            // ✅ si mandan hatoId por URL, valida que sea del scope
+            if (hatoId.HasValue && !hatosPermitidos.Any(x => x.Id == hatoId.Value))
+                return Forbid();
+
+            // ✅ Query producción solo de animales del scope
+            var q = from r in _context.RegistroProduccionLeches.AsNoTracking()
+                    join a in animalesScope on r.idAnimal equals a.Id
+                    where (r.fechaOrdeno ?? r.fechaRegistro) >= f
+                       && (r.fechaOrdeno ?? r.fechaRegistro) < f2
+                    select new
+                    {
+                        r.idAnimal,
+                        Arete = a.arete,
+                        Nombre = a.nombre,
+                        HatoId = a.idHato,
+                        Turno = r.turno,
+                        Litros = r.pesoOrdeno ?? 0m
+                    };
+
+            if (hatoId.HasValue)
+                q = q.Where(x => x.HatoId == hatoId.Value);
+
+            var data = await q.ToListAsync();
+
+            var items = data
+                .GroupBy(x => new { x.idAnimal, x.Arete, x.Nombre })
+                .OrderBy(g => g.Key.Arete)
+                .Select((g, idx) => new ControlLecheroDiarioItemVm
+                {
+                    No = idx + 1,
+                    AnimalId = g.Key.idAnimal,
+                    Arete = g.Key.Arete,
+                    Nombre = g.Key.Nombre ?? "",
+                    AM = Math.Round(g.Where(x => x.Turno == "MAÑANA").Sum(x => x.Litros), 2),
+                    PM = Math.Round(g.Where(x => x.Turno == "TARDE").Sum(x => x.Litros), 2),
+                })
+                .ToList();
+
+            return View(new ControlLecheroDiarioVm
+            {
+                Fecha = f,
+                HatoId = hatoId,
+                Items = items
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> PicoCampania(int? hatoId, DateTime? fechaCorte)
+        {
+            var corte = (fechaCorte ?? DateTime.Today).Date;
+            var endExclusive = corte.AddDays(1);
+
+            // ✅ Scope multiempresa (solo mis animales)
+            var animalesScope = await ScopeAnimalesAsync(_context.Animals.AsNoTracking());
+            animalesScope = animalesScope.Where(a => (a.sexo ?? "").Trim().ToUpper() == "HEMBRA");
+
+            // ✅ Hatos permitidos SOLO desde mi scope
+            var hatosPermitidos = await (
+                from a in animalesScope
+                join h in _context.Hatos.AsNoTracking() on a.idHato equals h.Id
+                select new { h.Id, h.nombre }
+            ).Distinct()
+             .OrderBy(x => x.nombre)
+             .ToListAsync();
+
+            ViewBag.Hatos = hatosPermitidos
+                .Select(x => new SelectListItem { Value = x.Id.ToString(), Text = x.nombre })
+                .ToList();
+
+            if (hatoId.HasValue && !hatosPermitidos.Any(x => x.Id == hatoId.Value))
+                return Forbid();
+
+            if (hatoId.HasValue)
+                animalesScope = animalesScope.Where(a => a.idHato == hatoId.Value);
+
+            // ✅ 1) SOLO animales que tienen producción registrada hasta la fecha corte
+            var animalIdsConProduccion = await (
+                from r in _context.RegistroProduccionLeches.AsNoTracking()
+                join a in animalesScope on r.idAnimal equals a.Id
+                where (r.fechaOrdeno ?? r.fechaRegistro) < endExclusive
+                select r.idAnimal
+            ).Distinct().ToListAsync();
+
+            // Si no hay nada, no mostrar filas
+            if (animalIdsConProduccion.Count == 0)
+            {
+                return View(new PicoCampaniaVm
+                {
+                    FechaCorte = corte,
+                    HatoId = hatoId,
+                    Items = new List<PicoCampaniaItemVm>()
+                });
+            }
+
+            // Reducir scope a solo animales con datos
+            animalesScope = animalesScope.Where(a => animalIdsConProduccion.Contains(a.Id));
+
+            var animals = await animalesScope
+                .Select(a => new { a.Id, a.arete, a.nombre })
+                .ToListAsync();
+
+            var animalIds = animals.Select(a => a.Id).ToList();
+
+            // ===== partos (por animal) =====
+            var partos = await (
+                from p in _context.Partos.AsNoTracking()
+                join rr in _context.RegistroReproduccions.AsNoTracking() on p.idRegistroReproduccion equals rr.Id
+                where animalIds.Contains(rr.idAnimal)
+                select new { AnimalId = rr.idAnimal, FechaParto = p.fechaRegistro.Date }
+            ).ToListAsync();
+
+            // ===== secas (por animal) =====
+            var secas = await (
+                from s in _context.Secas.AsNoTracking()
+                join rr in _context.RegistroReproduccions.AsNoTracking() on s.idRegistroReproduccion equals rr.Id
+                where s.fechaSeca != null && animalIds.Contains(rr.idAnimal)
+                select new { AnimalId = rr.idAnimal, FechaSeca = s.fechaSeca!.Value.Date }
+            ).ToListAsync();
+
+            // ===== producción diaria hasta corte =====
+            var prodRaw = await _context.RegistroProduccionLeches.AsNoTracking()
+                .Where(r => animalIds.Contains(r.idAnimal))
+                .Where(r => (r.fechaOrdeno ?? r.fechaRegistro) < endExclusive)
+                .Select(r => new
+                {
+                    r.idAnimal,
+                    Fecha = (r.fechaOrdeno ?? r.fechaRegistro).Date,
+                    Litros = r.pesoOrdeno ?? 0m
+                })
+                .ToListAsync();
+
+            var prodFechasPorAnimal = prodRaw
+                .GroupBy(x => x.idAnimal)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.GroupBy(z => z.Fecha)
+                          .Select(d => new { Fecha = d.Key, Total = d.Sum(v => v.Litros) })
+                          .OrderBy(x => x.Fecha)
+                          .ToList()
+                );
+
+            var partosPorAnimal = partos
+                .GroupBy(p => p.AnimalId)
+                .ToDictionary(g => g.Key, g => g.Select(x => x.FechaParto).Distinct().OrderBy(d => d).ToList());
+
+            var secasPorAnimal = secas
+                .GroupBy(s => s.AnimalId)
+                .ToDictionary(g => g.Key, g => g.Select(x => x.FechaSeca).Distinct().OrderBy(d => d).ToList());
+
+            var items = new List<PicoCampaniaItemVm>();
+
+            foreach (var a in animals.OrderBy(x => x.arete))
+            {
+                partosPorAnimal.TryGetValue(a.Id, out var listaPartos);
+                listaPartos ??= new List<DateTime>();
+
+                secasPorAnimal.TryGetValue(a.Id, out var listaSecas);
+                listaSecas ??= new List<DateTime>();
+
+                DateTime? ultimoParto = listaPartos.Where(d => d <= corte).DefaultIfEmpty().Max();
+                if (ultimoParto == DateTime.MinValue) ultimoParto = null;
+
+                int? dl = ultimoParto.HasValue ? (corte - ultimoParto.Value.Date).Days : null;
+
+                int? udl = null;
+                if (ultimoParto.HasValue)
+                {
+                    var start = ultimoParto.Value.Date;
+                    DateTime? nextParto = listaPartos.FirstOrDefault(d => d > start);
+                    if (nextParto == default(DateTime)) nextParto = null;
+
+                    DateTime? seca = listaSecas
+                        .Where(s => s >= start && (nextParto == null || s < nextParto.Value.Date))
+                        .OrderBy(s => s)
+                        .FirstOrDefault();
+
+                    if (seca.HasValue && seca.Value != default(DateTime))
+                        udl = (seca.Value.Date - start).Days;
+                    else if (prodFechasPorAnimal.TryGetValue(a.Id, out var prodList))
+                    {
+                        var lastProd = prodList
+                            .Where(p => p.Fecha >= start && (nextParto == null || p.Fecha < nextParto.Value.Date))
+                            .Select(p => (DateTime?)p.Fecha)
+                            .DefaultIfEmpty()
+                            .Max();
+
+                        if (lastProd.HasValue && lastProd.Value != DateTime.MinValue)
+                            udl = (lastProd.Value.Date - start).Days;
+                    }
+                }
+
+                var row = new PicoCampaniaItemVm
+                {
+                    Arete = a.arete,
+                    Nombre = a.nombre ?? "",
+                    Parto = ultimoParto,
+                    dl = dl,
+                    udl = udl
+                };
+
+                for (int i = 0; i < 7; i++)
+                {
+                    if (i >= listaPartos.Count) break;
+
+                    var start = listaPartos[i].Date;
+                    DateTime? next = (i + 1 < listaPartos.Count) ? listaPartos[i + 1].Date : (DateTime?)null;
+
+                    DateTime? seca = listaSecas
+                        .Where(s => s >= start && (next == null || s < next.Value))
+                        .OrderBy(s => s)
+                        .FirstOrDefault();
+
+                    DateTime end = corte;
+                    if (seca.HasValue && seca.Value != default(DateTime))
+                        end = seca.Value.Date;
+                    else if (next.HasValue)
+                        end = next.Value.AddDays(-1);
+
+                    if (end < start) continue;
+
+                    if (prodFechasPorAnimal.TryGetValue(a.Id, out var prodList2))
+                    {
+                        var dias = prodList2.Where(p => p.Fecha >= start && p.Fecha <= end).Select(p => p.Total).ToList();
+                        if (dias.Count > 0)
+                        {
+                            row.Picos[i] = Math.Round(dias.Max(), 2);
+                            row.Promedios[i] = Math.Round(dias.Average(), 2);
+                        }
+                    }
+                }
+
+                items.Add(row);
+            }
+
+            for (int i = 0; i < items.Count; i++) items[i].No = i + 1;
+
+            return View(new PicoCampaniaVm
+            {
+                FechaCorte = corte,
+                HatoId = hatoId,
+                Items = items
+            });
+        }
+
+
 
     }
 }

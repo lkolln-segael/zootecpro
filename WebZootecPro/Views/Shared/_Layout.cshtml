@@ -9,530 +9,542 @@ _Layout.cshtml (MODULOS: Dashboard, Producción, Reproducción, Reportes, Sanida
 <html lang="es">
 
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>@ViewData["Title"] - ZootecPro</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ZootecPro</title>
 
-  <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
-    rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
+          rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
 
-  <style>
-    .sidebar-menu .nav-item.has-children {
-      position: relative;
-    }
+    <style>
+        .sidebar-menu .nav-item.has-children {
+            position: relative;
+        }
 
-    .sidebar-menu .nav-item.has-children>a::after {
-      content: "›";
-      margin-left: auto;
-      font-size: 0.8rem;
-      opacity: 0.7;
-    }
+            .sidebar-menu .nav-item.has-children > a::after {
+                content: "›";
+                margin-left: auto;
+                font-size: 0.8rem;
+                opacity: 0.7;
+            }
 
-    .sidebar-submenu {
-      position: absolute;
-      top: 0;
-      left: 100%;
-      min-width: 220px;
-      background-color: #111827;
-      list-style: none;
-      margin: 0;
-      padding: 0.35rem 0;
-      border-radius: 0 0.5rem 0.5rem 0;
-      box-shadow: 4px 4px 12px rgba(0, 0, 0, .45);
-      display: none;
-      z-index: 1200;
-    }
+        .sidebar-submenu {
+            position: absolute;
+            top: 0;
+            left: 100%;
+            min-width: 220px;
+            background-color: #111827;
+            list-style: none;
+            margin: 0;
+            padding: 0.35rem 0;
+            border-radius: 0 0.5rem 0.5rem 0;
+            box-shadow: 4px 4px 12px rgba(0, 0, 0, .45);
+            display: none;
+            z-index: 1200;
+        }
 
-    .sidebar-submenu .nav-link {
-      padding: 0.4rem 0.9rem;
-      font-size: 0.9rem;
-      white-space: nowrap;
-      color: #e5e7eb;
-    }
+            .sidebar-submenu .nav-link {
+                padding: 0.4rem 0.9rem;
+                font-size: 0.9rem;
+                white-space: nowrap;
+                color: #e5e7eb;
+            }
 
-    .sidebar-submenu .nav-link:hover {
-      background-color: #0b1120;
-      color: #fff;
-    }
+                .sidebar-submenu .nav-link:hover {
+                    background-color: #0b1120;
+                    color: #fff;
+                }
 
-    .sidebar-menu .nav-item.has-children:hover>.sidebar-submenu {
-      display: block;
-    }
+        .sidebar-menu .nav-item.has-children:hover > .sidebar-submenu {
+            display: block;
+        }
 
-    #sidebar {
-      overflow-x: visible;
-    }
-  </style>
+        #sidebar {
+            overflow-x: visible;
+        }
+    </style>
 
-  @RenderSection("Styles", required: false)
+    @RenderSection("Styles", required: false)
 </head>
 
 <body class="@ViewBag.BodyClass">
-  @{
-  var isAuth = User?.Identity?.IsAuthenticated ?? false;
+    @{
+        var isAuth = User?.Identity?.IsAuthenticated ?? false;
 
-  var isSuperAdmin = User.IsInRole("SUPERADMIN");
-  var isAdminEmpresa = User.IsInRole("ADMIN_EMPRESA");
-  var isUsuarioEmpresa = User.IsInRole("USUARIO_EMPRESA");
+        var isSuperAdmin = User.IsInRole("SUPERADMIN");
+        var isAdminEmpresa = User.IsInRole("ADMIN_EMPRESA");
+        var isUsuarioEmpresa = User.IsInRole("USUARIO_EMPRESA");
 
-  var isInspector = User.IsInRole("INSPECTOR");
-  var isLaboratorio = User.IsInRole("LABORATORIO_EMPRESA");
-  var isVet = User.IsInRole("VETERINARIO");
+        var isInspector = User.IsInRole("INSPECTOR");
+        var isLaboratorio = User.IsInRole("LABORATORIO_EMPRESA");
+        var isVet = User.IsInRole("VETERINARIO");
 
-  var roleName = isAuth ? User.FindFirst(ClaimTypes.Role)?.Value : null;
+        var roleName = isAuth ? User.FindFirst(ClaimTypes.Role)?.Value : null;
 
-  // helpers de permisos por módulo
-  bool CanOperacion() => isSuperAdmin || isAdminEmpresa || isVet || isUsuarioEmpresa;
-  bool CanReportes() => isSuperAdmin || isAdminEmpresa || isInspector || isUsuarioEmpresa || isLaboratorio || isVet;
-  bool CanSanidad() => isSuperAdmin || isAdminEmpresa || isVet || isUsuarioEmpresa;
-  bool CanNutricion() => isSuperAdmin || isAdminEmpresa;
-  bool CanAdmin() => isSuperAdmin || isAdminEmpresa;
-  bool CanLab() => isSuperAdmin || isAdminEmpresa || isLaboratorio;
-  }
+        // helpers de permisos por módulo
+        bool CanOperacion() => isSuperAdmin || isAdminEmpresa || isVet || isUsuarioEmpresa;
+        bool CanReportes() => isSuperAdmin || isAdminEmpresa || isInspector || isUsuarioEmpresa || isLaboratorio || isVet;
+        bool CanSanidad() => isSuperAdmin || isAdminEmpresa || isVet || isUsuarioEmpresa;
+        bool CanNutricion() => isSuperAdmin || isAdminEmpresa;
+        bool CanAdmin() => isSuperAdmin || isAdminEmpresa;
+        bool CanLab() => isSuperAdmin || isAdminEmpresa || isLaboratorio;
+    }
 
-  @if (ViewBag.HideNavbar == true)
-  {
-  <main class="main-content">
-    <div class="container-fluid px-3 px-md-4 py-4 py-md-5">
-      @RenderBody()
-    </div>
-  </main>
-  }
-  else
-  {
-  <div id="app-shell" class="d-flex">
-    <div id="sidebar-backdrop"></div>
+    @if (ViewBag.HideNavbar == true)
+    {
+        <main class="main-content">
+            <div class="container-fluid px-3 px-md-4 py-4 py-md-5">
+                @RenderBody()
+            </div>
+        </main>
+    }
+    else
+    {
+        <div id="app-shell" class="d-flex">
+            <div id="sidebar-backdrop"></div>
 
-    <nav id="sidebar" class="sidebar d-flex flex-column">
-      <div class="sidebar-header d-flex align-items-center mb-3 px-2">
-        <div class="brand-logo me-2 d-flex align-items-center justify-content-center">MK</div>
-        <div class="d-flex flex-column">
-          <span class="fw-semibold">ZootecPro</span>
-          <small class="text-muted">Panel</small>
-        </div>
-      </div>
+            <nav id="sidebar" class="sidebar d-flex flex-column">
+                <div class="sidebar-header d-flex align-items-center mb-3 px-2">
+                    <div class="brand-logo me-2 d-flex align-items-center justify-content-center">MK</div>
+                    <div class="d-flex flex-column">
+                        <span class="fw-semibold">ZootecPro</span>
+                        <small class="text-muted">Panel</small>
+                    </div>
+                </div>
 
-      <hr class="border-secondary opacity-25 my-2" />
+                <hr class="border-secondary opacity-25 my-2" />
 
-      <ul class="nav flex-column sidebar-menu mb-auto">
+                <ul class="nav flex-column sidebar-menu mb-auto">
 
-        <!-- 1) DASHBOARD -->
-        <li class="nav-item">
-          <a asp-controller="Home" asp-action="Index" class="nav-link d-flex align-items-center">
-            <i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span>
-          </a>
-        </li>
+                    <!-- 1) DASHBOARD -->
+                    <li class="nav-item">
+                        <a asp-controller="Home" asp-action="Index" class="nav-link d-flex align-items-center">
+                            <i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span>
+                        </a>
+                    </li>
 
-        <!-- 2) PRODUCCIÓN (leche / industria / calidad laboratorio) -->
-        @if (isAuth && (CanOperacion() || CanReportes() || CanLab()))
-        {
-        <li class="nav-item has-children mt-2">
-          <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
-            <i class="bi bi-droplet-half me-2"></i><span>Producción</span>
-          </a>
+                    <!-- 2) PRODUCCIÓN (leche / industria / calidad laboratorio) -->
+                    @if (isAuth && (CanOperacion() || CanReportes() || CanLab()))
+                    {
+                        <li class="nav-item has-children mt-2">
+                            <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
+                                <i class="bi bi-droplet-half me-2"></i><span>Producción</span>
+                            </a>
 
-          <ul class="sidebar-submenu nav flex-column">
-            @* Producción leche *@
-            @if (isAuth && (isSuperAdmin || isAdminEmpresa || isInspector || isUsuarioEmpresa))
-            {
-            <li class="nav-item">
-              <a asp-controller="Produccion" asp-action="Index" class="nav-link d-flex align-items-center">
-                <i class="bi bi-droplet me-2"></i><span>Producción leche</span>
-              </a>
-            </li>
-            }
+                            <ul class="sidebar-submenu nav flex-column">
+                                @* Producción leche *@
+                                @if (isAuth && (isSuperAdmin || isAdminEmpresa || isInspector || isUsuarioEmpresa))
+                                {
+                                    <li class="nav-item">
+                                        <a asp-controller="Produccion" asp-action="Index" class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-droplet me-2"></i><span>Producción leche</span>
+                                        </a>
+                                    </li>
+                                }
 
-            @* Industria *@
-            @if (isAuth && (isSuperAdmin || isAdminEmpresa || isInspector || isUsuarioEmpresa))
-            {
-            <li class="nav-item">
-              <a asp-controller="Produccion" asp-action="ReporteIndustria" class="nav-link d-flex align-items-center">
-                <i class="bi bi-building me-2"></i><span>Reporte industria</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a asp-controller="Produccion" asp-action="ComparativoIndustria"
-                class="nav-link d-flex align-items-center">
-                <i class="bi bi-arrows-left-right me-2"></i><span>Comparativo industria</span>
-              </a>
-            </li>
-            }
+                                @* Industria *@
+                                @if (isAuth && (isSuperAdmin || isAdminEmpresa || isInspector || isUsuarioEmpresa))
+                                {
+                                    <li class="nav-item">
+                                        <a asp-controller="Produccion" asp-action="ReporteIndustria" class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-building me-2"></i><span>Reporte industria</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a asp-controller="Produccion" asp-action="ComparativoIndustria"
+                                           class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-arrows-left-right me-2"></i><span>Comparativo industria</span>
+                                        </a>
+                                    </li>
+                                }
 
-            @* Laboratorio / Calidad *@
-            @if (isAuth && CanLab())
-            {
-            <li class="nav-item">
-              <a asp-controller="Calidad" asp-action="Index" class="nav-link d-flex align-items-center">
-                <i class="bi bi-clipboard2-pulse me-2"></i><span>Calidad</span>
-              </a>
-            </li>
-            }
-          </ul>
-        </li>
-        }
+                                @* Laboratorio / Calidad *@
+                                @if (isAuth && CanLab())
+                                {
+                                    <li class="nav-item">
+                                        <a asp-controller="Calidad" asp-action="Index" class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-clipboard2-pulse me-2"></i><span>Calidad</span>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </li>
+                    }
 
-        <!-- 3) REPRODUCCIÓN (animales, machos, eventos, campañas) -->
-        @if (isAuth && CanOperacion())
-        {
-        <li class="nav-item has-children mt-2">
-          <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
-            <i class="bi bi-heart-arrow me-2"></i><span>Reproducción</span>
-          </a>
+                    <!-- 3) REPRODUCCIÓN (animales, machos, eventos, campañas) -->
+                    @if (isAuth && CanOperacion())
+                    {
+                        <li class="nav-item has-children mt-2">
+                            <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
+                                <i class="bi bi-heart-arrow me-2"></i><span>Reproducción</span>
+                            </a>
 
-          <ul class="sidebar-submenu nav flex-column">
-            <li class="nav-item">
-              <a asp-controller="Animales" asp-action="Index" class="nav-link d-flex align-items-center">
-                <i class="bi bi-collection me-2"></i><span>Animales (Hembras)</span>
-              </a>
-            </li>
+                            <ul class="sidebar-submenu nav flex-column">
+                                <li class="nav-item">
+                                    <a asp-controller="Animales" asp-action="Index" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-collection me-2"></i><span>Animales (Hembras)</span>
+                                    </a>
+                                </li>
 
-            <li class="nav-item">
-              <a asp-controller="Machos" asp-action="Index" class="nav-link d-flex align-items-center">
-                <i class="bi bi-gender-male me-2"></i><span>Machos</span>
-              </a>
-            </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Machos" asp-action="Index" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-gender-male me-2"></i><span>Machos</span>
+                                    </a>
+                                </li>
 
-            <li class="nav-item">
-              <a asp-controller="Eventos" asp-action="Registrar" class="nav-link d-flex align-items-center">
-                <i class="bi bi-activity me-2"></i><span>Registrar eventos</span>
-              </a>
-            </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Eventos" asp-action="Registrar" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-activity me-2"></i><span>Registrar eventos</span>
+                                    </a>
+                                </li>
 
-            @if (isSuperAdmin || isAdminEmpresa || isUsuarioEmpresa || isLaboratorio)
-            {
-            <li class="nav-item">
-              <a asp-controller="Campanias" asp-action="Index" class="nav-link d-flex align-items-center">
-                <i class="bi bi-calendar-range me-2"></i><span>Campañas</span>
-              </a>
-            </li>
-            }
-          </ul>
-        </li>
-        }
+                                @if (isSuperAdmin || isAdminEmpresa || isUsuarioEmpresa || isLaboratorio)
+                                {
+                                    <li class="nav-item">
+                                        <a asp-controller="Campanias" asp-action="Index" class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-calendar-range me-2"></i><span>Campañas</span>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </li>
+                    }
 
-        <!-- 4) REPORTES -->
-        @if (isAuth && CanReportes())
-        {
-        <li class="nav-item has-children mt-2">
-          <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
-            <i class="bi bi-graph-up-arrow me-2"></i><span>Reportes</span>
-          </a>
+                    <!-- 4) REPORTES -->
+                    @if (isAuth && CanReportes())
+                    {
+                        <li class="nav-item has-children mt-2">
+                            <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
+                                <i class="bi bi-graph-up-arrow me-2"></i><span>Reportes</span>
+                            </a>
 
-          <ul class="sidebar-submenu nav flex-column">
-            @if (isSuperAdmin || isAdminEmpresa || isUsuarioEmpresa || isLaboratorio)
-            {
-            <li class="nav-item">
-              <a asp-controller="Reportes" asp-action="ReproduccionKpi" class="nav-link d-flex align-items-center">
-                <i class="bi bi-graph-up me-2"></i><span>Reportes / KPI</span>
-              </a>
-            </li>
+                            <ul class="sidebar-submenu nav flex-column">
+                                @if (isSuperAdmin || isAdminEmpresa || isUsuarioEmpresa || isLaboratorio)
+                                {
+                                    <li class="nav-item">
+                                        <a asp-controller="Reportes" asp-action="ReproduccionKpi" class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-graph-up me-2"></i><span>Reportes / KPI</span>
+                                        </a>
+                                    </li>
 
-            <li class="nav-item">
-              <a asp-controller="Reportes" asp-action="ProduccionDiaria" class="nav-link d-flex align-items-center">
-                <i class="bi bi-bar-chart me-2"></i><span>Reporte producción</span>
-              </a>
-            </li>
-            }
+                                    <li class="nav-item">
+                                        <a asp-controller="Reportes" asp-action="ProduccionDiaria" class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-bar-chart me-2"></i><span>Reporte producción</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a asp-controller="Reportes" asp-action="ControlLecheroDiario" class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-table me-2"></i><span>Control lechero (AM/PM)</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a asp-controller="Reportes" asp-action="PicoCampania" class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-graph-up-arrow me-2"></i><span>Pico por campaña</span>
+                                        </a>
+                                    </li>
 
-            @if (isSuperAdmin || isAdminEmpresa)
-            {
-            <li class="nav-item">
-              <a asp-controller="Reportes" asp-action="CostosResumen" class="nav-link d-flex align-items-center">
-                <i class="bi bi-cash-coin me-2"></i><span>Reporte costos</span>
-              </a>
-            </li>
-            }
 
-            @if (isSuperAdmin || isAdminEmpresa || isUsuarioEmpresa || isLaboratorio)
-            {
-            <li class="nav-item">
-              <a asp-controller="CalidadDiariaHato" asp-action="Index" class="nav-link d-flex align-items-center">
-                <i class="bi bi-clipboard-data me-2"></i><span>Calidad diaria (Hato)</span>
-              </a>
-            </li>
-            }
+                                }
 
-            @if (isSuperAdmin || isAdminEmpresa || isVet || isUsuarioEmpresa)
-            {
-            <li class="nav-item">
-              <a asp-controller="Reportes" asp-action="Enfermeria" class="nav-link d-flex align-items-center">
-                <i class="bi bi-hospital me-2"></i><span>Enfermería</span>
-              </a>
-            </li>
-            }
-          </ul>
-        </li>
-        }
+                                @if (isSuperAdmin || isAdminEmpresa)
+                                {
+                                    <li class="nav-item">
+                                        <a asp-controller="Reportes" asp-action="CostosResumen" class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-cash-coin me-2"></i><span>Reporte costos</span>
+                                        </a>
+                                    </li>
+                                }
 
-        <!-- 5) SANIDAD -->
-        @if (isAuth && CanSanidad())
-        {
-        <li class="nav-item has-children mt-2">
-          <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
-            <i class="bi bi-heart-pulse me-2"></i><span>Sanidad</span>
-          </a>
+                                @if (isSuperAdmin || isAdminEmpresa || isUsuarioEmpresa || isLaboratorio)
+                                {
+                                    <li class="nav-item">
+                                        <a asp-controller="CalidadDiariaHato" asp-action="Index" class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-clipboard-data me-2"></i><span>Calidad diaria (Hato)</span>
+                                        </a>
+                                    </li>
+                                }
 
-          <ul class="sidebar-submenu nav flex-column">
-            <li class="nav-item">
-              <a asp-controller="Enfermedades" asp-action="Index" class="nav-link d-flex align-items-center">
-                <i class="bi bi-bug me-2"></i><span>Enfermedades</span>
-              </a>
-            </li>
+                                @if (isSuperAdmin || isAdminEmpresa || isVet || isUsuarioEmpresa)
+                                {
+                                    <li class="nav-item">
+                                        <a asp-controller="Reportes" asp-action="Enfermeria" class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-hospital me-2"></i><span>Enfermería</span>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </li>
+                    }
 
-            <li class="nav-item">
-              <a asp-controller="Tratamientos" asp-action="Index" class="nav-link d-flex align-items-center">
-                <i class="bi bi-capsule-pill me-2"></i><span>Tratamientos</span>
-              </a>
-            </li>
+                    <!-- 5) SANIDAD -->
+                    @if (isAuth && CanSanidad())
+                    {
+                        <li class="nav-item has-children mt-2">
+                            <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
+                                <i class="bi bi-heart-pulse me-2"></i><span>Sanidad</span>
+                            </a>
 
-            <li class="nav-item">
-              <a asp-controller="Tratamientos" asp-action="RetiroLeche" class="nav-link d-flex align-items-center">
-                <i class="bi bi-droplet-half me-2"></i><span>Retiro de leche</span>
-              </a>
-            </li>
-          </ul>
-        </li>
-        }
+                            <ul class="sidebar-submenu nav flex-column">
+                                <li class="nav-item">
+                                    <a asp-controller="Enfermedades" asp-action="Index" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-bug me-2"></i><span>Enfermedades</span>
+                                    </a>
+                                </li>
 
-        <!-- 6) NUTRICIÓN -->
-        @if (isAuth && CanNutricion())
-        {
-        <li class="nav-item has-children mt-2">
-          <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
-            <i class="bi bi-basket3 me-2"></i><span>Nutrición</span>
-          </a>
+                                <li class="nav-item">
+                                    <a asp-controller="Tratamientos" asp-action="Index" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-capsule-pill me-2"></i><span>Tratamientos</span>
+                                    </a>
+                                </li>
 
-          <ul class="sidebar-submenu nav flex-column">
-            <li class="nav-item">
-              <a asp-controller="AlimentacionRtm" asp-action="Entregas" class="nav-link d-flex align-items-center">
-                <i class="bi bi-basket3 me-2"></i><span>Alimentación (RTM)</span>
-              </a>
-            </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Tratamientos" asp-action="RetiroLeche" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-droplet-half me-2"></i><span>Retiro de leche</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    }
 
-            <li class="nav-item">
-              <a asp-controller="Medidores" asp-action="Index" class="nav-link d-flex align-items-center">
-                <i class="bi bi-cpu me-2"></i><span>Medidores</span>
-              </a>
-            </li>
-          </ul>
-        </li>
-        }
+                    <!-- 6) NUTRICIÓN -->
+                    @if (isAuth && CanNutricion())
+                    {
+                        <li class="nav-item has-children mt-2">
+                            <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
+                                <i class="bi bi-basket3 me-2"></i><span>Nutrición</span>
+                            </a>
 
-        <!-- 7) MANTENIMIENTO -->
-        @if (isAuth && CanAdmin())
-        {
-        <li class="nav-item has-children mt-2">
-          <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
-            <i class="bi bi-tools me-2"></i><span>Mantenimiento</span>
-          </a>
+                            <ul class="sidebar-submenu nav flex-column">
+                                <li class="nav-item">
+                                    <a asp-controller="AlimentacionRtm" asp-action="Entregas" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-basket3 me-2"></i><span>Alimentación (RTM)</span>
+                                    </a>
+                                </li>
 
-          <ul class="sidebar-submenu nav flex-column">
-            @* Administración base *@
-            @if (isSuperAdmin)
-            {
-            <li class="nav-item">
-              <a asp-controller="Admin" asp-action="Index" class="nav-link d-flex align-items-center">
-                <i class="bi bi-building me-2"></i><span>Empresas</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a asp-controller="PlanLicencias" asp-action="Index" class="nav-link d-flex align-items-center">
-                <i class="bi bi-building me-2"></i><span>Planes</span>
-              </a>
-            </li>
-            }
+                                <li class="nav-item">
+                                    <a asp-controller="Medidores" asp-action="Index" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-cpu me-2"></i><span>Medidores</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    }
 
-            <li class="nav-item">
-              <a asp-controller="Admin" asp-action="Personal" class="nav-link d-flex align-items-center">
-                <i class="bi bi-people me-2"></i><span>Personal</span>
-              </a>
-            </li>
+                    <!-- 7) MANTENIMIENTO -->
+                    @if (isAuth && CanAdmin())
+                    {
+                        <li class="nav-item has-children mt-2">
+                            <a href="javascript:void(0);" class="nav-link d-flex align-items-center">
+                                <i class="bi bi-tools me-2"></i><span>Mantenimiento</span>
+                            </a>
 
-            <li class="nav-item">
-              <a asp-controller="Establos" asp-action="Index" class="nav-link d-flex align-items-center">
-                <i class="bi bi-buildings me-2"></i><span>Establos</span>
-              </a>
-            </li>
+                            <ul class="sidebar-submenu nav flex-column">
+                                @* Administración base *@
+                                @if (isSuperAdmin)
+                                {
+                                    <li class="nav-item">
+                                        <a asp-controller="Admin" asp-action="Index" class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-building me-2"></i><span>Empresas</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a asp-controller="PlanLicencias" asp-action="Index" class="nav-link d-flex align-items-center">
+                                            <i class="bi bi-building me-2"></i><span>Planes</span>
+                                        </a>
+                                    </li>
+                                }
 
-            <li class="nav-item">
-              <a asp-controller="Hatos" asp-action="Index" class="nav-link d-flex align-items-center">
-                <i class="bi bi-diagram-3 me-2"></i><span>Hatos</span>
-              </a>
-            </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Admin" asp-action="Personal" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-people me-2"></i><span>Personal</span>
+                                    </a>
+                                </li>
 
-            @* Catálogos *@
-            <li class="nav-item">
-              <a asp-controller="Admin" asp-action="IndexEspecialidades" class="nav-link d-flex align-items-center">
-                <i class="bi bi-person-workspace me-2"></i><span>Especialidades</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a asp-controller="Inseminadores" asp-action="Index" class="nav-link d-flex align-items-center">
-                <i class="bi bi-prescription2 me-2"></i><span>Inseminadores</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a asp-controller="Admin" asp-action="IndexRoles" class="nav-link d-flex align-items-center">
-                <i class="bi bi-person-badge me-2"></i><span>Roles</span>
-              </a>
-            </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Establos" asp-action="Index" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-buildings me-2"></i><span>Establos</span>
+                                    </a>
+                                </li>
 
-            <li class="nav-item">
-              <a asp-controller="Admin" asp-action="IndexTipoEnfermedad" class="nav-link d-flex align-items-center">
-                <i class="bi bi-lungs me-2"></i><span>Tipos de enfermedades</span>
-              </a>
-            </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Hatos" asp-action="Index" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-diagram-3 me-2"></i><span>Hatos</span>
+                                    </a>
+                                </li>
 
-            <li class="nav-item">
-              <a asp-controller="Admin" asp-action="IndexSintoma" class="nav-link d-flex align-items-center">
-                <i class="bi bi-virus me-2"></i><span>Síntomas</span>
-              </a>
-            </li>
+                                @* Catálogos *@
+                                <li class="nav-item">
+                                    <a asp-controller="Admin" asp-action="IndexEspecialidades" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-person-workspace me-2"></i><span>Especialidades</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Inseminadores" asp-action="Index" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-prescription2 me-2"></i><span>Inseminadores</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Admin" asp-action="IndexRoles" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-person-badge me-2"></i><span>Roles</span>
+                                    </a>
+                                </li>
 
-            <li class="nav-item">
-              <a asp-controller="Admin" asp-action="IndexTipoTratamiento" class="nav-link d-flex align-items-center">
-                <i class="bi bi-hospital me-2"></i><span>Tipos de tratamientos</span>
-              </a>
-            </li>
+                                <li class="nav-item">
+                                    <a asp-controller="Admin" asp-action="IndexTipoEnfermedad" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-lungs me-2"></i><span>Tipos de enfermedades</span>
+                                    </a>
+                                </li>
 
-            @* Costos *@
-            <li class="nav-item">
-              <a asp-controller="Costos" asp-action="Index" class="nav-link d-flex align-items-center">
-                <i class="bi bi-cash-coin me-2"></i><span>Costos</span>
-              </a>
-            </li>
-          </ul>
-        </li>
-        }
-      </ul>
+                                <li class="nav-item">
+                                    <a asp-controller="Admin" asp-action="IndexSintoma" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-virus me-2"></i><span>Síntomas</span>
+                                    </a>
+                                </li>
 
-      <hr class="border-secondary opacity-25 my-2" />
+                                <li class="nav-item">
+                                    <a asp-controller="Admin" asp-action="IndexTipoTratamiento" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-hospital me-2"></i><span>Tipos de tratamientos</span>
+                                    </a>
+                                </li>
 
-      @if (isAuth)
-      {
-      <div class="sidebar-user d-flex align-items-center px-2 pb-2">
-        <div class="rounded-circle bg-secondary d-flex justify-content-center align-items-center me-2"
-          style="width:32px;height:32px;">
-          <i class="bi bi-person"></i>
-        </div>
+                                @* Costos *@
+                                <li class="nav-item">
+                                    <a asp-controller="Costos" asp-action="Index" class="nav-link d-flex align-items-center">
+                                        <i class="bi bi-cash-coin me-2"></i><span>Costos</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                </ul>
 
-        <div class="flex-grow-1">
-          <div class="small">@User.Identity!.Name</div>
-          @if (!string.IsNullOrWhiteSpace(roleName))
-          {
-          <div class="text-muted small">Rol: @roleName</div>
-          }
-          <div class="text-muted small">Conectado</div>
-        </div>
+                <hr class="border-secondary opacity-25 my-2" />
 
-        <form asp-controller="Account" asp-action="Logout" method="post" class="ms-2">
-          <button type="submit" class="btn btn-outline-light btn-sm rounded-pill" title="Cerrar sesión">
-            <i class="bi bi-box-arrow-right"></i>
-          </button>
-        </form>
-      </div>
-      }
-    </nav>
-
-    <div class="app-main flex-grow-1 d-flex flex-column">
-      <header>
-        <nav class="navbar navbar-expand-lg navbar-dark navbar-main">
-          <div class="container-fluid px-3 px-md-4">
-            <button class="btn btn-outline-light btn-sm me-2" id="sidebarToggle" type="button">
-              <i class="bi bi-list"></i>
-            </button>
-
-            <a class="navbar-brand fw-semibold" asp-controller="Home" asp-action="Index">
-              Establo Pro
-            </a>
-
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
-              aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
-              <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="mainNavbar">
-              <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                 @if (isAuth)
                 {
-                <li class="nav-item d-flex align-items-center me-2">
-                  <span class="nav-text-small text-white-50">@User.Identity!.Name</span>
-                </li>
-                <li class="nav-item d-none d-lg-block">
-                  <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                    <button type="submit" class="btn btn-outline-light btn-sm rounded-pill">Cerrar sesión</button>
-                  </form>
-                </li>
+                    <div class="sidebar-user d-flex align-items-center px-2 pb-2">
+                        <div class="rounded-circle bg-secondary d-flex justify-content-center align-items-center me-2"
+                             style="width:32px;height:32px;">
+                            <i class="bi bi-person"></i>
+                        </div>
+
+                        <div class="flex-grow-1">
+                            <div class="small">@User.Identity!.Name</div>
+                            @if (!string.IsNullOrWhiteSpace(roleName))
+                            {
+                                <div class="text-muted small">Rol: @roleName</div>
+                            }
+                            <div class="text-muted small">Conectado</div>
+                        </div>
+
+                        <form asp-controller="Account" asp-action="Logout" method="post" class="ms-2">
+                            <button type="submit" class="btn btn-outline-light btn-sm rounded-pill" title="Cerrar sesión">
+                                <i class="bi bi-box-arrow-right"></i>
+                            </button>
+                        </form>
+                    </div>
                 }
-                else
-                {
-                <li class="nav-item">
-                  <a class="btn btn-outline-light btn-sm rounded-pill" asp-controller="Account" asp-action="Login">
-                    Iniciar sesión
-                  </a>
-                </li>
-                }
-              </ul>
+            </nav>
+
+            <div class="app-main flex-grow-1 d-flex flex-column">
+                <header>
+                    <nav class="navbar navbar-expand-lg navbar-dark navbar-main">
+                        <div class="container-fluid px-3 px-md-4">
+                            <button class="btn btn-outline-light btn-sm me-2" id="sidebarToggle" type="button">
+                                <i class="bi bi-list"></i>
+                            </button>
+
+                            <a class="navbar-brand fw-semibold" asp-controller="Home" asp-action="Index">
+                                Establo Pro
+                            </a>
+
+                            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
+                                    aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                                <span class="navbar-toggler-icon"></span>
+                            </button>
+
+                            <div class="collapse navbar-collapse" id="mainNavbar">
+                                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                                    @if (isAuth)
+                                    {
+                                        <li class="nav-item d-flex align-items-center me-2">
+                                            <span class="nav-text-small text-white-50">@User.Identity!.Name</span>
+                                        </li>
+                                        <li class="nav-item d-none d-lg-block">
+                                            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-outline-light btn-sm rounded-pill">Cerrar sesión</button>
+                                            </form>
+                                        </li>
+                                    }
+                                    else
+                                    {
+                                        <li class="nav-item">
+                                            <a class="btn btn-outline-light btn-sm rounded-pill" asp-controller="Account" asp-action="Login">
+                                                Iniciar sesión
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                    </nav>
+                </header>
+
+                <main class="main-content flex-grow-1">
+                    <div class="container-fluid px-3 px-md-4 py-4 py-md-5">
+                        @RenderBody()
+                    </div>
+                </main>
             </div>
-          </div>
-        </nav>
-      </header>
-
-      <main class="main-content flex-grow-1">
-        <div class="container-fluid px-3 px-md-4 py-4 py-md-5">
-          @RenderBody()
         </div>
-      </main>
-    </div>
-  </div>
-  }
+    }
 
-  <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="~/js/site.js" asp-append-version="true"></script>
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-  <script>
-    (function () {
-      const toggleBtn = document.getElementById('sidebarToggle');
-      const backdrop = document.getElementById('sidebar-backdrop');
-      const SIDEBAR_KEY = 'establoProSidebarCollapsed';
+    <script>
+        (function () {
+          const toggleBtn = document.getElementById('sidebarToggle');
+          const backdrop = document.getElementById('sidebar-backdrop');
+          const SIDEBAR_KEY = 'establoProSidebarCollapsed';
 
-      function applySavedState() {
-        const collapsed = localStorage.getItem(SIDEBAR_KEY) === '1';
-        if (window.innerWidth >= 992) {
-          document.body.classList.toggle('sidebar-collapsed', collapsed);
-        } else {
-          document.body.classList.remove('sidebar-collapsed');
-        }
-      }
+          function applySavedState() {
+            const collapsed = localStorage.getItem(SIDEBAR_KEY) === '1';
+            if (window.innerWidth >= 992) {
+              document.body.classList.toggle('sidebar-collapsed', collapsed);
+            } else {
+              document.body.classList.remove('sidebar-collapsed');
+            }
+          }
 
-      applySavedState();
-      window.addEventListener('resize', applySavedState);
+          applySavedState();
+          window.addEventListener('resize', applySavedState);
 
-      function toggleSidebar() {
-        if (window.innerWidth < 992) {
-          document.body.classList.toggle('sidebar-open');
-        } else {
-          const nowCollapsed = document.body.classList.toggle('sidebar-collapsed');
-          localStorage.setItem(SIDEBAR_KEY, nowCollapsed ? '1' : '0');
-        }
-      }
+          function toggleSidebar() {
+            if (window.innerWidth < 992) {
+              document.body.classList.toggle('sidebar-open');
+            } else {
+              const nowCollapsed = document.body.classList.toggle('sidebar-collapsed');
+              localStorage.setItem(SIDEBAR_KEY, nowCollapsed ? '1' : '0');
+            }
+          }
 
-      function closeSidebarMobile() {
-        document.body.classList.remove('sidebar-open');
-      }
+          function closeSidebarMobile() {
+            document.body.classList.remove('sidebar-open');
+          }
 
-      if (toggleBtn) toggleBtn.addEventListener('click', toggleSidebar);
-      if (backdrop) backdrop.addEventListener('click', closeSidebarMobile);
-    })();
-  </script>
+          if (toggleBtn) toggleBtn.addEventListener('click', toggleSidebar);
+          if (backdrop) backdrop.addEventListener('click', closeSidebarMobile);
+        })();
+    </script>
 
-  @RenderSection("Scripts", required: false)
+    @RenderSection("Scripts", required: false)
 </body>
 
 </html>

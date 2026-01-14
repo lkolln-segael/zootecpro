@@ -1,0 +1,86 @@
+﻿@model WebZootecPro.ViewModels.Reportes.PicoCampaniaVm
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Hoja 1 - Pico por campaña";
+    var hatos = ViewBag.Hatos as List<SelectListItem> ?? new();
+}
+
+<h2>PRODUCCIÓN (Prom. DL)</h2>
+
+<form method="get" class="card p-3 mb-3">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Hato</label>
+            <select name="hatoId" class="form-select">
+                <option value="">-- Todos --</option>
+                @foreach (var h in hatos)
+                {
+                    <option value="@h.Value" selected="@(h.Value == (Model.HatoId?.ToString() ?? ""))">@h.Text</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Fecha corte</label>
+            <input type="date" name="fechaCorte" class="form-control" value="@Model.FechaCorte.ToString("yyyy-MM-dd")" />
+        </div>
+
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100" type="submit">Ver</button>
+        </div>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-sm align-middle">
+        <thead class="table-light">
+            <tr>
+                <th colspan="6"></th>
+                <th colspan="7" class="text-center">PICO DE PRODUCCIÓN POR CAMPAÑA</th>
+                <th colspan="7" class="text-center">PROMEDIO CAMPAÑA</th>
+            </tr>
+            <tr>
+                <th>No.</th>
+                <th>Arete</th>
+                <th>Nombre</th>
+                <th>Parto</th>
+                <th>dl</th>
+                <th>udl</th>
+
+                @for (int i = 1; i <= 7; i++)
+                {
+                    <th class="text-end">@i</th>
+                }
+                @for (int i = 1; i <= 7; i++)
+                {
+                    <th class="text-end">X @i</th>
+                }
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var x in Model.Items)
+            {
+                <tr>
+                    <td>@x.No</td>
+                    <td>@x.Arete</td>
+                    <td>@x.Nombre</td>
+                    <td>@(x.Parto?.ToString("dd/MM/yyyy") ?? "")</td>
+                    <td>@(x.dl?.ToString() ?? "")</td>
+                    <td>@(x.udl?.ToString() ?? "")</td>
+
+                    @for (int i = 0; i < 7; i++)
+                    {
+                        <td class="text-end">@((x.Picos[i] ?? 0m) == 0m ? "" : x.Picos[i]!.Value.ToString("0.0"))</td>
+                    }
+
+                    @for (int i = 0; i < 7; i++)
+                    {
+                        <td class="text-end">@((x.Promedios[i] ?? 0m) == 0m ? "" : x.Promedios[i]!.Value.ToString("0.0"))</td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

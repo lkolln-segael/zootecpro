@@ -1,0 +1,57 @@
+﻿@model WebZootecPro.ViewModels.Reportes.ControlLecheroDiarioVm
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Control lechero diario";
+    var hatos = ViewBag.Hatos as List<SelectListItem> ?? new();
+}
+
+<h2>Control lechero diario (@Model.Fecha.ToString("dd/MM/yyyy"))</h2>
+
+<form method="get" class="card p-3 mb-3">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Hato</label>
+            <select name="hatoId" class="form-select">
+                <option value="">-- Todos --</option>
+                @foreach (var h in hatos)
+                {
+                    <option value="@h.Value" selected="@(h.Value == (Model.HatoId?.ToString() ?? ""))">@h.Text</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Fecha</label>
+            <input type="date" name="fecha" class="form-control" value="@Model.Fecha.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100" type="submit">Ver</button>
+        </div>
+    </div>
+</form>
+
+<table class="table table-bordered table-sm">
+    <thead class="table-light">
+        <tr>
+            <th>No.</th>
+            <th>Arete</th>
+            <th>Nombre</th>
+            <th class="text-end">A.M</th>
+            <th class="text-end">P.M</th>
+            <th class="text-end">TOTAL</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var x in Model.Items)
+        {
+            <tr>
+                <td>@x.No</td>
+                <td>@x.Arete</td>
+                <td>@x.Nombre</td>
+                <td class="text-end">@x.AM.ToString("0.00")</td>
+                <td class="text-end">@x.PM.ToString("0.00")</td>
+                <td class="text-end">@x.Total.ToString("0.00")</td>
+            </tr>
+        }
+    </tbody>
+</table>
