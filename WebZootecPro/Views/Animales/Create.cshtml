@@ -14,9 +14,10 @@
         <form asp-action="Create" method="post" novalidate>
             <div asp-validation-summary="All" class="text-danger small mb-3"></div>
 
+            <!-- CAMPOS PRINCIPALES -->
             <div class="row g-3">
 
-                <!-- 1ra fila -->
+                <!-- FILA 1 -->
                 <div class="col-12 col-lg-6">
                     <label asp-for="nombre" class="form-label">Nombre</label>
                     <input asp-for="nombre" class="form-control" />
@@ -25,7 +26,7 @@
 
                 <div class="col-12 col-md-6 col-lg-3">
                     <label class="form-label">Sexo</label>
-                    <input class="form-control" value="HEMBRA" readonly style="background-color: rgba(15, 23, 42, 0.96)" />
+                    <input class="form-control bg-dark text-white" value="HEMBRA" readonly />
                     <input asp-for="sexo" type="hidden" value="HEMBRA" />
                 </div>
 
@@ -35,14 +36,13 @@
                     <span asp-validation-for="codigo" class="text-danger small"></span>
                 </div>
 
+                <!-- FILA 2 -->
                 <div class="col-12 col-md-6 col-lg-3">
                     <label asp-for="arete" class="form-label">Arete</label>
-                    <input asp-for="arete" class="form-control"  required/>
+                    <input asp-for="arete" class="form-control" />
                     <span asp-validation-for="arete" class="text-danger small"></span>
                 </div>
 
-
-                <!-- 2da fila (4 columnas) -->
                 <div class="col-12 col-md-6 col-lg-3">
                     <label asp-for="IdentificadorElectronico" class="form-label">Identificador electrónico</label>
                     <input asp-for="IdentificadorElectronico" class="form-control" />
@@ -58,6 +58,7 @@
                     <input asp-for="color" class="form-control" />
                 </div>
 
+                <!-- FILA 3 -->
                 <div class="col-12 col-md-6 col-lg-3">
                     <label asp-for="idHato" class="form-label">Hato</label>
                     <select asp-for="idHato" asp-items="ViewBag.IdHato" class="form-select">
@@ -66,7 +67,6 @@
                     <span asp-validation-for="idHato" class="text-danger small"></span>
                 </div>
 
-                <!-- 3ra fila (4 columnas) -->
                 <div class="col-12 col-md-6 col-lg-3">
                     <label asp-for="fechaNacimiento" class="form-label">Fecha de nacimiento</label>
                     <input asp-for="fechaNacimiento" type="date" class="form-control" id="fechaNacimiento" />
@@ -74,7 +74,7 @@
                 </div>
 
                 <div class="col-12 col-md-6 col-lg-3 d-flex align-items-end">
-                    <div class="form-check form-switch mb-1">
+                    <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" asp-for="nacimientoEstimado" />
                         <label class="form-check-label" asp-for="nacimientoEstimado">Nacimiento estimado</label>
                     </div>
@@ -87,6 +87,7 @@
                     </select>
                 </div>
 
+                <!-- FILA 4 -->
                 <div class="col-12 col-md-6 col-lg-3">
                     <label asp-for="procedenciaId" class="form-label">Procedencia</label>
                     <select asp-for="procedenciaId" asp-items="ViewBag.ProcedenciaId" class="form-select">
@@ -94,7 +95,6 @@
                     </select>
                 </div>
 
-                <!-- 4ta fila (4 columnas) -->
                 <div class="col-12 col-md-6 col-lg-3">
                     <label asp-for="propositoId" class="form-label">Propósito</label>
                     <select asp-for="propositoId" asp-items="ViewBag.PropositoId" class="form-select">
@@ -108,7 +108,6 @@
                         <option value="">-- Seleccione --</option>
                     </select>
                 </div>
-                <input type="hidden" asp-for="estadoProductivoId" />
 
                 <div class="col-12 col-md-6 col-lg-3">
                     <label class="form-label">Categoría</label>
@@ -117,18 +116,22 @@
                     </select>
                 </div>
 
+                <input type="hidden" asp-for="estadoProductivoId" />
 
-                <!-- (opcional) hueco para que no se “descuadre” en 4 columnas -->
-                <div class="col-12 col-md-6 col-lg-3"></div>
+            </div>
 
-                <!-- Padres / Madres en 2 columnas -->
-                <div class="col-12 col-lg-6">
+            <hr class="my-3" />
+
+            <!-- PADRE / MADRE (SIEMPRE LADO A LADO EN ESCRITORIO: md+) -->
+            <div class="row g-3">
+
+                <div class="col-12 col-md-6">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="chkPadre" @(tienePadre ? "checked" : "") />
                         <label class="form-check-label" for="chkPadre">Asignar padre</label>
                     </div>
 
-                    <div id="padreWrap" style="display:@(tienePadre ? "block" : "none");" class="mt-2">
+                    <div id="padreWrap" class="mt-2" style="display:@(tienePadre ? "block" : "none");">
                         <label asp-for="idPadre" class="form-label">Padre</label>
                         <select asp-for="idPadre" asp-items="ViewBag.IdPadre" class="form-select">
                             <option value="">-- Seleccione --</option>
@@ -136,13 +139,13 @@
                     </div>
                 </div>
 
-                <div class="col-12 col-lg-6">
+                <div class="col-12 col-md-6">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="chkMadre" @(tieneMadre ? "checked" : "") />
                         <label class="form-check-label" for="chkMadre">Asignar madre</label>
                     </div>
 
-                    <div id="madreWrap" style="display:@(tieneMadre ? "block" : "none");" class="mt-2">
+                    <div id="madreWrap" class="mt-2" style="display:@(tieneMadre ? "block" : "none");">
                         <label asp-for="idMadre" class="form-label">Madre</label>
                         <select asp-for="idMadre" asp-items="ViewBag.IdMadre" class="form-select">
                             <option value="">-- Seleccione --</option>
@@ -150,7 +153,6 @@
                     </div>
                 </div>
 
-                <!-- Observaciones full width -->
                 <div class="col-12">
                     <label asp-for="observaciones" class="form-label">Observaciones</label>
                     <textarea asp-for="observaciones" class="form-control" rows="2"></textarea>
@@ -187,10 +189,15 @@
                 }
             }
 
+            // aplica estado inicial (IMPORTANTE)
+            toggle(padreWrap, chkPadre);
+            toggle(madreWrap, chkMadre);
+
             chkPadre.addEventListener('change', () => toggle(padreWrap, chkPadre));
             chkMadre.addEventListener('change', () => toggle(madreWrap, chkMadre));
 
             function calcEdad() {
+                if (!fecha || !edadInfo) return;
                 if (!fecha.value) { edadInfo.textContent = ''; return; }
                 const nac = new Date(fecha.value + 'T00:00:00');
                 const hoy = new Date();
@@ -202,8 +209,10 @@
                 edadInfo.textContent = `Edad aprox: ${anios} año(s) ${rem} mes(es)`;
             }
 
-            fecha.addEventListener('change', calcEdad);
-            calcEdad();
+            if (fecha) {
+                fecha.addEventListener('change', calcEdad);
+                calcEdad();
+            }
         })();
     </script>
 }

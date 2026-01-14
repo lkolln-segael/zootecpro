@@ -53,6 +53,9 @@ public partial class Empresa
     [InverseProperty("Empresa")]
     public virtual ICollection<Establo> Establos { get; set; } = new List<Establo>();
 
+    [InverseProperty("Empresa")]
+    public virtual ICollection<Inseminador> Inseminadors { get; set; } = new List<Inseminador>();
+
     [ForeignKey("PlanId")]
     [InverseProperty("Empresas")]
     public virtual PlanLicencium? Plan { get; set; }

@@ -1,5 +1,5 @@
-
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebZootecPro.Data;
@@ -7,174 +7,200 @@ using WebZootecPro.ViewModels.Inseminador;
 
 namespace WebZootecPro.Controllers;
 
+[Authorize(Roles = "SUPERADMIN,ADMIN_EMPRESA,VETERINARIO,USUARIO_EMPRESA")]
 public class InseminadoresController : Controller
 {
-  private readonly ZootecContext _context;
+    private readonly ZootecContext _context;
 
-  public InseminadoresController(ZootecContext context)
-  {
-    _context = context;
-  }
-  private int? GetUsuarioId()
-  {
-    var s = User.FindFirstValue(ClaimTypes.NameIdentifier);
-    return int.TryParse(s, out var id) ? id : (int?)null;
-  }
-  private async Task<Usuario?> GetUsuarioActualAsync()
-  {
-    var id = GetUsuarioId();
-    if (id == null) return null;
-
-    return await _context.Usuarios
-        .AsNoTracking()
-        .Include(u => u.Rol)
-        .FirstOrDefaultAsync(u => u.Id == id.Value);
-  }
-
-  private async Task<int?> GetEstabloScopeAsync()
-  {
-    var empresa = await GetEmpresaAsync();
-    var establo = await _context.Establos.FirstOrDefaultAsync(e => empresa != null && e.EmpresaId == empresa.Id);
-    return establo != null ? establo.Id : -1;
-  }
-  private async Task<Empresa?> GetEmpresaAsync()
-  {
-    var usuario = await GetUsuarioActualAsync();
-    if (usuario == null)
-      return null;
-
-    return await _context.Empresas
-        .FirstOrDefaultAsync(e => e.usuarioID == usuario.Id
-            || (e.Colaboradors != null
-                && e.Colaboradors.Select(c => c.idUsuario).Contains(usuario.Id)));
-  }
-
-  // GET: Inseminadors
-  public async Task<IActionResult> Index()
-  {
-    var list = await _context.Inseminadors
-        .AsNoTracking()
-        .Select(i => new InseminadorViewModel
-        {
-          Id = i.Id,
-          Nombre = i.nombre,
-          Apellido = i.apellido
-        })
-        .ToListAsync();
-
-    return View(list);
-  }
-
-  // GET: Inseminadors/Details/5
-  public async Task<IActionResult> Details(int id)
-  {
-    var i = await _context.Inseminadors
-        .AsNoTracking()
-        .Where(x => x.Id == id)
-        .Select(x => new InseminadorViewModel
-        {
-          Id = x.Id,
-          Nombre = x.nombre,
-          Apellido = x.apellido
-        })
-        .FirstOrDefaultAsync();
-
-    if (i == null) return NotFound();
-
-    return View(i);
-  }
-
-  // GET: Inseminadors/Create
-  public IActionResult Create()
-  {
-    return View(new InseminadorViewModel());
-  }
-
-  // POST: Inseminadors/Create
-  [HttpPost]
-  [ValidateAntiForgeryToken]
-  public async Task<IActionResult> Create(InseminadorViewModel vm)
-  {
-    var empresa = await GetEmpresaAsync();
-    if (!ModelState.IsValid) return View(vm);
-
-    var entity = new Inseminador
+    public InseminadoresController(ZootecContext context)
     {
-      nombre = vm.Nombre,
-      apellido = vm.Apellido,
-      EmpresaId = empresa.Id
-    };
+        _context = context;
+    }
 
-    _context.Add(entity);
-    await _context.SaveChangesAsync();
+    private bool IsSuperAdmin => User.IsInRole("SUPERADMIN");
 
-    return RedirectToAction(nameof(Index));
-  }
-
-  // GET: Inseminadors/Edit/5
-  public async Task<IActionResult> Edit(int id)
-  {
-    var i = await _context.Inseminadors.FindAsync(id);
-    if (i == null) return NotFound();
-
-    var vm = new InseminadorViewModel
+    private int? GetUsuarioId()
     {
-      Id = i.Id,
-      Nombre = i.nombre,
-      Apellido = i.apellido
-    };
+        var s = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return int.TryParse(s, out var id) ? id : (int?)null;
+    }
 
-    return View(vm);
-  }
+    private async Task<Usuario?> GetUsuarioActualAsync()
+    {
+        var id = GetUsuarioId();
+        if (id == null) return null;
 
-  // POST: Inseminadors/Edit/5
-  [HttpPost]
-  [ValidateAntiForgeryToken]
-  public async Task<IActionResult> Edit(int id, InseminadorViewModel vm)
-  {
-    if (id != vm.Id) return BadRequest();
-    if (!ModelState.IsValid) return View(vm);
+        return await _context.Usuarios
+          .AsNoTracking()
+          .Include(u => u.Rol)
+          .FirstOrDefaultAsync(u => u.Id == id.Value);
+    }
 
-    var i = await _context.Inseminadors.FindAsync(id);
-    if (i == null) return NotFound();
+    private async Task<Empresa?> GetEmpresaAsync()
+    {
+        var usuario = await GetUsuarioActualAsync();
+        if (usuario == null) return null;
 
-    i.nombre = vm.Nombre;
-    i.apellido = vm.Apellido;
+        return await _context.Empresas.FirstOrDefaultAsync(e =>
+          e.usuarioID == usuario.Id
+          || (e.Colaboradors != null && e.Colaboradors.Select(c => c.idUsuario).Contains(usuario.Id)));
+    }
 
-    await _context.SaveChangesAsync();
-    return RedirectToAction(nameof(Index));
-  }
+    private async Task<int?> GetEmpresaIdScopeAsync()
+    {
+        if (IsSuperAdmin) return null; // SUPERADMIN ve todo (si quieres que NO, quita esto y siempre retorna empresa.Id)
+        var empresa = await GetEmpresaAsync();
+        return empresa?.Id;
+    }
 
-  // GET: Inseminadors/Delete/5
-  public async Task<IActionResult> Delete(int id)
-  {
-    var i = await _context.Inseminadors
-        .AsNoTracking()
-        .Where(x => x.Id == id)
-        .Select(x => new InseminadorViewModel
+    private static IQueryable<Inseminador> Scope(IQueryable<Inseminador> q, int? empresaId)
+      => empresaId == null ? q : q.Where(x => x.EmpresaId == empresaId.Value);
+
+    // GET: Inseminadores
+    public async Task<IActionResult> Index()
+    {
+        var empresaId = await GetEmpresaIdScopeAsync();
+        if (!IsSuperAdmin && empresaId == null) return Forbid();
+
+        var list = await Scope(_context.Inseminadors.AsNoTracking(), empresaId)
+          .OrderBy(x => x.apellido).ThenBy(x => x.nombre)
+          .Select(i => new InseminadorViewModel
+          {
+              Id = i.Id,
+              Nombre = i.nombre,
+              Apellido = i.apellido
+          })
+          .ToListAsync();
+
+        return View(list);
+    }
+
+    // GET: Inseminadores/Details/5
+    public async Task<IActionResult> Details(int id)
+    {
+        var empresaId = await GetEmpresaIdScopeAsync();
+        if (!IsSuperAdmin && empresaId == null) return Forbid();
+
+        var i = await Scope(_context.Inseminadors.AsNoTracking(), empresaId)
+          .Where(x => x.Id == id)
+          .Select(x => new InseminadorViewModel
+          {
+              Id = x.Id,
+              Nombre = x.nombre,
+              Apellido = x.apellido
+          })
+          .FirstOrDefaultAsync();
+
+        if (i == null) return NotFound();
+        return View(i);
+    }
+
+    // GET: Inseminadores/Create
+    public IActionResult Create() => View(new InseminadorViewModel());
+
+    // POST: Inseminadores/Create
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(InseminadorViewModel vm)
+    {
+        if (!ModelState.IsValid) return View(vm);
+
+        var empresa = await GetEmpresaAsync();
+        if (empresa == null) return Forbid(); // obligatorio para asignar EmpresaId
+
+        var entity = new Inseminador
         {
-          Id = x.Id,
-          Nombre = x.nombre,
-          Apellido = x.apellido
-        })
-        .FirstOrDefaultAsync();
+            nombre = vm.Nombre,
+            apellido = vm.Apellido,
+            EmpresaId = empresa.Id
+        };
 
-    if (i == null) return NotFound();
+        _context.Inseminadors.Add(entity);
+        await _context.SaveChangesAsync();
 
-    return View(i);
-  }
+        return RedirectToAction(nameof(Index));
+    }
 
-  // POST: Inseminadors/Delete/5
-  [HttpPost, ActionName("Delete")]
-  [ValidateAntiForgeryToken]
-  public async Task<IActionResult> DeleteConfirmed(int id)
-  {
-    var i = await _context.Inseminadors.FindAsync(id);
-    if (i == null) return NotFound();
+    // GET: Inseminadores/Edit/5
+    public async Task<IActionResult> Edit(int id)
+    {
+        var empresaId = await GetEmpresaIdScopeAsync();
+        if (!IsSuperAdmin && empresaId == null) return Forbid();
 
-    _context.Inseminadors.Remove(i);
-    await _context.SaveChangesAsync();
+        var i = await Scope(_context.Inseminadors.AsNoTracking(), empresaId)
+          .Where(x => x.Id == id)
+          .Select(x => new InseminadorViewModel
+          {
+              Id = x.Id,
+              Nombre = x.nombre,
+              Apellido = x.apellido
+          })
+          .FirstOrDefaultAsync();
 
-    return RedirectToAction(nameof(Index));
-  }
+        if (i == null) return NotFound();
+        return View(i);
+    }
+
+    // POST: Inseminadores/Edit/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, InseminadorViewModel vm)
+    {
+        if (id != vm.Id) return BadRequest();
+        if (!ModelState.IsValid) return View(vm);
+
+        var empresaId = await GetEmpresaIdScopeAsync();
+        if (!IsSuperAdmin && empresaId == null) return Forbid();
+
+        // NO usar FindAsync(id) sin validar EmpresaId
+        var i = await Scope(_context.Inseminadors, empresaId)
+          .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (i == null) return NotFound();
+
+        i.nombre = vm.Nombre;
+        i.apellido = vm.Apellido;
+
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
+    }
+
+    // GET: Inseminadores/Delete/5
+    public async Task<IActionResult> Delete(int id)
+    {
+        var empresaId = await GetEmpresaIdScopeAsync();
+        if (!IsSuperAdmin && empresaId == null) return Forbid();
+
+        var i = await Scope(_context.Inseminadors.AsNoTracking(), empresaId)
+          .Where(x => x.Id == id)
+          .Select(x => new InseminadorViewModel
+          {
+              Id = x.Id,
+              Nombre = x.nombre,
+              Apellido = x.apellido
+          })
+          .FirstOrDefaultAsync();
+
+        if (i == null) return NotFound();
+        return View(i);
+    }
+
+    // POST: Inseminadores/Delete/5
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        var empresaId = await GetEmpresaIdScopeAsync();
+        if (!IsSuperAdmin && empresaId == null) return Forbid();
+
+        var i = await Scope(_context.Inseminadors, empresaId)
+          .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (i == null) return NotFound();
+
+        _context.Inseminadors.Remove(i);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction(nameof(Index));
+    }
 }

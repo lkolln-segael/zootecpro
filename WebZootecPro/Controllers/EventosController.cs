@@ -566,8 +566,6 @@ namespace WebZootecPro.Controllers
                 ModelState.AddModelError(nameof(model.AreteCria1), "Ya existe un animal con ese Areté.");
             }
 
-
-
             if (!ModelState.IsValid)
             {
               await tx.RollbackAsync();
@@ -689,8 +687,6 @@ namespace WebZootecPro.Controllers
               areteCria1 = arete1,
               horaParto = model.HoraParto.Value,
               pveDias = pveDias,
-
-              // SOLO si NO es computed:
               fechaFinPve = fechaFinPve
 
             };
@@ -709,6 +705,7 @@ namespace WebZootecPro.Controllers
             var nombreCria1 = !string.IsNullOrWhiteSpace(model.NombreCria1)
                 ? model.NombreCria1.Trim()
                 : $"CRIA {arete1}";
+
 
             var cria1 = new Animal
             {

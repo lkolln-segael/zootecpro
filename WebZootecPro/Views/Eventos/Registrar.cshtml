@@ -163,24 +163,20 @@ ViewData["Title"] = "Registrar evento";
       actualizarCalculos();
     }
 
-    async function cargarArete() {
-      const idAnimal = ($animal.val() || "").toString();
-      if (!idAnimal) {$arete.val(""); return;}
+          async function cargarArete() {
+          const idAnimal = ($animal.val() || "").toString();
+          if (!idAnimal) { $arete.val(""); return; }
 
-      const url = '@Url.Action("DatosAnimal", "Eventos")'
-        + '?idAnimal=' + encodeURIComponent(idAnimal);
+          const url = '@Url.Action("DatosAnimal", "Eventos")'
+            + '?idAnimal=' + encodeURIComponent(idAnimal);
 
-      const res = await fetch(url, {headers: {"X-Requested-With": "XMLHttpRequest"}});
-      const data = await res.json();
+          const res = await fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } });
+          const data = await res.json();
 
-      $arete.val(data.arete || "");
+          // ✅ Solo mostrar (puede venir vacío)
+          $arete.val((data.arete || "").trim());
+        }
 
-      if (!data.arete || !data.arete.trim()) {
-        alert("Este animal no tiene Areté. Regístrelo antes de continuar.");
-        $animal.val(null).trigger("change.select2");
-        $arete.val("");
-      }
-    }
 
     async function recargarAnimales() {
       const tipo = ($tipo.val() || "").trim();
